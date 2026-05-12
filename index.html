@@ -1553,6 +1553,64 @@ function clearData() {
 // INIT
 // ══════════════════════════════════════════════════════════
 renderDashboard();
+
+// ══════════════════════════════════════════════════════════
+// SERVICE WORKER + PWA INSTALL
+// ══════════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+
+// Capture install prompt and show a banner
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  if (document.getElementById('install-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.style.cssText = `
+    position:fixed; top:0; left:0; right:0; z-index:9999;
+    background:linear-gradient(135deg,#1A2B4A,#2E4B7A);
+    border-bottom:1px solid rgba(212,168,67,0.4);
+    padding:12px 16px; display:flex; align-items:center; gap:12px;
+    animation:slideDown 0.4s ease;
+  `;
+  banner.innerHTML = `
+    <style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>
+    <div style="font-size:28px">💼</div>
+    <div style="flex:1">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#F1F5F9">Install FinTrack</div>
+      <div style="font-size:11px;color:#94A3B8;margin-top:1px">Add to home screen for the best experience</div>
+    </div>
+    <button onclick="installApp()" style="background:linear-gradient(135deg,#D4A843,#F0C96A);border:none;border-radius:8px;padding:8px 14px;color:#0F1923;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">Install</button>
+    <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#64748B;font-size:20px;cursor:pointer;padding:0 4px;">×</button>
+  `;
+  document.body.prepend(banner);
+}
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-banner')?.remove();
+  }
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner')?.remove();
+  console.log('FinTrack installed!');
+});
 </script>
 </body>
 </html>
