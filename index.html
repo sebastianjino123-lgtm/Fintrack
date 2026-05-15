@@ -563,19 +563,34 @@ body {
 <div class="page" id="page-accounts">
   <div class="topbar"><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
 
-  <div class="acct-section-label">🏦 Indian Bank Accounts</div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🏦 Indian Bank Accounts</span>
+    <button onclick="openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  </div>
   <div id="acct-banks"></div>
 
-  <div class="acct-section-label">💳 Credit Cards</div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>💳 Credit Cards</span>
+    <button onclick="openAddModal('card')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:7px;padding:5px 10px;color:#F87171;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  </div>
   <div id="acct-cards"></div>
 
-  <div class="acct-section-label">🇦🇪 UAE Accounts</div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🇦🇪 UAE Accounts</span>
+    <button onclick="openAddModal('uae')" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:5px 10px;color:#34D399;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  </div>
   <div id="acct-uae"></div>
 
-  <div class="acct-section-label">🏠 Loans</div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🏠 Loans</span>
+    <button onclick="openAddModal('loan')" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:7px;padding:5px 10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  </div>
   <div id="acct-loans"></div>
 
-  <div class="acct-section-label">🎰 Chit Funds</div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🎰 Chit Funds</span>
+    <button onclick="openAddModal('chit')" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:7px;padding:5px 10px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  </div>
   <div id="acct-chits"></div>
 </div>
 
@@ -796,13 +811,13 @@ const defaultData = {
       { id:'b6', name:'Bank of Baroda',        bank:'Bank of Baroda',      balance:0, minBal:2000,  type:'Savings', color:'#34D399' },
     ],
     indCards: [
-      { id:'c1', name:'Kotak Mahindra Credit card', bank:'Kotak Bank',    limit:100000, outstanding:0, minDue:0, totalDue:0, dueDate:20, color:'#F87171' },
-      { id:'c2', name:'SBI Credit Card',  bank:'SBI Bank',     limit:80000,  outstanding:0, minDue:0, totalDue:0, dueDate:15, color:'#FB923C' },
-      { id:'c3', name:'Onecard Credit Card',bank:'SBM Bank',   limit:75000,  outstanding:0, minDue:0, totalDue:0, dueDate:25, color:'#A78BFA' },
+      { id:'c1', name:'HDFC Credit Card', bank:'HDFC Bank',    limit:100000, outstanding:0, minDue:0, totalDue:0, dueDate:20, color:'#F87171' },
+      { id:'c2', name:'SBI Credit Card',  bank:'SBI Card',     limit:80000,  outstanding:0, minDue:0, totalDue:0, dueDate:15, color:'#FB923C' },
+      { id:'c3', name:'ICICI Credit Card',bank:'ICICI Bank',   limit:75000,  outstanding:0, minDue:0, totalDue:0, dueDate:25, color:'#A78BFA' },
     ],
     uaeAccounts: [
-      { id:'u1', name:'ADCB Savings',     bank:'ADCB Bank', balanceAED:0, type:'Savings',     color:'#34D399' },
-      { id:'u2', name:'ADCB Credit Card', bank:'ADCB Bank', balanceAED:0, type:'Credit Card', color:'#F87171', limit:10000 },
+      { id:'u1', name:'FAB Savings',     bank:'First Abu Dhabi Bank', balanceAED:0, type:'Savings',     color:'#34D399' },
+      { id:'u2', name:'FAB Credit Card', bank:'First Abu Dhabi Bank', balanceAED:0, type:'Credit Card', color:'#F87171', limit:10000 },
     ],
     loans: [
       { id:'l1', name:'Home Loan',       lender:'', principal:0, outstanding:0, emi:0, rate:8.5, dueDay:1, tenure:240, completed:0 },
@@ -1434,29 +1449,47 @@ function openAcctModal(id) {
   let fields = '';
   if(D.accounts.indBanks.find(b=>b.id===id)) {
     fields = `
+      <div class="form-group"><label class="form-label">Account Nickname</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
+      <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="ae-bank" value="${acct.bank}"></div>
       <div class="form-group"><label class="form-label">Current Balance (₹)</label><input type="number" class="form-input" id="ae-balance" value="${acct.balance}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Minimum Balance (₹)</label><input type="number" class="form-input" id="ae-minbal" value="${acct.minBal}" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Account Nickname</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>`;
+      <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','indBanks')">🗑️ Delete this Account</button>`;
   } else if(D.accounts.indCards.find(c=>c.id===id)) {
     fields = `
+      <div class="form-group"><label class="form-label">Card Nickname</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
+      <div class="form-group"><label class="form-label">Bank / Network</label><input type="text" class="form-input" id="ae-bank" value="${acct.bank}"></div>
       <div class="form-group"><label class="form-label">Credit Limit (₹)</label><input type="number" class="form-input" id="ae-limit" value="${acct.limit}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Current Outstanding (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Minimum Due (₹)</label><input type="number" class="form-input" id="ae-mindue" value="${acct.minDue}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Total Due (₹)</label><input type="number" class="form-input" id="ae-totaldue" value="${acct.totalDue}" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Payment Due Date (day of month)</label><input type="number" class="form-input" id="ae-duedate" value="${acct.dueDate}" min="1" max="31" inputmode="numeric"></div>`;
+      <div class="form-group"><label class="form-label">Payment Due Date (day of month)</label><input type="number" class="form-input" id="ae-duedate" value="${acct.dueDate}" min="1" max="31" inputmode="numeric"></div>
+      <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','indCards')">🗑️ Delete this Card</button>`;
   } else if(D.accounts.uaeAccounts.find(u=>u.id===id)) {
     fields = `
-      <div class="form-group"><label class="form-label">Balance (AED)</label><input type="number" class="form-input" id="ae-aed" value="${acct.balanceAED}" inputmode="decimal"></div>`;
+      <div class="form-group"><label class="form-label">Account Nickname</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
+      <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="ae-bank" value="${acct.bank}"></div>
+      <div class="form-group"><label class="form-label">Account Type</label>
+        <div class="select-wrap"><select class="form-select" id="ae-type">
+          <option ${acct.type==='Savings'?'selected':''}>Savings</option>
+          <option ${acct.type==='Current'?'selected':''}>Current</option>
+          <option ${acct.type==='Credit Card'?'selected':''}>Credit Card</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Balance (AED)</label><input type="number" class="form-input" id="ae-aed" value="${acct.balanceAED}" inputmode="decimal"></div>
+      <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','uaeAccounts')">🗑️ Delete this Account</button>`;
   } else if(D.accounts.loans.find(l=>l.id===id)) {
     fields = `
+      <div class="form-group"><label class="form-label">Loan Name</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
       <div class="form-group"><label class="form-label">Lender Name</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender}"></div>
       <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="ae-emi" value="${acct.emi}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate}" step="0.1" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="ae-completed" value="${acct.completed}" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="ae-tenure" value="${acct.tenure}" inputmode="numeric"></div>`;
+      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="ae-tenure" value="${acct.tenure}" inputmode="numeric"></div>
+      <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','loans')">🗑️ Delete this Loan</button>`;
   } else if(D.accounts.chits.find(c=>c.id===id)) {
     fields = `
+      <div class="form-group"><label class="form-label">Chit Name</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
       <div class="form-group"><label class="form-label">Organizer</label><input type="text" class="form-input" id="ae-organizer" value="${acct.organizer}"></div>
       <div class="form-group"><label class="form-label">Chit Value (₹)</label><input type="number" class="form-input" id="ae-value" value="${acct.value}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Monthly Contribution (₹)</label><input type="number" class="form-input" id="ae-monthly" value="${acct.monthly}" inputmode="decimal"></div>
@@ -1464,7 +1497,8 @@ function openAcctModal(id) {
       <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="ae-completed" value="${acct.completed}" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Payout Received?</label>
         <div class="select-wrap"><select class="form-select" id="ae-payout"><option value="false" ${!acct.payoutReceived?'selected':''}>No</option><option value="true" ${acct.payoutReceived?'selected':''}>Yes</option></select></div>
-      </div>`;
+      </div>
+      <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','chits')">🗑️ Delete this Chit</button>`;
   }
   body.innerHTML = fields;
   openModal('acct-modal');
@@ -1478,14 +1512,17 @@ function saveAccountEdit() {
   let list = D.accounts.indBanks;
   let idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
+    if(g('ae-name')) list[idx].name = g('ae-name');
+    if(g('ae-bank')) list[idx].bank = g('ae-bank');
     list[idx].balance = gn('ae-balance') ?? list[idx].balance;
     list[idx].minBal  = gn('ae-minbal') ?? list[idx].minBal;
-    if(g('ae-name')) list[idx].name = g('ae-name');
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
   list = D.accounts.indCards; idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
+    if(g('ae-name')) list[idx].name = g('ae-name');
+    if(g('ae-bank')) list[idx].bank = g('ae-bank');
     list[idx].limit = gn('ae-limit') ?? list[idx].limit;
     list[idx].outstanding = gn('ae-outstanding') ?? list[idx].outstanding;
     list[idx].minDue = gn('ae-mindue') ?? list[idx].minDue;
@@ -1496,12 +1533,16 @@ function saveAccountEdit() {
 
   list = D.accounts.uaeAccounts; idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
+    if(g('ae-name')) list[idx].name = g('ae-name');
+    if(g('ae-bank')) list[idx].bank = g('ae-bank');
+    if(g('ae-type')) list[idx].type = g('ae-type');
     list[idx].balanceAED = gn('ae-aed') ?? list[idx].balanceAED;
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
   list = D.accounts.loans; idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
+    if(g('ae-name')) list[idx].name = g('ae-name');
     if(g('ae-lender')) list[idx].lender = g('ae-lender');
     list[idx].outstanding = gn('ae-outstanding') ?? list[idx].outstanding;
     list[idx].emi = gn('ae-emi') ?? list[idx].emi;
@@ -1513,6 +1554,7 @@ function saveAccountEdit() {
 
   list = D.accounts.chits; idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
+    if(g('ae-name')) list[idx].name = g('ae-name');
     if(g('ae-organizer')) list[idx].organizer = g('ae-organizer');
     list[idx].value = gn('ae-value') ?? list[idx].value;
     list[idx].monthly = gn('ae-monthly') ?? list[idx].monthly;
@@ -1526,6 +1568,107 @@ function saveAccountEdit() {
 function editBudget(cat) {
   const newVal = prompt(`Monthly budget for ${cat} (₹):`, D.budgets[cat]);
   if(newVal !== null) { D.budgets[cat] = parseFloat(newVal)||0; save(); renderSettings(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// DELETE ACCOUNT
+// ══════════════════════════════════════════════════════════
+function deleteAccount(id, type) {
+  if(!confirm('Delete this account? This cannot be undone.')) return;
+  D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
+  save(); closeModal('acct-modal'); renderPage(currentPage);
+}
+
+// ══════════════════════════════════════════════════════════
+// ADD NEW ACCOUNT MODAL
+// ══════════════════════════════════════════════════════════
+function openAddModal(type) {
+  const COLORS = ['#2DD4BF','#60A5FA','#A78BFA','#F472B6','#FB923C','#34D399','#F87171','#D4A843'];
+  const randomColor = COLORS[Math.floor(Math.random()*COLORS.length)];
+  const id = type + '_' + Date.now();
+  let fields = '';
+
+  if(type === 'bank') {
+    fields = `
+      <div class="form-group"><label class="form-label">Account Nickname</label><input type="text" class="form-input" id="add-name" placeholder="e.g. SBI Joint Account"></div>
+      <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="add-bank" placeholder="e.g. State Bank of India"></div>
+      <div class="form-group"><label class="form-label">Current Balance (₹)</label><input type="number" class="form-input" id="add-balance" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Minimum Balance (₹)</label><input type="number" class="form-input" id="add-minbal" placeholder="0" inputmode="decimal"></div>`;
+  } else if(type === 'card') {
+    fields = `
+      <div class="form-group"><label class="form-label">Card Nickname</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Axis Credit Card"></div>
+      <div class="form-group"><label class="form-label">Bank / Network</label><input type="text" class="form-input" id="add-bank" placeholder="e.g. Axis Bank / Visa"></div>
+      <div class="form-group"><label class="form-label">Credit Limit (₹)</label><input type="number" class="form-input" id="add-limit" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Current Outstanding (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Minimum Due (₹)</label><input type="number" class="form-input" id="add-mindue" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Total Due (₹)</label><input type="number" class="form-input" id="add-totaldue" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Payment Due Date (day of month)</label><input type="number" class="form-input" id="add-duedate" placeholder="20" min="1" max="31" inputmode="numeric"></div>`;
+  } else if(type === 'uae') {
+    fields = `
+      <div class="form-group"><label class="form-label">Account Nickname</label><input type="text" class="form-input" id="add-name" placeholder="e.g. ENBD Savings"></div>
+      <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="add-bank" placeholder="e.g. Emirates NBD"></div>
+      <div class="form-group"><label class="form-label">Account Type</label>
+        <div class="select-wrap"><select class="form-select" id="add-type">
+          <option>Savings</option><option>Current</option><option>Credit Card</option>
+        </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Balance (AED)</label><input type="number" class="form-input" id="add-aed" placeholder="0" inputmode="decimal"></div>`;
+  } else if(type === 'loan') {
+    fields = `
+      <div class="form-group"><label class="form-label">Loan Name</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Home Loan"></div>
+      <div class="form-group"><label class="form-label">Lender Name</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. HDFC Bank"></div>
+      <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="add-emi" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="add-rate" placeholder="8.5" step="0.1" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="add-tenure" placeholder="60" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">EMI Due Date (day of month)</label><input type="number" class="form-input" id="add-dueday" placeholder="5" min="1" max="31" inputmode="numeric"></div>`;
+  } else if(type === 'chit') {
+    fields = `
+      <div class="form-group"><label class="form-label">Chit Name</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Chit Fund 3"></div>
+      <div class="form-group"><label class="form-label">Organizer</label><input type="text" class="form-input" id="add-organizer" placeholder="Organizer name"></div>
+      <div class="form-group"><label class="form-label">Chit Value (₹)</label><input type="number" class="form-input" id="add-value" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Monthly Contribution (₹)</label><input type="number" class="form-input" id="add-monthly" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Total Months</label><input type="number" class="form-input" id="add-totalmonths" placeholder="10" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>`;
+  }
+
+  document.getElementById('acct-modal-title').textContent = {
+    bank:'➕ Add Bank Account', card:'➕ Add Credit Card',
+    uae:'➕ Add UAE Account', loan:'➕ Add Loan', chit:'➕ Add Chit Fund'
+  }[type];
+
+  const body = document.getElementById('acct-modal-body');
+  body.innerHTML = fields;
+
+  // Override save button temporarily
+  document.querySelector('#acct-modal .btn-primary').onclick = () => saveNewAccount(type, id, randomColor);
+  openModal('acct-modal');
+}
+
+function saveNewAccount(type, id, color) {
+  const g = (eid) => { const el=document.getElementById(eid); return el?el.value.trim():null; };
+  const gn = (eid) => { const v=g(eid); return v?parseFloat(v)||0:0; };
+  const gi = (eid) => { const v=g(eid); return v?parseInt(v)||0:0; };
+
+  const name = g('add-name');
+  if(!name) { alert('Please enter a name'); return; }
+
+  if(type === 'bank') {
+    D.accounts.indBanks.push({ id, name, bank: g('add-bank')||'Bank', balance: gn('add-balance'), minBal: gn('add-minbal'), type:'Savings', color });
+  } else if(type === 'card') {
+    D.accounts.indCards.push({ id, name, bank: g('add-bank')||'Bank', limit: gn('add-limit'), outstanding: gn('add-outstanding'), minDue: gn('add-mindue'), totalDue: gn('add-totaldue'), dueDate: gi('add-duedate')||20, color });
+  } else if(type === 'uae') {
+    D.accounts.uaeAccounts.push({ id, name, bank: g('add-bank')||'Bank', balanceAED: gn('add-aed'), type: g('add-type')||'Savings', color });
+  } else if(type === 'loan') {
+    D.accounts.loans.push({ id, name, lender: g('add-lender')||'', principal: gn('add-outstanding'), outstanding: gn('add-outstanding'), emi: gn('add-emi'), rate: gn('add-rate'), dueDay: gi('add-dueday')||1, tenure: gi('add-tenure')||12, completed: gi('add-completed') });
+  } else if(type === 'chit') {
+    D.accounts.chits.push({ id, name, organizer: g('add-organizer')||'', value: gn('add-value'), monthly: gn('add-monthly'), totalMonths: gi('add-totalmonths')||10, completed: gi('add-completed'), payoutReceived: false });
+  }
+
+  // Restore save button
+  document.querySelector('#acct-modal .btn-primary').onclick = saveAccountEdit;
+  save(); closeModal('acct-modal'); renderPage(currentPage);
 }
 
 // ══════════════════════════════════════════════════════════
