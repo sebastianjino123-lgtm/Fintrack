@@ -866,7 +866,10 @@ function save() { localStorage.setItem('fintrack_data', JSON.stringify(D)); }
 
 const fmt = (n) => '₹' + Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:0});
 const fmtAED = (n) => 'AED ' + n.toLocaleString('en-IN', {minimumFractionDigits:0, maximumFractionDigits:0});
-const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+const fmtDate = (d) => {
+  const [y,m,day] = d.split('-').map(Number);
+  return new Date(y, m-1, day).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+};
 const today = () => new Date().toISOString().split('T')[0];
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -912,8 +915,8 @@ function getAcctById(id) {
 
 function monthExpenses(m, y) {
   return D.expenses.filter(e => {
-    const d = new Date(e.date);
-    return d.getMonth() === m && d.getFullYear() === y;
+    const [ey, em, ed] = e.date.split('-').map(Number);
+    return (em - 1) === m && ey === y;
   });
 }
 
@@ -950,19 +953,26 @@ function renderDashboard() {
 
   // Totals
   const bankTotal = D.accounts.indBanks.reduce((s,b) => s+b.balance, 0);
-  const uaeTotal  = D.accounts.uaeAccounts.reduce((s,u) => s+(u.balanceAED*D.aedRate), 0);
-  const assets    = bankTotal + uaeTotal;
-  const ccDebt    = D.accounts.indCards.reduce((s,c) => s+c.outstanding, 0);
-  const loanDebt  = D.accounts.loans.reduce((s,l) => s+l.outstanding, 0);
-  const chitObligation = D.accounts.chits.reduce((s,c) => s+(c.monthly*(c.totalMonths-c.completed)), 0);
-  const liabilities   = ccDebt + loanDebt;
-  const netWorth       = assets - liabilities;
+  // Separate UAE savings accounts from UAE credit cards
+  const uaeSavings = D.accounts.uaeAccounts
+    .filter(u => u.type !== 'Credit Card')
+    .reduce((s,u) => s+(u.balanceAED*D.aedRate), 0);
+  const uaeCCDebt  = D.accounts.uaeAccounts
+    .filter(u => u.type === 'Credit Card')
+    .reduce((s,u) => s+(u.balanceAED*D.aedRate), 0);
+  const uaeTotal   = D.accounts.uaeAccounts.reduce((s,u) => s+(u.balanceAED*D.aedRate), 0);
+  const assets     = bankTotal + uaeSavings;
+  const ccDebt     = D.accounts.indCards.reduce((s,c) => s+c.outstanding, 0);
+  const loanDebt   = D.accounts.loans.reduce((s,l) => s+l.outstanding, 0);
+  const liabilities = ccDebt + loanDebt + uaeCCDebt;
+  const netWorth    = assets - liabilities;
 
   const now = new Date();
   const monthExps = monthExpenses(now.getMonth(), now.getFullYear());
   const monthSpend = monthExps.reduce((s,e) => s+e.amount, 0);
 
-  document.getElementById('dash-networth').textContent = (netWorth<0?'-':'')+fmt(netWorth);
+  document.getElementById('dash-networth').textContent = (netWorth<0?'- ':'')+fmt(Math.abs(netWorth));
+  document.getElementById('dash-networth').style.color = netWorth < 0 ? 'var(--red)' : 'var(--text)';
   document.getElementById('dash-assets').textContent = fmt(assets);
   document.getElementById('dash-liabilities').textContent = fmt(liabilities);
   document.getElementById('dash-month-spend').textContent = fmt(monthSpend);
@@ -972,7 +982,7 @@ function renderDashboard() {
   chips.innerHTML = `
     <div class="chip"><div class="dot" style="background:#2DD4BF"></div><div><div class="clbl">Banks</div><div class="cval" style="color:#2DD4BF">${fmt(bankTotal)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#F87171"></div><div><div class="clbl">CC Debt</div><div class="cval" style="color:#F87171">${fmt(ccDebt)}</div></div></div>
-    <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE (INR)</div><div class="cval" style="color:#60A5FA">${fmt(uaeTotal)}</div></div></div>
+    <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE Assets</div><div class="cval" style="color:#60A5FA">${fmt(uaeSavings)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
   `;
 
@@ -981,17 +991,19 @@ function renderDashboard() {
   let dues = [];
   D.accounts.indCards.forEach(c => {
     if(c.outstanding <= 0) return;
-    const d = new Date(); d.setDate(c.dueDate);
-    if(d < new Date()) d.setMonth(d.getMonth()+1);
-    const diff = Math.ceil((d - new Date())/(1000*60*60*24));
-    dues.push({ name: c.name, amount: fmt(c.totalDue||c.outstanding), diff, label: diff<=3?'urgent':diff<=7?'soon':'ok' });
+    const now1 = new Date(); now1.setHours(0,0,0,0);
+    const d1 = new Date(now1); d1.setDate(c.dueDate);
+    if(d1 < now1) d1.setMonth(d1.getMonth()+1);
+    const diff1 = Math.round((d1 - now1)/(1000*60*60*24));
+    dues.push({ name: c.name, amount: fmt(c.totalDue||c.outstanding), diff: diff1, label: diff1<=3?'urgent':diff1<=7?'soon':'ok' });
   });
   D.accounts.loans.forEach(l => {
     if(l.outstanding <= 0) return;
-    const d = new Date(); d.setDate(l.dueDay);
-    if(d < new Date()) d.setMonth(d.getMonth()+1);
-    const diff = Math.ceil((d - new Date())/(1000*60*60*24));
-    dues.push({ name: l.name+' EMI', amount: fmt(l.emi), diff, label: diff<=3?'urgent':diff<=7?'soon':'ok' });
+    const now2 = new Date(); now2.setHours(0,0,0,0);
+    const d2 = new Date(now2); d2.setDate(l.dueDay);
+    if(d2 < now2) d2.setMonth(d2.getMonth()+1);
+    const diff2 = Math.round((d2 - now2)/(1000*60*60*24));
+    dues.push({ name: l.name+' EMI', amount: fmt(l.emi), diff: diff2, label: diff2<=3?'urgent':diff2<=7?'soon':'ok' });
   });
   D.accounts.chits.forEach(c => {
     if(c.monthly <= 0 || c.completed >= c.totalMonths) return;
@@ -1004,7 +1016,7 @@ function renderDashboard() {
   } else {
     dueList.innerHTML = dues.slice(0,5).map(d => `
       <div class="due-item">
-        <div class="due-badge ${d.label}">${d.diff === 0 ? 'TODAY' : d.diff + 'd'}</div>
+        <div class="due-badge ${d.label}">${d.diff === 0 ? 'TODAY' : d.diff < 0 ? 'OVERDUE' : d.diff + 'd'}</div>
         <div style="flex:1"><div style="font-size:13px;font-weight:500">${d.name}</div></div>
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">${d.amount}</div>
       </div>`).join('');
@@ -1358,7 +1370,14 @@ function renderSettings() {
 // ══════════════════════════════════════════════════════════
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Restore acct-modal save button in case Add flow was interrupted
+  if(id === 'acct-modal') {
+    const btn = document.querySelector('#acct-modal .btn-primary');
+    if(btn) btn.onclick = saveAccountEdit;
+  }
+}
 
 // Close on overlay click
 document.querySelectorAll('.modal-overlay').forEach(o => {
@@ -1430,10 +1449,13 @@ function openTransferModal() {
 function saveTransfer() {
   const amt = parseFloat(document.getElementById('tr-amt').value);
   if(!amt || amt <= 0) { alert('Enter a valid amount'); return; }
+  const fromId = document.getElementById('tr-from').value;
+  const toId = document.getElementById('tr-to').value;
+  if(fromId === toId) { alert('From and To accounts cannot be the same'); return; }
   D.transfers.push({
     id: Date.now().toString(),
-    fromId: document.getElementById('tr-from').value,
-    toId: document.getElementById('tr-to').value,
+    fromId,
+    toId,
     amount: amt,
     date: document.getElementById('tr-date').value,
     type: document.getElementById('tr-type').value,
@@ -1573,8 +1595,8 @@ function saveAccountEdit() {
     list[idx].outstanding = gn('ae-outstanding') ?? list[idx].outstanding;
     list[idx].emi = gn('ae-emi') ?? list[idx].emi;
     list[idx].rate = gn('ae-rate') ?? list[idx].rate;
-    list[idx].completed = parseInt(g('ae-completed')) || list[idx].completed;
-    list[idx].tenure = parseInt(g('ae-tenure')) || list[idx].tenure;
+    const cmpL = g('ae-completed'); if(cmpL !== null) list[idx].completed = parseInt(cmpL)||0;
+    const tenL = g('ae-tenure');   if(tenL !== null) list[idx].tenure = parseInt(tenL)||list[idx].tenure;
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
@@ -1584,8 +1606,8 @@ function saveAccountEdit() {
     if(g('ae-organizer')) list[idx].organizer = g('ae-organizer');
     list[idx].value = gn('ae-value') ?? list[idx].value;
     list[idx].monthly = gn('ae-monthly') ?? list[idx].monthly;
-    list[idx].totalMonths = parseInt(g('ae-totalmonths')) || list[idx].totalMonths;
-    list[idx].completed = parseInt(g('ae-completed')) || list[idx].completed;
+    const tmC = g('ae-totalmonths'); if(tmC !== null) list[idx].totalMonths = parseInt(tmC)||list[idx].totalMonths;
+    const cmpC = g('ae-completed'); if(cmpC !== null) list[idx].completed = Math.min(parseInt(cmpC)||0, list[idx].totalMonths);
     if(g('ae-payout')) list[idx].payoutReceived = g('ae-payout')==='true';
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
@@ -1866,7 +1888,7 @@ function showDriveGuide(mode) {
 // BACKUP REMINDER
 // ══════════════════════════════════════════════════════════
 function showBackupReminder(days) {
-  if(document.getElementById('backup-reminder')) return;
+  removeBackupReminder(); // always remove first to avoid duplicates
   const el = document.createElement('div');
   el.id = 'backup-reminder';
   el.style.cssText = 'margin:0 16px 14px;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;';
