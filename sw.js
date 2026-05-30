@@ -1,5 +1,5 @@
 // Increment this version every time you update the app
-const CACHE = 'fintrack-v6';
+const CACHE = 'fintrack-v7';
 const FILES = ['./', './index.html', './manifest.json', './icon.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
