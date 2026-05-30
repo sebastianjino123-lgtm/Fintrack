@@ -2283,9 +2283,12 @@ function markSettled() {
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
   if(!confirm(`Mark ${entry.friend}'s ₹${entry.amount.toLocaleString()} as fully settled?`)) return;
+  const remaining = entry.amount - entry.recovered; // calculate BEFORE updating
   entry.recovered = entry.amount;
   entry.status = 'settled';
-  entry.repayments.push({ date: today(), amount: entry.amount - entry.recovered, note: 'Marked settled', accountId: '' });
+  if(remaining > 0) {
+    entry.repayments.push({ date: today(), amount: remaining, note: 'Marked settled', accountId: '' });
+  }
   save(); closeModal('repay-modal'); renderLent(); renderDashLent();
 }
 
