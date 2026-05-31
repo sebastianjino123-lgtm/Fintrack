@@ -1178,12 +1178,34 @@ function renderDashboard() {
     });
   });
   D.accounts.loans.forEach(l => {
-    if(l.outstanding <= 0) return;
+    if((l.outstanding||0) <= 0) return;
+    const ltype = l.loanType || 'emi';
+    let dueLabel = '', dueAmt = '';
     const now2 = new Date(); now2.setHours(0,0,0,0);
-    const d2 = new Date(now2); d2.setDate(l.dueDay);
-    if(d2 < now2) d2.setMonth(d2.getMonth()+1);
-    const diff2 = Math.round((d2 - now2)/(1000*60*60*24));
-    dues.push({ name: l.name+' EMI', amount: fmt(l.emi), diff: diff2, label: diff2<=3?'urgent':diff2<=7?'soon':'ok' });
+    let diff2 = 30;
+
+    if(ltype === 'emi' && l.dueDay) {
+      const d2 = new Date(now2); d2.setDate(l.dueDay);
+      if(d2 < now2) d2.setMonth(d2.getMonth()+1);
+      diff2 = Math.round((d2 - now2)/(1000*60*60*24));
+      dueLabel = l.name + ' EMI'; dueAmt = fmt(l.emi||0);
+    } else if(ltype === 'gold') {
+      dueLabel = l.name + ' 🥇 Interest'; dueAmt = fmt(l.interestDue||0);
+      if(l.maturityDate) {
+        const mat = new Date(l.maturityDate); mat.setHours(0,0,0,0);
+        diff2 = Math.round((mat - now2)/(1000*60*60*24));
+        if(diff2 > 30) return; // only show if within 30 days
+      }
+    } else if(ltype === 'informal') {
+      if(!l.returnDate) return;
+      const ret = new Date(l.returnDate); ret.setHours(0,0,0,0);
+      diff2 = Math.round((ret - now2)/(1000*60*60*24));
+      if(diff2 > 7) return;
+      dueLabel = l.name + ' 🤝 Return'; dueAmt = fmt(l.outstanding||0);
+    } else if(ltype === 'overdraft') {
+      return; // overdraft has no fixed due
+    }
+    if(dueLabel) dues.push({ name: dueLabel, amount: dueAmt, diff: diff2, label: diff2<=3?'urgent':diff2<=7?'soon':'ok' });
   });
   D.accounts.uaeAccounts.filter(u => u.type === 'Credit Card' && (u.outstandingAED||0) > 0).forEach(u => {
     const now3 = new Date(); now3.setHours(0,0,0,0);
@@ -1555,29 +1577,64 @@ function renderAccounts() {
 
   // Loans
   document.getElementById('acct-loans').innerHTML = D.accounts.loans.map(l => {
-    const progress = l.tenure > 0 ? l.completed/l.tenure : 0;
+    const ltype = l.loanType || 'emi';
+    const lIcons = { emi:'🏠', gold:'🥇', informal:'🤝', overdraft:'💳' };
+    const lLabels = { emi:'EMI Loan', gold:'Gold Loan', informal:'Informal Loan', overdraft:'Overdraft' };
+    const lColors = { emi:'#F87171', gold:'#D4A843', informal:'#60A5FA', overdraft:'#A78BFA' };
+    const icon = lIcons[ltype] || '🏠';
+    const color = lColors[ltype] || '#F87171';
+    const progress = (ltype==='emi' && l.tenure>0) ? l.completed/l.tenure : 0;
+
+    // Type-specific detail rows
+    let detailRows = '';
+    if(ltype === 'emi') {
+      detailRows = `
+        <div class="acct-detail-row"><span class="k">EMI Amount</span><span class="v red">${fmt(l.emi||0)}</span></div>
+        <div class="acct-detail-row"><span class="k">Interest Rate</span><span class="v">${l.rate||0}% p.a.</span></div>
+        <div class="acct-detail-row"><span class="k">EMI Due Date</span><span class="v">${l.dueDay||1}th of month</span></div>
+        <div class="acct-detail-row"><span class="k">Progress</span><span class="v">${l.completed||0} / ${l.tenure||0} months</span></div>`;
+    } else if(ltype === 'gold') {
+      detailRows = `
+        <div class="acct-detail-row"><span class="k">Gold Pawned Value</span><span class="v" style="color:var(--gold)">${fmt(l.pawnedValue||0)}</span></div>
+        <div class="acct-detail-row"><span class="k">Interest Rate</span><span class="v">${l.rate||0}% p.a.</span></div>
+        <div class="acct-detail-row"><span class="k">Interest Due (Month)</span><span class="v orange">${fmt(l.interestDue||0)}</span></div>
+        ${l.maturityDate?`<div class="acct-detail-row"><span class="k">Maturity Date</span><span class="v">${fmtDate(l.maturityDate)}</span></div>`:''}`;
+    } else if(ltype === 'informal') {
+      detailRows = `
+        <div class="acct-detail-row"><span class="k">Lender</span><span class="v">${l.lender||'Not set'}</span></div>
+        <div class="acct-detail-row"><span class="k">Interest Rate</span><span class="v">${l.rate||0}% p.a.</span></div>
+        ${l.returnDate?`<div class="acct-detail-row"><span class="k">Return By</span><span class="v" style="color:${new Date(l.returnDate)<new Date()?'var(--red)':'var(--text2)'}">${fmtDate(l.returnDate)}</span></div>`:''}`;
+    } else if(ltype === 'overdraft') {
+      const used = l.outstanding||0;
+      const limit = l.odLimit||0;
+      const util = limit>0 ? Math.min(used/limit,1) : 0;
+      const utilColor = util<0.5?'#34D399':util<0.75?'#FB923C':'#F87171';
+      detailRows = `
+        <div class="acct-detail-row"><span class="k">OD Limit</span><span class="v">${fmt(limit)}</span></div>
+        <div class="acct-detail-row"><span class="k">Available</span><span class="v green">${fmt(limit-used)}</span></div>
+        <div class="acct-detail-row"><span class="k">Utilization</span><span class="v" style="color:${utilColor}">${(util*100).toFixed(1)}%</span></div>
+        <div class="acct-detail-row"><span class="k">Interest Rate</span><span class="v">${l.rate||0}% p.a.</span></div>`;
+    }
+
     return `
     <div class="acct-detail">
       <div class="acct-detail-header" onclick="openAcctModal('${l.id}')">
-        <div class="acct-icon" style="background:rgba(248,113,113,0.1);margin-right:12px">🏠</div>
+        <div class="acct-icon" style="background:${color}20;margin-right:12px">${icon}</div>
         <div style="flex:1">
           <div style="font-size:14px;font-weight:600">${l.name}</div>
-          <div style="font-size:11px;color:var(--text3)">${l.lender||'Lender not set'}</div>
+          <div style="font-size:11px;color:var(--text3)">${lLabels[ltype]} · ${l.lender||'Lender not set'}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#F87171">${fmt(l.outstanding)}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:${color}">${fmt(l.outstanding||0)}</div>
           <div style="font-size:10px;color:var(--text3)">outstanding</div>
         </div>
       </div>
+      ${ltype==='emi' && l.tenure>0 ? `
       <div style="margin:0 16px 8px">
         <div class="prog-bar"><div class="prog-fill" style="width:${progress*100}%;background:#34D399"></div></div>
-        <div class="prog-labels"><span>${l.completed} months paid</span><span>${l.tenure-l.completed} left</span></div>
-      </div>
-      <div class="acct-detail-rows">
-        <div class="acct-detail-row"><span class="k">EMI</span><span class="v red">${fmt(l.emi)}</span></div>
-        <div class="acct-detail-row"><span class="k">Interest Rate</span><span class="v">${l.rate}% p.a.</span></div>
-        <div class="acct-detail-row"><span class="k">EMI Due Date</span><span class="v">${l.dueDay}th of month</span></div>
-      </div>
+        <div class="prog-labels"><span>${l.completed||0} months paid</span><span>${(l.tenure||0)-(l.completed||0)} left</span></div>
+      </div>` : ''}
+      <div class="acct-detail-rows">${detailRows}</div>
     </div>`}).join('');
 
   // Chits
@@ -1899,14 +1956,21 @@ function openAcctModal(id) {
       ` : ''}
       <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','uaeAccounts')">🗑️ Delete this Account</button>`;
   } else if(D.accounts.loans.find(l=>l.id===id)) {
+    const ltype = acct.loanType || 'emi';
     fields = `
       <div class="form-group"><label class="form-label">Loan Name</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
-      <div class="form-group"><label class="form-label">Lender Name</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender}"></div>
-      <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding}" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="ae-emi" value="${acct.emi}" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate}" step="0.1" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="ae-completed" value="${acct.completed}" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="ae-tenure" value="${acct.tenure}" inputmode="numeric"></div>
+      <div class="form-group">
+        <label class="form-label">Loan Type</label>
+        <div class="select-wrap">
+          <select class="form-select" id="ae-loan-type" onchange="toggleLoanEditFields(this.value, ${JSON.stringify(acct).replace(/"/g,"'")})">
+            <option value="emi" ${ltype==='emi'?'selected':''}>EMI Loan (Home/Car/Personal)</option>
+            <option value="gold" ${ltype==='gold'?'selected':''}>Gold Loan</option>
+            <option value="informal" ${ltype==='informal'?'selected':''}>Informal Loan (From Person)</option>
+            <option value="overdraft" ${ltype==='overdraft'?'selected':''}>Overdraft / Credit Line</option>
+          </select>
+        </div>
+      </div>
+      <div id="loan-edit-fields">${getLoanEditFields(ltype, acct)}</div>
       <button class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);margin-bottom:8px" onclick="deleteAccount('${acct.id}','loans')">🗑️ Delete this Loan</button>`;
   } else if(D.accounts.chits.find(c=>c.id===id)) {
     fields = `
@@ -1987,12 +2051,29 @@ function saveAccountEdit() {
   list = D.accounts.loans; idx = list.findIndex(a=>a.id===id);
   if(idx>=0) {
     if(g('ae-name')) list[idx].name = g('ae-name');
+    const lt = g('ae-loan-type'); if(lt) list[idx].loanType = lt;
+    const ltype = list[idx].loanType || 'emi';
+    // Common fields
     if(g('ae-lender')) list[idx].lender = g('ae-lender');
-    list[idx].outstanding = gn('ae-outstanding') ?? list[idx].outstanding;
-    list[idx].emi = gn('ae-emi') ?? list[idx].emi;
-    list[idx].rate = gn('ae-rate') ?? list[idx].rate;
-    const cmpL = g('ae-completed'); if(cmpL !== null) list[idx].completed = parseInt(cmpL)||0;
-    const tenL = g('ae-tenure');   if(tenL !== null) list[idx].tenure = parseInt(tenL)||list[idx].tenure;
+    const aeOut = document.getElementById('ae-outstanding'); if(aeOut&&aeOut.value!=='') list[idx].outstanding = parseFloat(aeOut.value)||0;
+    const aeRate = document.getElementById('ae-rate'); if(aeRate&&aeRate.value!=='') list[idx].rate = parseFloat(aeRate.value)||0;
+    // Type-specific
+    if(ltype === 'emi') {
+      const aeEmi = document.getElementById('ae-emi'); if(aeEmi&&aeEmi.value!=='') list[idx].emi = parseFloat(aeEmi.value)||0;
+      const cmpL = g('ae-completed'); if(cmpL !== null && cmpL !== '') list[idx].completed = Math.min(parseInt(cmpL)||0, list[idx].tenure||999);
+      const tenL = g('ae-tenure');   if(tenL !== null && tenL !== '') list[idx].tenure = parseInt(tenL)||list[idx].tenure;
+      const dueL = g('ae-dueday');   if(dueL !== null && dueL !== '') list[idx].dueDay = parseInt(dueL)||1;
+    } else if(ltype === 'gold') {
+      const aeInt = document.getElementById('ae-interest-due'); if(aeInt&&aeInt.value!=='') list[idx].interestDue = parseFloat(aeInt.value)||0;
+      const aeMat = g('ae-maturity'); if(aeMat) list[idx].maturityDate = aeMat;
+      const aePawned = document.getElementById('ae-pawned'); if(aePawned&&aePawned.value!=='') list[idx].pawnedValue = parseFloat(aePawned.value)||0;
+    } else if(ltype === 'informal') {
+      if(g('ae-lender')) list[idx].lender = g('ae-lender');
+      const aeRet = g('ae-return-date'); if(aeRet) list[idx].returnDate = aeRet;
+    } else if(ltype === 'overdraft') {
+      const aeLimit = document.getElementById('ae-od-limit'); if(aeLimit&&aeLimit.value!=='') list[idx].odLimit = parseFloat(aeLimit.value)||0;
+      const aeUsed = document.getElementById('ae-od-used'); if(aeUsed&&aeUsed.value!=='') { list[idx].outstanding = parseFloat(aeUsed.value)||0; }
+    }
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
@@ -2169,6 +2250,81 @@ function openMonthlyReconcile() {
 }
 
 // ══════════════════════════════════════════════════════════
+// LOAN TYPE FIELDS
+// ══════════════════════════════════════════════════════════
+function getLoanFields(ltype) {
+  if(ltype === 'emi') return `
+    <div class="form-group"><label class="form-label">Lender (Bank/NBFC)</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. HDFC Bank"></div>
+    <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="add-emi" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="add-rate" placeholder="8.5" step="0.1" inputmode="decimal"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="add-tenure" placeholder="60" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>
+    </div>
+    <div class="form-group"><label class="form-label">EMI Due Date (day of month)</label><input type="number" class="form-input" id="add-dueday" placeholder="5" min="1" max="31" inputmode="numeric"></div>`;
+  if(ltype === 'gold') return `
+    <div class="form-group"><label class="form-label">Lender (Bank/Jeweller)</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. Muthoot Finance"></div>
+    <div class="form-group"><label class="form-label">Loan Amount / Outstanding (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Gold Pawned Value (₹)</label><input type="number" class="form-input" id="add-pawned" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="add-rate" placeholder="12" step="0.1" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Due This Month (₹)</label><input type="number" class="form-input" id="add-interest-due" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Maturity / Due Date</label><input type="date" class="form-input" id="add-maturity"></div>`;
+  if(ltype === 'informal') return `
+    <div class="form-group"><label class="form-label">Lender Name (Person)</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. John, Uncle Mathew"></div>
+    <div class="form-group"><label class="form-label">Amount Borrowed (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.) — 0 if none</label><input type="number" class="form-input" id="add-rate" placeholder="0" step="0.1" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Expected Return Date</label><input type="date" class="form-input" id="add-return-date"></div>`;
+  if(ltype === 'overdraft') return `
+    <div class="form-group"><label class="form-label">Bank / Lender</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. SBI Overdraft"></div>
+    <div class="form-group"><label class="form-label">Overdraft Limit (₹)</label><input type="number" class="form-input" id="add-od-limit" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Amount Used / Outstanding (₹)</label><input type="number" class="form-input" id="add-od-used" placeholder="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="add-rate" placeholder="12" step="0.1" inputmode="decimal"></div>`;
+  return '';
+}
+
+function getLoanEditFields(ltype, acct) {
+  if(ltype === 'emi') return `
+    <div class="form-group"><label class="form-label">Lender</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender||''}"></div>
+    <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="ae-emi" value="${acct.emi||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate||0}" step="0.1" inputmode="decimal"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="ae-tenure" value="${acct.tenure||0}" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="ae-completed" value="${acct.completed||0}" inputmode="numeric"></div>
+    </div>
+    <div class="form-group"><label class="form-label">EMI Due Date (day of month)</label><input type="number" class="form-input" id="ae-dueday" value="${acct.dueDay||1}" min="1" max="31" inputmode="numeric"></div>`;
+  if(ltype === 'gold') return `
+    <div class="form-group"><label class="form-label">Lender</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender||''}"></div>
+    <div class="form-group"><label class="form-label">Outstanding (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Gold Pawned Value (₹)</label><input type="number" class="form-input" id="ae-pawned" value="${acct.pawnedValue||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate||0}" step="0.1" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Due This Month (₹)</label><input type="number" class="form-input" id="ae-interest-due" value="${acct.interestDue||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Maturity Date</label><input type="date" class="form-input" id="ae-maturity" value="${acct.maturityDate||''}"></div>`;
+  if(ltype === 'informal') return `
+    <div class="form-group"><label class="form-label">Lender Name</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender||''}"></div>
+    <div class="form-group"><label class="form-label">Amount Borrowed (₹)</label><input type="number" class="form-input" id="ae-outstanding" value="${acct.outstanding||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate||0}" step="0.1" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Expected Return Date</label><input type="date" class="form-input" id="ae-return-date" value="${acct.returnDate||''}"></div>`;
+  if(ltype === 'overdraft') return `
+    <div class="form-group"><label class="form-label">Bank / Lender</label><input type="text" class="form-input" id="ae-lender" value="${acct.lender||''}"></div>
+    <div class="form-group"><label class="form-label">Overdraft Limit (₹)</label><input type="number" class="form-input" id="ae-od-limit" value="${acct.odLimit||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Amount Used / Outstanding (₹)</label><input type="number" class="form-input" id="ae-od-used" value="${acct.outstanding||0}" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="ae-rate" value="${acct.rate||0}" step="0.1" inputmode="decimal"></div>`;
+  return '';
+}
+
+function toggleLoanFields(ltype) {
+  const container = document.getElementById('loan-fields-container');
+  if(container) container.innerHTML = getLoanFields(ltype);
+}
+
+function toggleLoanEditFields(ltype, acct) {
+  const container = document.getElementById('loan-edit-fields');
+  if(container) container.innerHTML = getLoanEditFields(ltype, acct);
+}
+
+// ══════════════════════════════════════════════════════════
 // UAE CC FIELD TOGGLE
 // ══════════════════════════════════════════════════════════
 function toggleUAECCFields(type) {
@@ -2246,13 +2402,18 @@ function openAddModal(type) {
   } else if(type === 'loan') {
     fields = `
       <div class="form-group"><label class="form-label">Loan Name</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Home Loan"></div>
-      <div class="form-group"><label class="form-label">Lender Name</label><input type="text" class="form-input" id="add-lender" placeholder="e.g. HDFC Bank"></div>
-      <div class="form-group"><label class="form-label">Outstanding Balance (₹)</label><input type="number" class="form-input" id="add-outstanding" placeholder="0" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">EMI Amount (₹)</label><input type="number" class="form-input" id="add-emi" placeholder="0" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Interest Rate (% p.a.)</label><input type="number" class="form-input" id="add-rate" placeholder="8.5" step="0.1" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Total Tenure (months)</label><input type="number" class="form-input" id="add-tenure" placeholder="60" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">EMI Due Date (day of month)</label><input type="number" class="form-input" id="add-dueday" placeholder="5" min="1" max="31" inputmode="numeric"></div>`;
+      <div class="form-group">
+        <label class="form-label">Loan Type</label>
+        <div class="select-wrap">
+          <select class="form-select" id="add-loan-type" onchange="toggleLoanFields(this.value)">
+            <option value="emi">EMI Loan (Home/Car/Personal)</option>
+            <option value="gold">Gold Loan</option>
+            <option value="informal">Informal Loan (From Person)</option>
+            <option value="overdraft">Overdraft / Credit Line</option>
+          </select>
+        </div>
+      </div>
+      <div id="loan-fields-container"></div>`;
   } else if(type === 'chit') {
     fields = `
       <div class="form-group"><label class="form-label">Chit Name</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Chit Fund 3"></div>
@@ -2267,6 +2428,10 @@ function openAddModal(type) {
     bank:'➕ Add Bank Account', card:'➕ Add Credit Card',
     uae:'➕ Add UAE Account', loan:'➕ Add Loan', chit:'➕ Add Chit Fund'
   }[type];
+  // For loan, auto-populate fields after modal renders
+  if(type === 'loan') {
+    setTimeout(() => toggleLoanFields('emi'), 50);
+  }
 
   const body = document.getElementById('acct-modal-body');
   body.innerHTML = fields;
@@ -2301,7 +2466,18 @@ function saveNewAccount(type, id, color) {
       dueDate: uaeIsCC ? (gi('add-duedate')||20) : 20
     });
   } else if(type === 'loan') {
-    D.accounts.loans.push({ id, name, lender: g('add-lender')||'', principal: gn('add-outstanding'), outstanding: gn('add-outstanding'), emi: gn('add-emi'), rate: gn('add-rate'), dueDay: gi('add-dueday')||1, tenure: gi('add-tenure')||12, completed: gi('add-completed') });
+    const loanType = g('add-loan-type') || 'emi';
+    const baseLoan = { id, name, loanType, lender: g('add-lender')||'', outstanding: gn('add-outstanding'), rate: gn('add-rate')||0, color: '#F87171' };
+    if(loanType === 'emi') {
+      Object.assign(baseLoan, { principal: gn('add-outstanding'), emi: gn('add-emi'), dueDay: gi('add-dueday')||1, tenure: gi('add-tenure')||12, completed: gi('add-completed')||0 });
+    } else if(loanType === 'gold') {
+      Object.assign(baseLoan, { pawnedValue: gn('add-pawned'), interestDue: gn('add-interest-due'), maturityDate: g('add-maturity')||'' });
+    } else if(loanType === 'informal') {
+      Object.assign(baseLoan, { returnDate: g('add-return-date')||'', lender: g('add-lender')||'' });
+    } else if(loanType === 'overdraft') {
+      Object.assign(baseLoan, { odLimit: gn('add-od-limit'), outstanding: gn('add-od-used') });
+    }
+    D.accounts.loans.push(baseLoan);
   } else if(type === 'chit') {
     D.accounts.chits.push({ id, name, organizer: g('add-organizer')||'', value: gn('add-value'), monthly: gn('add-monthly'), totalMonths: gi('add-totalmonths')||10, completed: gi('add-completed'), payoutReceived: false });
   }
