@@ -1121,7 +1121,7 @@ function renderDashboard() {
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 
   // Totals
-  const bankTotal = D.accounts.indBanks.reduce((s,b) => s+(b.appBalance !== undefined ? b.appBalance : b.balance), 0);
+  const bankTotal = D.accounts.indBanks.reduce((s,b) => s+b.balance, 0);
   // Separate UAE savings accounts from UAE credit cards
   const uaeSavings = D.accounts.uaeAccounts
     .filter(u => u.type !== 'Credit Card')
@@ -1212,21 +1212,18 @@ function renderDashboard() {
 
   // Banks list
   const banksEl = document.getElementById('dash-banks');
-  banksEl.innerHTML = D.accounts.indBanks.map(b => {
-    const dispBal = b.appBalance !== undefined ? b.appBalance : b.balance;
-    const hasReconcileDrift = b.appBalance !== undefined && Math.abs(b.appBalance - b.balance) > 1;
-    return `
+  banksEl.innerHTML = D.accounts.indBanks.map(b => `
     <div class="acct-item" onclick="openAcctModal('${b.id}')">
       <div class="acct-icon" style="background:${b.color}20">${bankEmoji(b.bank)}</div>
       <div class="acct-info">
         <div class="acct-name">${b.name}</div>
-        <div class="acct-type"><span class="status-dot" style="background:${dispBal>=b.minBal?'#34D399':'#F87171'}"></span>${b.bank}</div>
+        <div class="acct-type"><span class="status-dot" style="background:${b.balance>=b.minBal?'#34D399':'#F87171'}"></span>${b.bank}</div>
       </div>
       <div class="acct-bal">
-        <div class="amount" style="color:${b.color}">${fmt(dispBal)}</div>
-        <div class="sub">${hasReconcileDrift?'<span style="color:var(--orange)">⚠️ Needs reconcile</span>':'Min: '+fmt(b.minBal)}</div>
+        <div class="amount" style="color:${b.color}">${fmt(b.balance)}</div>
+        <div class="sub">Min: ${fmt(b.minBal)}</div>
       </div>
-    </div>`}).join('');
+    </div>`).join('');
 
   // CC
   const ccEl = document.getElementById('dash-cc');
@@ -1469,8 +1466,7 @@ function renderAccounts() {
       <div class="acct-detail-rows">
         <div class="acct-detail-row"><span class="k">Minimum Balance</span><span class="v">${fmt(b.minBal)}</span></div>
         <div class="acct-detail-row"><span class="k">Surplus</span><span class="v ${b.balance-b.minBal>=0?'green':'red'}">${fmt(b.balance-b.minBal)}</span></div>
-        ${b.lastReconciled ? `<div class="acct-detail-row"><span class="k">Last Reconciled</span><span class="v" style="color:var(--text3)">${fmtDate(b.lastReconciled)}</span></div>` : ''}
-        ${b.appBalance !== undefined && b.appBalance !== b.balance ? `<div class="acct-detail-row"><span class="k">App Tracked Balance</span><span class="v" style="color:var(--orange)">${fmt(b.appBalance)}</span></div>` : ''}
+        ${b.lastReconciled ? `<div class="acct-detail-row"><span class="k">Last Reconciled</span><span class="v" style="color:var(--green)">${fmtDate(b.lastReconciled)}</span></div>` : `<div class="acct-detail-row"><span class="k">Last Reconciled</span><span class="v" style="color:var(--text3)">Never — tap Reconcile below</span></div>`}
       </div>
       <div style="padding:0 16px 12px">
         <button onclick="openReconcileModal('${b.id}')" style="width:100%;padding:9px;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:8px;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">🔄 Reconcile with Bank App</button>
@@ -1906,25 +1902,25 @@ function editBudget(cat) {
 // AUTO-DEDUCT / REFUND
 // ══════════════════════════════════════════════════════════
 function deductFromAccount(accountId, amount) {
-  // Indian Banks — reduce balance, track app balance separately
+  // Indian Banks — deduct directly from balance
   let b = D.accounts.indBanks.find(a => a.id === accountId);
   if(b) {
-    if(b.appBalance === undefined) b.appBalance = b.balance;
-    b.appBalance = (b.appBalance || b.balance) - amount;
+    b.balance = (b.balance || 0) - amount;
+    if(b.appBalance !== undefined) b.appBalance = b.balance;
     return;
   }
-  // Indian Credit Cards — increase outstanding
+  // Indian Credit Cards — increase outstanding & total due
   let c = D.accounts.indCards.find(a => a.id === accountId);
   if(c) {
     c.outstanding = (c.outstanding || 0) + amount;
-    c.totalDue = (c.totalDue || 0) + amount;
+    c.totalDue    = (c.totalDue    || 0) + amount;
     return;
   }
-  // UAE Savings — reduce AED balance
+  // UAE accounts
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
   if(u) {
     if(u.type !== 'Credit Card') {
-      u.balanceAED = Math.max(0, (u.balanceAED || 0) - (amount / D.aedRate));
+      u.balanceAED = (u.balanceAED || 0) - (amount / D.aedRate);
     } else {
       u.outstandingAED = (u.outstandingAED || 0) + (amount / D.aedRate);
       u.balanceAED = u.outstandingAED;
@@ -1936,14 +1932,14 @@ function deductFromAccount(accountId, amount) {
 function refundToAccount(accountId, amount) {
   let b = D.accounts.indBanks.find(a => a.id === accountId);
   if(b) {
-    if(b.appBalance === undefined) b.appBalance = b.balance;
-    b.appBalance = (b.appBalance || b.balance) + amount;
+    b.balance = (b.balance || 0) + amount;
+    if(b.appBalance !== undefined) b.appBalance = b.balance;
     return;
   }
   let c = D.accounts.indCards.find(a => a.id === accountId);
   if(c) {
     c.outstanding = Math.max(0, (c.outstanding || 0) - amount);
-    c.totalDue = Math.max(0, (c.totalDue || 0) - amount);
+    c.totalDue    = Math.max(0, (c.totalDue    || 0) - amount);
     return;
   }
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
@@ -1967,7 +1963,6 @@ function openReconcileModal(id) {
   reconcileAccountId = id;
   const acct = D.accounts.indBanks.find(a => a.id === id);
   if(!acct) return;
-  const appBal = acct.appBalance !== undefined ? acct.appBalance : acct.balance;
   document.getElementById('reconcile-actual').value = '';
   document.getElementById('reconcile-note').value = '';
   document.getElementById('reconcile-diff').style.display = 'none';
@@ -1977,8 +1972,8 @@ function openReconcileModal(id) {
       <span style="font-weight:600">${acct.name}</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-      <span style="color:var(--text3)">App Tracked Balance</span>
-      <span style="color:var(--orange);font-weight:700">${fmt(appBal)}</span>
+      <span style="color:var(--text3)">Current App Balance</span>
+      <span style="color:var(--orange);font-weight:700">${fmt(acct.balance)}</span>
     </div>
     <div style="display:flex;justify-content:space-between">
       <span style="color:var(--text3)">Last Reconciled</span>
@@ -1989,7 +1984,7 @@ function openReconcileModal(id) {
   document.getElementById('reconcile-actual').oninput = function() {
     const actual = parseFloat(this.value);
     if(!isNaN(actual)) {
-      const diff = actual - appBal;
+      const diff = actual - acct.balance;
       const diffEl = document.getElementById('reconcile-diff');
       diffEl.style.display = 'block';
       diffEl.style.background = diff === 0 ? 'rgba(52,211,153,0.1)' : 'rgba(251,146,60,0.1)';
@@ -2007,10 +2002,10 @@ function saveReconcile() {
   if(isNaN(actual) || actual < 0) { alert('Enter a valid balance'); return; }
   const acct = D.accounts.indBanks.find(a => a.id === reconcileAccountId);
   if(!acct) return;
-  const oldBal = acct.appBalance !== undefined ? acct.appBalance : acct.balance;
+  const oldBal = acct.balance;
   const diff = actual - oldBal;
   acct.balance = actual;
-  acct.appBalance = actual;
+  acct.appBalance = actual; // keep in sync
   acct.lastReconciled = today();
   if(document.getElementById('reconcile-note').value) {
     acct.lastReconcileNote = document.getElementById('reconcile-note').value;
@@ -2044,7 +2039,7 @@ function openMonthlyReconcile() {
           <div style="width:36px;height:36px;border-radius:10px;background:${b.color}20;display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:12px;">${bankEmoji(b.bank)}</div>
           <div style="flex:1">
             <div style="font-size:14px;font-weight:600">${b.name}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">App: ${fmt(appBal)} · ${b.lastReconciled?'Reconciled '+fmtDate(b.lastReconciled):'Never reconciled'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Balance: ${fmt(b.balance)} · ${b.lastReconciled?'Reconciled '+fmtDate(b.lastReconciled):'Never reconciled'}</div>
           </div>
           <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${needsReconcile?'var(--gold)':'var(--green)'}">
             ${needsReconcile?'Update →':'✅'}
