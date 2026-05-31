@@ -1721,24 +1721,103 @@ function saveTransfer() {
   const amt = parseFloat(document.getElementById('tr-amt').value);
   if(!amt || amt <= 0) { alert('Enter a valid amount'); return; }
   const fromId = document.getElementById('tr-from').value;
-  const toId = document.getElementById('tr-to').value;
+  const toId   = document.getElementById('tr-to').value;
+  const trType = document.getElementById('tr-type').value;
   if(fromId === toId) { alert('From and To accounts cannot be the same'); return; }
+
+  const tId = Date.now().toString();
   D.transfers.push({
-    id: Date.now().toString(),
-    fromId,
-    toId,
-    amount: amt,
+    id: tId, fromId, toId, amount: amt,
     date: document.getElementById('tr-date').value,
-    type: document.getElementById('tr-type').value,
+    type: trType,
     note: document.getElementById('tr-note').value
   });
+
+  // Apply balance changes to both accounts
+  applyTransfer(fromId, toId, amt, trType);
+
   save(); closeModal('tr-modal'); renderTransfers();
+  renderDashboard();
+  showToast(`Transfer of ${fmt(amt)} applied to both accounts`);
+}
+
+function applyTransfer(fromId, toId, amt, trType, reverse) {
+  const sign = reverse ? -1 : 1;
+
+  // Helper to get any account
+  const findAcct = (id) => {
+    return D.accounts.indBanks.find(a=>a.id===id) ||
+           D.accounts.indCards.find(a=>a.id===id) ||
+           D.accounts.uaeAccounts.find(a=>a.id===id) ||
+           D.accounts.loans.find(a=>a.id===id) ||
+           D.accounts.chits.find(a=>a.id===id);
+  };
+
+  const fromAcct = findAcct(fromId);
+  const toAcct   = findAcct(toId);
+
+  // DEDUCT FROM source account
+  if(fromAcct) {
+    if(D.accounts.indBanks.find(a=>a.id===fromId)) {
+      fromAcct.balance = (fromAcct.balance||0) - (amt * sign);
+      if(fromAcct.appBalance !== undefined) fromAcct.appBalance = fromAcct.balance;
+    } else if(D.accounts.indCards.find(a=>a.id===fromId)) {
+      // Paying FROM a bank TO credit card reduces CC outstanding
+      fromAcct.outstanding = Math.max(0, (fromAcct.outstanding||0) - (amt * sign));
+      fromAcct.totalDue    = Math.max(0, (fromAcct.totalDue||0)    - (amt * sign));
+    } else if(D.accounts.uaeAccounts.find(a=>a.id===fromId)) {
+      if(fromAcct.type === 'Credit Card') {
+        fromAcct.outstandingAED = Math.max(0, (fromAcct.outstandingAED||0) - (amt/D.aedRate * sign));
+        fromAcct.balanceAED = fromAcct.outstandingAED;
+      } else {
+        fromAcct.balanceAED = (fromAcct.balanceAED||0) - (amt/D.aedRate * sign);
+      }
+    }
+    // Loans & chits: reduce outstanding
+    else if(D.accounts.loans.find(a=>a.id===fromId)) {
+      fromAcct.outstanding = Math.max(0, (fromAcct.outstanding||0) - (amt * sign));
+    }
+  }
+
+  // ADD TO destination account
+  if(toAcct) {
+    if(D.accounts.indBanks.find(a=>a.id===toId)) {
+      toAcct.balance = (toAcct.balance||0) + (amt * sign);
+      if(toAcct.appBalance !== undefined) toAcct.appBalance = toAcct.balance;
+    } else if(D.accounts.indCards.find(a=>a.id===toId)) {
+      // Transfer TO credit card = payment = reduces outstanding
+      toAcct.outstanding = Math.max(0, (toAcct.outstanding||0) - (amt * sign));
+      toAcct.totalDue    = Math.max(0, (toAcct.totalDue||0)    - (amt * sign));
+    } else if(D.accounts.uaeAccounts.find(a=>a.id===toId)) {
+      if(toAcct.type === 'Credit Card') {
+        toAcct.outstandingAED = Math.max(0, (toAcct.outstandingAED||0) - (amt/D.aedRate * sign));
+        toAcct.balanceAED = toAcct.outstandingAED;
+      } else {
+        toAcct.balanceAED = (toAcct.balanceAED||0) + (amt/D.aedRate * sign);
+      }
+    }
+    // Loans: transfer TO loan = payment = reduces outstanding
+    else if(D.accounts.loans.find(a=>a.id===toId)) {
+      toAcct.outstanding = Math.max(0, (toAcct.outstanding||0) - (amt * sign));
+    }
+    // Chits: reduce remaining obligation
+    else if(D.accounts.chits.find(a=>a.id===toId)) {
+      toAcct.completed = Math.min((toAcct.completed||0) + 1, toAcct.totalMonths);
+    }
+  }
 }
 
 function deleteTransfer(id) {
   if(!confirm('Delete this transfer?')) return;
+  const tr = D.transfers.find(t=>t.id===id);
+  if(tr) {
+    // Reverse the balance changes
+    applyTransfer(tr.fromId, tr.toId, tr.amount, tr.type, true);
+    showToast('Transfer reversed and deleted');
+  }
   D.transfers = D.transfers.filter(t=>t.id!==id);
-  save(); renderTransfers();
+  save(); renderTransfers(); renderDashboard();
+  if(currentPage === 'accounts') renderAccounts();
 }
 
 // Rate Modal
