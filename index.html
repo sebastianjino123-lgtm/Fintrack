@@ -571,7 +571,10 @@ body {
 
   <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
     <span>🏦 Indian Bank Accounts</span>
-    <button onclick="openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    <div style="display:flex;gap:6px">
+      <button onclick="openMonthlyReconcile()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">🔄 Reconcile</button>
+      <button onclick="openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
   </div>
   <div id="acct-banks"></div>
 
@@ -912,6 +915,26 @@ body {
   </div>
 </div>
 
+<!-- Reconcile Modal -->
+<div class="modal-overlay" id="reconcile-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔄 Reconcile Account</div>
+    <div id="reconcile-summary" style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;"></div>
+    <div class="form-group">
+      <label class="form-label">Actual Balance from Bank App (₹)</label>
+      <input type="number" class="form-input" id="reconcile-actual" placeholder="Enter real balance" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note (optional)</label>
+      <input type="text" class="form-input" id="reconcile-note" placeholder="e.g. Verified from bank app">
+    </div>
+    <div id="reconcile-diff" style="display:none;padding:12px;border-radius:10px;margin-bottom:8px;text-align:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;"></div>
+    <button class="btn-primary" onclick="saveReconcile()">Update Balance</button>
+    <button class="btn-outline" onclick="closeModal('reconcile-modal')">Cancel</button>
+  </div>
+</div>
+
 <!-- AED Rate Modal -->
 <div class="modal-overlay" id="rate-modal">
   <div class="modal">
@@ -1098,7 +1121,7 @@ function renderDashboard() {
     new Date().toLocaleDateString('en-IN', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
 
   // Totals
-  const bankTotal = D.accounts.indBanks.reduce((s,b) => s+b.balance, 0);
+  const bankTotal = D.accounts.indBanks.reduce((s,b) => s+(b.appBalance !== undefined ? b.appBalance : b.balance), 0);
   // Separate UAE savings accounts from UAE credit cards
   const uaeSavings = D.accounts.uaeAccounts
     .filter(u => u.type !== 'Credit Card')
@@ -1189,18 +1212,21 @@ function renderDashboard() {
 
   // Banks list
   const banksEl = document.getElementById('dash-banks');
-  banksEl.innerHTML = D.accounts.indBanks.map(b => `
+  banksEl.innerHTML = D.accounts.indBanks.map(b => {
+    const dispBal = b.appBalance !== undefined ? b.appBalance : b.balance;
+    const hasReconcileDrift = b.appBalance !== undefined && Math.abs(b.appBalance - b.balance) > 1;
+    return `
     <div class="acct-item" onclick="openAcctModal('${b.id}')">
       <div class="acct-icon" style="background:${b.color}20">${bankEmoji(b.bank)}</div>
       <div class="acct-info">
         <div class="acct-name">${b.name}</div>
-        <div class="acct-type"><span class="status-dot" style="background:${b.balance>=b.minBal?'#34D399':'#F87171'}"></span>${b.bank}</div>
+        <div class="acct-type"><span class="status-dot" style="background:${dispBal>=b.minBal?'#34D399':'#F87171'}"></span>${b.bank}</div>
       </div>
       <div class="acct-bal">
-        <div class="amount" style="color:${b.color}">${fmt(b.balance)}</div>
-        <div class="sub">Min: ${fmt(b.minBal)}</div>
+        <div class="amount" style="color:${b.color}">${fmt(dispBal)}</div>
+        <div class="sub">${hasReconcileDrift?'<span style="color:var(--orange)">⚠️ Needs reconcile</span>':'Min: '+fmt(b.minBal)}</div>
       </div>
-    </div>`).join('');
+    </div>`}).join('');
 
   // CC
   const ccEl = document.getElementById('dash-cc');
@@ -1263,6 +1289,33 @@ function renderDashboard() {
 
   // Render lent section on dashboard
   renderDashLent();
+
+  // Reconcile reminder — if any bank hasn't been reconciled this month
+  const thisMonth = new Date().getMonth();
+  const thisYear  = new Date().getFullYear();
+  const needsReconcile = D.accounts.indBanks.some(b => {
+    if(!b.lastReconciled) return true;
+    const [y,m] = b.lastReconciled.split('-').map(Number);
+    return !(m-1 === thisMonth && y === thisYear);
+  });
+  const existingReminder = document.getElementById('reconcile-reminder');
+  if(needsReconcile && !existingReminder) {
+    const rem = document.createElement('div');
+    rem.id = 'reconcile-reminder';
+    rem.style.cssText = 'margin:0 16px 14px;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;';
+    rem.onclick = () => { switchPage('accounts'); setTimeout(openMonthlyReconcile, 300); };
+    rem.innerHTML = `
+      <div style="font-size:22px">🔄</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--gold)">Monthly reconcile due!</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Tap to sync balances with your bank app</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>`;
+    const dueSection = document.querySelector('#page-dashboard .sec-hdr');
+    if(dueSection) dueSection.parentNode.insertBefore(rem, dueSection);
+  } else if(!needsReconcile && existingReminder) {
+    existingReminder.remove();
+  }
 }
 
 function bankEmoji(bank) {
@@ -1416,6 +1469,11 @@ function renderAccounts() {
       <div class="acct-detail-rows">
         <div class="acct-detail-row"><span class="k">Minimum Balance</span><span class="v">${fmt(b.minBal)}</span></div>
         <div class="acct-detail-row"><span class="k">Surplus</span><span class="v ${b.balance-b.minBal>=0?'green':'red'}">${fmt(b.balance-b.minBal)}</span></div>
+        ${b.lastReconciled ? `<div class="acct-detail-row"><span class="k">Last Reconciled</span><span class="v" style="color:var(--text3)">${fmtDate(b.lastReconciled)}</span></div>` : ''}
+        ${b.appBalance !== undefined && b.appBalance !== b.balance ? `<div class="acct-detail-row"><span class="k">App Tracked Balance</span><span class="v" style="color:var(--orange)">${fmt(b.appBalance)}</span></div>` : ''}
+      </div>
+      <div style="padding:0 16px 12px">
+        <button onclick="openReconcileModal('${b.id}')" style="width:100%;padding:9px;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:8px;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">🔄 Reconcile with Bank App</button>
       </div>
     </div>`).join('');
 
@@ -1622,19 +1680,26 @@ function saveExpense() {
   const mode = document.getElementById('exp-mode').value;
   if(!amt || amt <= 0) { alert('Please enter a valid amount'); return; }
   if(!selectedCategory) { alert('Please select a category'); return; }
+  const expId = Date.now().toString();
   D.expenses.push({
-    id: Date.now().toString(),
+    id: expId,
     category: selectedCategory, desc, amount: amt, date, accountId, mode
   });
+  // Auto-deduct from account
+  deductFromAccount(accountId, amt);
   save(); closeModal('exp-modal');
   if(currentPage === 'expenses') renderExpenses();
   if(currentPage === 'dashboard') renderDashboard();
+  if(currentPage === 'accounts') renderAccounts();
 }
 
 function deleteExpense(id) {
   if(!confirm('Delete this expense?')) return;
+  const exp = D.expenses.find(e=>e.id===id);
+  if(exp) refundToAccount(exp.accountId, exp.amount);
   D.expenses = D.expenses.filter(e=>e.id!==id);
   save(); renderExpenses();
+  if(currentPage === 'dashboard') renderDashboard();
 }
 
 // Transfer Modal
@@ -1835,6 +1900,161 @@ function saveAccountEdit() {
 function editBudget(cat) {
   const newVal = prompt(`Monthly budget for ${cat} (₹):`, D.budgets[cat]);
   if(newVal !== null) { D.budgets[cat] = parseFloat(newVal)||0; save(); renderSettings(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTO-DEDUCT / REFUND
+// ══════════════════════════════════════════════════════════
+function deductFromAccount(accountId, amount) {
+  // Indian Banks — reduce balance, track app balance separately
+  let b = D.accounts.indBanks.find(a => a.id === accountId);
+  if(b) {
+    if(b.appBalance === undefined) b.appBalance = b.balance;
+    b.appBalance = (b.appBalance || b.balance) - amount;
+    return;
+  }
+  // Indian Credit Cards — increase outstanding
+  let c = D.accounts.indCards.find(a => a.id === accountId);
+  if(c) {
+    c.outstanding = (c.outstanding || 0) + amount;
+    c.totalDue = (c.totalDue || 0) + amount;
+    return;
+  }
+  // UAE Savings — reduce AED balance
+  let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
+  if(u) {
+    if(u.type !== 'Credit Card') {
+      u.balanceAED = Math.max(0, (u.balanceAED || 0) - (amount / D.aedRate));
+    } else {
+      u.outstandingAED = (u.outstandingAED || 0) + (amount / D.aedRate);
+      u.balanceAED = u.outstandingAED;
+    }
+    return;
+  }
+}
+
+function refundToAccount(accountId, amount) {
+  let b = D.accounts.indBanks.find(a => a.id === accountId);
+  if(b) {
+    if(b.appBalance === undefined) b.appBalance = b.balance;
+    b.appBalance = (b.appBalance || b.balance) + amount;
+    return;
+  }
+  let c = D.accounts.indCards.find(a => a.id === accountId);
+  if(c) {
+    c.outstanding = Math.max(0, (c.outstanding || 0) - amount);
+    c.totalDue = Math.max(0, (c.totalDue || 0) - amount);
+    return;
+  }
+  let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
+  if(u) {
+    if(u.type !== 'Credit Card') {
+      u.balanceAED = (u.balanceAED || 0) + (amount / D.aedRate);
+    } else {
+      u.outstandingAED = Math.max(0, (u.outstandingAED || 0) - (amount / D.aedRate));
+      u.balanceAED = u.outstandingAED;
+    }
+    return;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// RECONCILE
+// ══════════════════════════════════════════════════════════
+let reconcileAccountId = null;
+
+function openReconcileModal(id) {
+  reconcileAccountId = id;
+  const acct = D.accounts.indBanks.find(a => a.id === id);
+  if(!acct) return;
+  const appBal = acct.appBalance !== undefined ? acct.appBalance : acct.balance;
+  document.getElementById('reconcile-actual').value = '';
+  document.getElementById('reconcile-note').value = '';
+  document.getElementById('reconcile-diff').style.display = 'none';
+  document.getElementById('reconcile-summary').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:var(--text3)">Account</span>
+      <span style="font-weight:600">${acct.name}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:var(--text3)">App Tracked Balance</span>
+      <span style="color:var(--orange);font-weight:700">${fmt(appBal)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--text3)">Last Reconciled</span>
+      <span style="color:var(--text2)">${acct.lastReconciled ? fmtDate(acct.lastReconciled) : 'Never'}</span>
+    </div>`;
+
+  // Show diff as user types
+  document.getElementById('reconcile-actual').oninput = function() {
+    const actual = parseFloat(this.value);
+    if(!isNaN(actual)) {
+      const diff = actual - appBal;
+      const diffEl = document.getElementById('reconcile-diff');
+      diffEl.style.display = 'block';
+      diffEl.style.background = diff === 0 ? 'rgba(52,211,153,0.1)' : 'rgba(251,146,60,0.1)';
+      diffEl.style.color = diff === 0 ? 'var(--green)' : diff > 0 ? 'var(--green)' : 'var(--red)';
+      diffEl.textContent = diff === 0 ? '✅ Perfectly balanced!' :
+        diff > 0 ? `+${fmt(diff)} untracked income/credit` :
+        `${fmt(Math.abs(diff))} untracked expense`;
+    }
+  };
+  openModal('reconcile-modal');
+}
+
+function saveReconcile() {
+  const actual = parseFloat(document.getElementById('reconcile-actual').value);
+  if(isNaN(actual) || actual < 0) { alert('Enter a valid balance'); return; }
+  const acct = D.accounts.indBanks.find(a => a.id === reconcileAccountId);
+  if(!acct) return;
+  const oldBal = acct.appBalance !== undefined ? acct.appBalance : acct.balance;
+  const diff = actual - oldBal;
+  acct.balance = actual;
+  acct.appBalance = actual;
+  acct.lastReconciled = today();
+  if(document.getElementById('reconcile-note').value) {
+    acct.lastReconcileNote = document.getElementById('reconcile-note').value;
+  }
+  save();
+  closeModal('reconcile-modal');
+  renderAccounts();
+  renderDashboard();
+  const msg = diff === 0 ? 'Balance confirmed ✅' :
+    diff > 0 ? `Balance updated. +${fmt(diff)} added (untracked credit)` :
+    `Balance updated. ${fmt(Math.abs(diff))} adjusted (untracked expense)`;
+  setTimeout(() => alert(msg), 200);
+}
+
+function openMonthlyReconcile() {
+  // Show reconcile picker for all bank accounts
+  const overlay = document.createElement('div');
+  overlay.id = 'monthly-reconcile-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:flex-end;';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border-radius:24px 24px 0 0;width:100%;padding:24px 20px 40px;max-height:85dvh;overflow-y:auto;">
+      <div style="width:36px;height:4px;background:var(--text3);border-radius:99px;margin:0 auto 20px;"></div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">🔄 Monthly Reconcile</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:20px;">Tap any account to enter its real balance from your bank app</div>
+      ${D.accounts.indBanks.map(b => {
+        const appBal = b.appBalance !== undefined ? b.appBalance : b.balance;
+        const needsReconcile = !b.lastReconciled || Math.abs(appBal - b.balance) > 0;
+        return `
+        <div onclick="document.getElementById('monthly-reconcile-overlay').remove(); openReconcileModal('${b.id}')"
+          style="display:flex;align-items:center;background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;border:1px solid ${needsReconcile?'rgba(212,168,67,0.3)':'var(--border)'};">
+          <div style="width:36px;height:36px;border-radius:10px;background:${b.color}20;display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:12px;">${bankEmoji(b.bank)}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600">${b.name}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">App: ${fmt(appBal)} · ${b.lastReconciled?'Reconciled '+fmtDate(b.lastReconciled):'Never reconciled'}</div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${needsReconcile?'var(--gold)':'var(--green)'}">
+            ${needsReconcile?'Update →':'✅'}
+          </div>
+        </div>`}).join('')}
+      <button onclick="document.getElementById('monthly-reconcile-overlay').remove()" 
+        style="width:100%;padding:13px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text2);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;">Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
 }
 
 // ══════════════════════════════════════════════════════════
