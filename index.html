@@ -1687,15 +1687,23 @@ function saveExpense() {
   if(currentPage === 'expenses') renderExpenses();
   if(currentPage === 'dashboard') renderDashboard();
   if(currentPage === 'accounts') renderAccounts();
+  // Show toast so user knows deduction happened
+  const acctName = allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
+  showToast(`₹${amt.toLocaleString('en-IN')} deducted from ${acctName}`);
 }
 
 function deleteExpense(id) {
   if(!confirm('Delete this expense?')) return;
   const exp = D.expenses.find(e=>e.id===id);
-  if(exp) refundToAccount(exp.accountId, exp.amount);
+  if(exp) {
+    refundToAccount(exp.accountId, exp.amount);
+    const acctName = allAccountOptions().find(o=>o.value===exp.accountId)?.label || 'account';
+    showToast(`₹${exp.amount.toLocaleString('en-IN')} refunded to ${acctName}`);
+  }
   D.expenses = D.expenses.filter(e=>e.id!==id);
   save(); renderExpenses();
   if(currentPage === 'dashboard') renderDashboard();
+  if(currentPage === 'accounts') renderAccounts();
 }
 
 // Transfer Modal
@@ -1832,8 +1840,12 @@ function saveAccountEdit() {
   if(idx>=0) {
     if(g('ae-name')) list[idx].name = g('ae-name');
     if(g('ae-bank')) list[idx].bank = g('ae-bank');
-    list[idx].balance = gn('ae-balance') ?? list[idx].balance;
-    list[idx].minBal  = gn('ae-minbal') ?? list[idx].minBal;
+    // Only update balance if user actually typed a value
+    const newBal = document.getElementById('ae-balance');
+    const newMin = document.getElementById('ae-minbal');
+    if(newBal && newBal.value !== '' && newBal.value !== null) list[idx].balance = parseFloat(newBal.value) || 0;
+    if(newMin && newMin.value !== '' && newMin.value !== null) list[idx].minBal = parseFloat(newMin.value) || 0;
+    if(list[idx].appBalance !== undefined) list[idx].appBalance = list[idx].balance;
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
@@ -1841,11 +1853,16 @@ function saveAccountEdit() {
   if(idx>=0) {
     if(g('ae-name')) list[idx].name = g('ae-name');
     if(g('ae-bank')) list[idx].bank = g('ae-bank');
-    list[idx].limit = gn('ae-limit') ?? list[idx].limit;
-    list[idx].outstanding = gn('ae-outstanding') ?? list[idx].outstanding;
-    list[idx].minDue = gn('ae-mindue') ?? list[idx].minDue;
-    list[idx].totalDue = gn('ae-totaldue') ?? list[idx].totalDue;
-    list[idx].dueDate = parseInt(g('ae-duedate')) || list[idx].dueDate;
+    const ccLimit = document.getElementById('ae-limit');
+    const ccOut   = document.getElementById('ae-outstanding');
+    const ccMin   = document.getElementById('ae-mindue');
+    const ccTotal = document.getElementById('ae-totaldue');
+    const ccDue   = document.getElementById('ae-duedate');
+    if(ccLimit && ccLimit.value !== '') list[idx].limit = parseFloat(ccLimit.value) || 0;
+    if(ccOut   && ccOut.value   !== '') list[idx].outstanding = parseFloat(ccOut.value) || 0;
+    if(ccMin   && ccMin.value   !== '') list[idx].minDue = parseFloat(ccMin.value) || 0;
+    if(ccTotal && ccTotal.value !== '') list[idx].totalDue = parseFloat(ccTotal.value) || 0;
+    if(ccDue   && ccDue.value   !== '') list[idx].dueDate = parseInt(ccDue.value) || list[idx].dueDate;
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
 
@@ -1855,15 +1872,19 @@ function saveAccountEdit() {
     if(g('ae-bank')) list[idx].bank = g('ae-bank');
     if(g('ae-type')) list[idx].type = g('ae-type');
     const newType = g('ae-type') || list[idx].type;
+    const uaeAed = document.getElementById('ae-aed');
     if(newType === 'Credit Card') {
-      list[idx].outstandingAED = gn('ae-aed') ?? list[idx].outstandingAED;
-      list[idx].balanceAED = list[idx].outstandingAED; // keep in sync
-      list[idx].limitAED = gn('ae-limitAED') ?? list[idx].limitAED;
-      list[idx].minDueAED = gn('ae-minDueAED') ?? list[idx].minDueAED;
-      list[idx].totalDueAED = gn('ae-totalDueAED') ?? list[idx].totalDueAED;
-      list[idx].dueDate = parseInt(g('ae-duedate')) || list[idx].dueDate;
+      if(uaeAed && uaeAed.value !== '') { list[idx].outstandingAED = parseFloat(uaeAed.value)||0; list[idx].balanceAED = list[idx].outstandingAED; }
+      const uaeLim = document.getElementById('ae-limitAED');
+      const uaeMin = document.getElementById('ae-minDueAED');
+      const uaeTot = document.getElementById('ae-totalDueAED');
+      const uaeDue = document.getElementById('ae-duedate');
+      if(uaeLim && uaeLim.value !== '') list[idx].limitAED = parseFloat(uaeLim.value)||0;
+      if(uaeMin && uaeMin.value !== '') list[idx].minDueAED = parseFloat(uaeMin.value)||0;
+      if(uaeTot && uaeTot.value !== '') list[idx].totalDueAED = parseFloat(uaeTot.value)||0;
+      if(uaeDue && uaeDue.value !== '') list[idx].dueDate = parseInt(uaeDue.value)||list[idx].dueDate;
     } else {
-      list[idx].balanceAED = gn('ae-aed') ?? list[idx].balanceAED;
+      if(uaeAed && uaeAed.value !== '') list[idx].balanceAED = parseFloat(uaeAed.value)||0;
     }
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
@@ -2358,6 +2379,25 @@ function showDriveGuide(mode) {
   `;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
+// ══════════════════════════════════════════════════════════
+// TOAST NOTIFICATION
+// ══════════════════════════════════════════════════════════
+function showToast(msg, color) {
+  const existing = document.getElementById('ft-toast');
+  if(existing) existing.remove();
+  const t = document.createElement('div');
+  t.id = 'ft-toast';
+  t.style.cssText = `position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:16px;right:16px;
+    background:${color||'#1E3A2F'};border:1px solid ${color?'rgba(255,255,255,0.2)':'rgba(52,211,153,0.4)'};
+    border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;
+    z-index:9999;animation:fadeUp 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.3);`;
+  t.innerHTML = `<span style="font-size:18px">${color?'ℹ️':'✅'}</span>
+    <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#fff;flex:1">${msg}</span>`;
+  document.body.appendChild(t);
+  setTimeout(() => t.style.opacity='0', 2500);
+  setTimeout(() => t.remove(), 3000);
 }
 
 // ══════════════════════════════════════════════════════════
