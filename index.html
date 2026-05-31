@@ -1166,7 +1166,16 @@ function renderDashboard() {
     const d1 = new Date(now1); d1.setDate(c.dueDate);
     if(d1 < now1) d1.setMonth(d1.getMonth()+1);
     const diff1 = Math.round((d1 - now1)/(1000*60*60*24));
-    dues.push({ name: c.name, amount: fmt(c.totalDue||c.outstanding), diff: diff1, label: diff1<=3?'urgent':diff1<=7?'soon':'ok' });
+    // Show Total Due if set, else show outstanding. Show min due as sub-info.
+    const showAmt = c.totalDue > 0 ? c.totalDue : c.outstanding;
+    const subInfo = c.minDue > 0 ? ` (Min: ${fmt(c.minDue)})` : '';
+    dues.push({ 
+      name: c.name, 
+      amount: fmt(showAmt) + subInfo,
+      diff: diff1, 
+      label: diff1<=3?'urgent':diff1<=7?'soon':'ok',
+      sub: c.minDue > 0 ? `Min Due: ${fmt(c.minDue)}` : ''
+    });
   });
   D.accounts.loans.forEach(l => {
     if(l.outstanding <= 0) return;
@@ -1181,8 +1190,9 @@ function renderDashboard() {
     const d3 = new Date(now3); d3.setDate(u.dueDate||20);
     if(d3 < now3) d3.setMonth(d3.getMonth()+1);
     const diff3 = Math.round((d3 - now3)/(1000*60*60*24));
-    const dueAmt = u.totalDueAED||u.outstandingAED||0;
-    dues.push({ name: u.name, amount: fmtAED(dueAmt) + ' / ' + fmt(dueAmt*D.aedRate), diff: diff3, label: diff3<=3?'urgent':diff3<=7?'soon':'ok' });
+    const dueAmt = u.totalDueAED > 0 ? u.totalDueAED : (u.outstandingAED||0);
+    const uaeMinSub = u.minDueAED > 0 ? ` (Min: ${fmtAED(u.minDueAED)})` : '';
+    dues.push({ name: u.name, amount: fmtAED(dueAmt) + ' / ' + fmt(dueAmt*D.aedRate) + uaeMinSub, diff: diff3, label: diff3<=3?'urgent':diff3<=7?'soon':'ok' });
   });
   D.accounts.chits.forEach(c => {
     if(c.monthly <= 0 || c.completed >= c.totalMonths) return;
@@ -1205,8 +1215,14 @@ function renderDashboard() {
     dueList.innerHTML = dues.slice(0,5).map(d => `
       <div class="due-item">
         <div class="due-badge ${d.label}">${d.diff === 0 ? 'TODAY' : d.diff < 0 ? 'OVERDUE' : d.diff + 'd'}</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:500">${d.name}</div></div>
-        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">${d.amount}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${d.name}</div>
+          ${d.sub ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${d.sub}</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">${d.totalDue || d.amount}</div>
+          ${d.sub ? `<div style="font-size:10px;color:var(--orange);margin-top:1px">${d.sub}</div>` : ''}
+        </div>
       </div>`).join('');
   }
 
