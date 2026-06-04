@@ -575,7 +575,7 @@ body {
         <div class="val red" id="dash-liabilities">₹0</div>
       </div>
       <div class="hero-stat">
-        <div class="lbl">THIS MONTH</div>
+        <div class="lbl" id="dash-this-month-lbl">THIS MONTH</div>
         <div class="val" id="dash-month-spend" style="color:var(--orange)">₹0</div>
       </div>
     </div>
@@ -606,6 +606,12 @@ body {
   <div class="sec-hdr"><h2>🇦🇪 UAE Accounts</h2></div>
   <div class="card">
     <div id="dash-uae"></div>
+  </div>
+
+  <!-- Income this month -->
+  <div class="sec-hdr"><h2>💰 Income This Month</h2><a href="#" onclick="switchPage('income');return false">See all</a></div>
+  <div class="card">
+    <div id="dash-income"></div>
   </div>
 
   <!-- Money Lent -->
@@ -753,6 +759,61 @@ body {
   <div id="lent-list" style="padding:0 16px"></div>
 </div>
 
+<!-- ══════════════════════ INCOME PAGE ══════════════════════ -->
+<div class="page" id="page-income">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <h1>💰 Income</h1>
+        <div class="sub" id="income-sub">Track all your income sources</div>
+      </div>
+      <button onclick="openIncomeModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Month selector -->
+  <div class="month-selector" style="padding-top:14px">
+    <button class="month-btn" onclick="changeIncomeMonth(-1)">‹</button>
+    <div class="month-label" id="income-month-label">June 2026</div>
+    <button class="month-btn" onclick="changeIncomeMonth(1)">›</button>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="exp-summary">
+    <div class="exp-stat">
+      <div class="lbl">Total Income</div>
+      <div class="val" id="income-total" style="color:var(--green)">₹0</div>
+    </div>
+    <div class="exp-stat">
+      <div class="lbl">Expenses</div>
+      <div class="val" id="income-exp" style="color:var(--red)">₹0</div>
+    </div>
+    <div class="exp-stat">
+      <div class="lbl">Saved</div>
+      <div class="val" id="income-saved" style="color:var(--gold)">₹0</div>
+    </div>
+  </div>
+
+  <!-- Savings rate bar -->
+  <div style="margin:0 16px 14px;">
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+      <span style="color:var(--text3)">Savings Rate</span>
+      <span id="income-savings-rate" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--gold)">0%</span>
+    </div>
+    <div class="prog-bar">
+      <div class="prog-fill" id="income-savings-bar" style="width:0%;background:var(--gold)"></div>
+    </div>
+  </div>
+
+  <!-- Category breakdown -->
+  <div class="sec-hdr"><h2>📊 By Source</h2></div>
+  <div id="income-breakdown" style="padding:0 16px 14px;"></div>
+
+  <!-- Income list -->
+  <div class="sec-hdr"><h2>Recent Income</h2></div>
+  <div id="income-list" style="padding:0 16px;"></div>
+</div>
+
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
 <div class="page" id="page-settings">
   <div class="topbar"><h1>Settings</h1></div>
@@ -843,6 +904,10 @@ body {
   <button class="nav-btn" onclick="switchPage('accounts')" id="nav-accounts">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Accounts</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('income')" id="nav-income">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    <span>Income</span>
   </button>
   <button class="nav-btn" onclick="switchPage('lent')" id="nav-lent">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -1060,6 +1125,62 @@ body {
   </div>
 </div>
 
+<!-- Add Income Modal -->
+<div class="modal-overlay" id="income-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="income-modal-title">💰 Add Income</div>
+
+    <div class="form-group">
+      <label class="form-label">Source / Description</label>
+      <input type="text" class="form-input" id="inc-desc" placeholder="e.g. Monthly Salary, Freelance, Rent" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="select-wrap">
+        <select class="form-select" id="inc-category">
+          <option value="Salary">💼 Salary</option>
+          <option value="Freelance">💻 Freelance</option>
+          <option value="Business">🏪 Business</option>
+          <option value="Rental Income">🏠 Rental Income</option>
+          <option value="Investment">📈 Investment Returns</option>
+          <option value="Interest">🏦 Bank Interest</option>
+          <option value="Gift">🎁 Gift / Bonus</option>
+          <option value="UAE Remittance">🇦🇪 UAE Remittance</option>
+          <option value="Other">📦 Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="inc-date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Credited To Account</label>
+      <div class="select-wrap">
+        <select class="form-select" id="inc-account"></select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Note (optional)</label>
+      <input type="text" class="form-input" id="inc-note" placeholder="e.g. April salary, Q1 bonus">
+    </div>
+
+    <button class="btn-primary" onclick="saveIncome()">Save Income</button>
+    <button class="btn-outline" onclick="closeModal('income-modal')">Cancel</button>
+  </div>
+</div>
+
 <!-- AED Rate Modal -->
 <div class="modal-overlay" id="rate-modal">
   <div class="modal">
@@ -1130,6 +1251,7 @@ const defaultData = {
   expenses: [],
   transfers: [],
   lent: [],
+  income: [],
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear()
 };
@@ -1140,6 +1262,7 @@ let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.pars
 
 // Migrate old saved data to support new fields
 if (!D.lent) D.lent = [];
+if (!D.income) D.income = [];
 if (D.accounts.uaeAccounts && !D.accounts.uaeAccounts[0].hasOwnProperty('outstandingAED')) {
   D.accounts.uaeAccounts = D.accounts.uaeAccounts.map(u => ({
     ...u,
@@ -1233,6 +1356,7 @@ function renderPage(page) {
   else if (page === 'transfers') renderTransfers();
   else if (page === 'accounts') renderAccounts();
   else if (page === 'lent') renderLent();
+  else if (page === 'income') renderIncome();
   else if (page === 'settings') renderSettings();
 }
 
@@ -1265,12 +1389,21 @@ function renderDashboard() {
   const now = new Date();
   const monthExps = monthExpenses(now.getMonth(), now.getFullYear());
   const monthSpend = monthExps.reduce((s,e) => s+e.amount, 0);
+  const monthIncTotal = monthIncome(now.getMonth(), now.getFullYear()).reduce((s,i)=>s+i.amount, 0);
 
   document.getElementById('dash-networth').textContent = (netWorth<0?'- ':'')+fmt(Math.abs(netWorth));
   document.getElementById('dash-networth').style.color = netWorth < 0 ? 'var(--red)' : 'var(--text)';
   document.getElementById('dash-assets').textContent = fmt(assets);
   document.getElementById('dash-liabilities').textContent = fmt(liabilities);
   document.getElementById('dash-month-spend').textContent = fmt(monthSpend);
+  // Update THIS MONTH label to show context
+  const netMonthEl = document.getElementById('dash-this-month-lbl');
+  if(netMonthEl) netMonthEl.textContent = monthIncTotal > 0 ? 'NET THIS MONTH' : 'SPENT THIS MONTH';
+  const netMonthVal = document.getElementById('dash-month-spend');
+  if(monthIncTotal > 0) {
+    const net = monthIncTotal - monthSpend;
+    if(netMonthVal) { netMonthVal.textContent = (net>=0?'+':'-')+fmt(Math.abs(net)); netMonthVal.style.color = net>=0?'var(--green)':'var(--red)'; }
+  }
 
   // Chips
   const chips = document.getElementById('dash-chips');
@@ -1280,6 +1413,7 @@ function renderDashboard() {
     <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE Assets</div><div class="cval" style="color:#60A5FA">${fmt(uaeSavings)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
     <div class="chip" onclick="switchPage('lent')"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">Lent Out</div><div class="cval" style="color:#60A5FA">${fmt(lentOutstanding)}</div></div></div>
+    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt(monthIncTotal)}</div></div></div>
   `;
 
   // Due soon
@@ -1447,7 +1581,8 @@ function renderDashboard() {
   const lastUAE = uaeEl.lastElementChild;
   if(lastUAE) lastUAE.style.borderBottom = 'none';
 
-  // Render lent section on dashboard
+  // Render income + lent sections on dashboard
+  renderDashIncome();
   renderDashLent();
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
@@ -3027,6 +3162,35 @@ function renderLent() {
   }).join('');
 }
 
+function renderDashIncome() {
+  const el = document.getElementById('dash-income');
+  if(!el) return;
+  const now = new Date();
+  const incomes = monthIncome(now.getMonth(), now.getFullYear());
+  if(incomes.length===0) {
+    el.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="icon" style="font-size:28px">💰</div>No income logged this month</div>';
+    return;
+  }
+  // Group by category
+  const catTotals = {};
+  incomes.forEach(i => { catTotals[i.category]=(catTotals[i.category]||0)+i.amount; });
+  const total = incomes.reduce((s,i)=>s+i.amount,0);
+  el.innerHTML = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => {
+    const c = getIncCat(cat);
+    return `
+    <div class="acct-item" onclick="switchPage('income')">
+      <div class="acct-icon" style="background:${c.color}20">${c.emoji}</div>
+      <div class="acct-info">
+        <div class="acct-name">${cat}</div>
+        <div class="acct-type">${((amt/total)*100).toFixed(0)}% of income</div>
+      </div>
+      <div class="acct-bal">
+        <div class="amount" style="color:${c.color}">+${fmt(amt)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderDashLent() {
   if(!D.lent) D.lent = [];
   const el = document.getElementById('dash-lent');
@@ -3060,6 +3224,197 @@ function renderDashLent() {
 
 // ── Add lent outstanding to assets (money owed TO you) ──────────────────────
 // Already handled in renderDashboard net worth
+
+// ══════════════════════════════════════════════════════════
+// INCOME TRACKER
+// ══════════════════════════════════════════════════════════
+const INCOME_CATEGORIES = [
+  { name:'Salary',        emoji:'💼', color:'#34D399' },
+  { name:'Freelance',     emoji:'💻', color:'#60A5FA' },
+  { name:'Business',      emoji:'🏪', color:'#D4A843' },
+  { name:'Rental Income', emoji:'🏠', color:'#A78BFA' },
+  { name:'Investment',    emoji:'📈', color:'#2DD4BF' },
+  { name:'Interest',      emoji:'🏦', color:'#60A5FA' },
+  { name:'Gift',          emoji:'🎁', color:'#F472B6' },
+  { name:'UAE Remittance',emoji:'🇦🇪', color:'#34D399' },
+  { name:'Other',         emoji:'📦', color:'#94A3B8' },
+];
+
+let incViewMonth = new Date().getMonth();
+let incViewYear  = new Date().getFullYear();
+let editingIncId = null;
+
+function getIncCat(name) {
+  return INCOME_CATEGORIES.find(c=>c.name===name) || INCOME_CATEGORIES[8];
+}
+
+function monthIncome(m, y) {
+  return (D.income||[]).filter(i => {
+    const [iy, im] = i.date.split('-').map(Number);
+    return (im-1)===m && iy===y;
+  });
+}
+
+function openIncomeModal(id) {
+  editingIncId = id || null;
+  const entry = id ? (D.income||[]).find(i=>i.id===id) : null;
+  document.getElementById('income-modal-title').textContent = id ? '✏️ Edit Income' : '💰 Add Income';
+  document.getElementById('inc-desc').value    = entry ? entry.desc    : '';
+  document.getElementById('inc-amount').value  = entry ? entry.amount  : '';
+  document.getElementById('inc-date').value    = entry ? entry.date    : today();
+  document.getElementById('inc-note').value    = entry ? (entry.note||'') : '';
+  document.getElementById('inc-category').value = entry ? entry.category : 'Salary';
+  const opts = allAccountOptions().map(o=>`<option value="${o.value}" ${entry&&entry.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
+  document.getElementById('inc-account').innerHTML = opts;
+  openModal('income-modal');
+}
+
+function saveIncome() {
+  const desc    = document.getElementById('inc-desc').value.trim();
+  const amount  = parseFloat(document.getElementById('inc-amount').value);
+  const date    = document.getElementById('inc-date').value;
+  const cat     = document.getElementById('inc-category').value;
+  const accountId = document.getElementById('inc-account').value;
+  const note    = document.getElementById('inc-note').value.trim();
+
+  if(!desc)             { alert('Enter a description'); return; }
+  if(!amount||amount<=0){ alert('Enter a valid amount'); return; }
+
+  if(editingIncId) {
+    // Edit — reverse old account credit then apply new
+    const old = (D.income||[]).find(i=>i.id===editingIncId);
+    if(old) {
+      deductFromAccount(old.accountId, old.amount); // reverse old credit
+    }
+    const idx = (D.income||[]).findIndex(i=>i.id===editingIncId);
+    if(idx>=0) D.income[idx] = { id:editingIncId, desc, amount, date, category:cat, accountId, note };
+  } else {
+    if(!D.income) D.income = [];
+    D.income.push({ id:Date.now().toString(), desc, amount, date, category:cat, accountId, note });
+  }
+  // Credit the account
+  creditToAccount(accountId, amount);
+  save();
+  closeModal('income-modal');
+  renderIncome();
+  renderDashboard();
+  showToast(`${fmt(amount)} credited to ${allAccountOptions().find(o=>o.value===accountId)?.label||'account'}`);
+}
+
+function deleteIncome(id) {
+  if(!confirm('Delete this income entry?')) return;
+  const entry = (D.income||[]).find(i=>i.id===id);
+  if(entry) {
+    deductFromAccount(entry.accountId, entry.amount); // reverse credit
+    showToast('Income entry deleted and balance reversed');
+  }
+  D.income = (D.income||[]).filter(i=>i.id!==id);
+  save(); renderIncome(); renderDashboard();
+}
+
+function changeIncomeMonth(dir) {
+  incViewMonth += dir;
+  if(incViewMonth > 11) { incViewMonth=0; incViewYear++; }
+  if(incViewMonth < 0)  { incViewMonth=11; incViewYear--; }
+  renderIncome();
+}
+
+function creditToAccount(accountId, amount) {
+  // Opposite of deductFromAccount — adds to account balance
+  const b = D.accounts.indBanks.find(a=>a.id===accountId);
+  if(b) { b.balance = (b.balance||0) + amount; if(b.appBalance!==undefined) b.appBalance=b.balance; return; }
+  const c = D.accounts.indCards.find(a=>a.id===accountId);
+  if(c) { c.outstanding = Math.max(0,(c.outstanding||0)-amount); c.totalDue=Math.max(0,(c.totalDue||0)-amount); return; }
+  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  if(u) {
+    if(u.type!=='Credit Card') u.balanceAED=(u.balanceAED||0)+(amount/D.aedRate);
+    else { u.outstandingAED=Math.max(0,(u.outstandingAED||0)-(amount/D.aedRate)); u.balanceAED=u.outstandingAED; }
+  }
+}
+
+function renderIncome() {
+  if(!D.income) D.income=[];
+  document.getElementById('income-month-label').textContent = MONTHS[incViewMonth]+' '+incViewYear;
+
+  const incomes  = monthIncome(incViewMonth, incViewYear);
+  const exps     = monthExpenses(incViewMonth, incViewYear);
+  const totalInc = incomes.reduce((s,i)=>s+i.amount, 0);
+  const totalExp = exps.reduce((s,e)=>s+e.amount, 0);
+  const saved    = totalInc - totalExp;
+  const savRate  = totalInc > 0 ? Math.max(0, saved/totalInc) : 0;
+
+  document.getElementById('income-total').textContent    = fmt(totalInc);
+  document.getElementById('income-exp').textContent      = fmt(totalExp);
+  document.getElementById('income-saved').textContent    = saved>=0 ? fmt(saved) : '-'+fmt(Math.abs(saved));
+  document.getElementById('income-saved').style.color    = saved>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('income-savings-rate').textContent = (savRate*100).toFixed(0)+'%';
+  document.getElementById('income-savings-rate').style.color = savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)';
+  const bar = document.getElementById('income-savings-bar');
+  if(bar) { bar.style.width=Math.min(savRate*100,100)+'%'; bar.style.background=savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)'; }
+
+  document.getElementById('income-sub').textContent =
+    `${MONTHS_SHORT[incViewMonth]} ${incViewYear} · ${incomes.length} entries · Savings ${(savRate*100).toFixed(0)}%`;
+
+  // Category breakdown
+  const catTotals = {};
+  incomes.forEach(i => { catTotals[i.category]=(catTotals[i.category]||0)+i.amount; });
+  const breakdown = document.getElementById('income-breakdown');
+  if(Object.keys(catTotals).length === 0) {
+    breakdown.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0;">No income this month</div>';
+  } else {
+    breakdown.innerHTML = Object.entries(catTotals)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([cat,amt]) => {
+        const c = getIncCat(cat);
+        const pct = totalInc>0 ? amt/totalInc : 0;
+        return `
+        <div style="background:var(--surface);border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px">${c.emoji}</span>
+              <span style="font-size:13px;font-weight:500">${cat}</span>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${c.color}">${fmt(amt)}</div>
+              <div style="font-size:10px;color:var(--text3)">${(pct*100).toFixed(0)}% of total</div>
+            </div>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${pct*100}%;background:${c.color}"></div></div>
+        </div>`;
+      }).join('');
+  }
+
+  // Income list
+  const el = document.getElementById('income-list');
+  const sorted = [...incomes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(sorted.length===0) {
+    el.innerHTML='<div class="empty-state"><div class="icon">💰</div>No income in '+MONTHS[incViewMonth]+'.<br>Tap + to add one!</div>';
+    return;
+  }
+  el.innerHTML = sorted.map(i => {
+    const c = getIncCat(i.category);
+    const acc = getAcctById(i.accountId);
+    return `
+    <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:${c.color}20;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${c.emoji}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.desc}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(i.date)} · ${acc?acc.name:'Unknown'}${i.note?' · '+i.note:''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">+${fmt(i.amount)}</div>
+        <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end;">
+          <button onclick="openIncomeModal('${i.id}')" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:3px 8px;color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;">✏️</button>
+          <button onclick="deleteIncome('${i.id}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Add income to dashboard dashboard chips & hero ───────────────────────────
+// Add income chip and update net worth to include monthly income context
+// (Net worth already correct via account balances — income shows in chips)
 
 // ══════════════════════════════════════════════════════════
 // PIN LOCK
