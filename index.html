@@ -3679,12 +3679,40 @@ function parseSMS() {
 
 function saveSMSExpense() {
   if(!smsParsed||!smsParsed.amount) { alert('Parse an SMS first'); return; }
-  if(smsParsed.txType === 'credit') {
-    showToast('Credit SMS noted — no expense added');
-    closeModal('sms-modal'); return;
-  }
+
   const accountId = document.getElementById('sms-account').value;
   const cat = smsParsed.suggestCat || 'Miscellaneous';
+
+  if(smsParsed.txType === 'credit') {
+    // Credit SMS — add income entry and credit account balance
+    if(!D.income) D.income = [];
+    D.income.push({
+      id: Date.now().toString(),
+      desc: smsParsed.merchant || 'SMS Credit',
+      amount: smsParsed.amount,
+      date: smsParsed.date,
+      category: 'Other',
+      accountId,
+      note: 'Auto (SMS)',
+      mode: 'Auto (SMS)'
+    });
+    creditToAccount(accountId, smsParsed.amount);
+
+    // If available balance in SMS, use it as the true balance (overrides calculation)
+    if(smsParsed.availBal !== null) {
+      reconcileFromSMS(accountId, smsParsed.availBal);
+    }
+
+    save();
+    closeModal('sms-modal');
+    renderPage(currentPage);
+    renderDashboard();
+    showToast(`+${fmt(smsParsed.amount)} credited to ${getAcctName(accountId)}`);
+    smsParsed = null;
+    return;
+  }
+
+  // Debit SMS — add expense and deduct from account
   D.expenses.push({
     id: Date.now().toString(),
     category: cat,
@@ -3695,17 +3723,54 @@ function saveSMSExpense() {
     mode: 'Auto (SMS)'
   });
   deductFromAccount(accountId, smsParsed.amount);
-  // If available balance in SMS, reconcile automatically
+
+  // If available balance in SMS, use as true balance (most accurate)
   if(smsParsed.availBal !== null) {
-    const bank = D.accounts.indBanks.find(b=>b.id===accountId);
-    if(bank) { bank.balance = smsParsed.availBal; bank.lastReconciled = today(); }
+    reconcileFromSMS(accountId, smsParsed.availBal);
   }
+
   save();
   closeModal('sms-modal');
   renderPage(currentPage);
   renderDashboard();
-  showToast(`${fmt(smsParsed.amount)} expense added from SMS`);
+
+  const balMsg = smsParsed.availBal !== null
+    ? ` · Balance updated to ${fmt(smsParsed.availBal)}`
+    : '';
+  showToast(`${fmt(smsParsed.amount)} deducted from ${getAcctName(accountId)}${balMsg}`);
   smsParsed = null;
+}
+
+function reconcileFromSMS(accountId, availBal) {
+  // Update balance from SMS available balance — most accurate source
+  const bank = D.accounts.indBanks.find(b=>b.id===accountId);
+  if(bank) {
+    bank.balance = availBal;
+    bank.appBalance = availBal;
+    bank.lastReconciled = today();
+    bank.lastReconcileNote = 'Auto-reconciled from SMS';
+    return;
+  }
+  const uae = D.accounts.uaeAccounts.find(u=>u.id===accountId);
+  if(uae && uae.type !== 'Credit Card') {
+    // availBal for UAE accounts may be in AED
+    uae.balanceAED = availBal;
+    return;
+  }
+  const cc = D.accounts.indCards.find(c=>c.id===accountId);
+  if(cc) {
+    // For CC, available bal in SMS = credit limit - outstanding
+    // So outstanding = limit - availBal
+    if(cc.limit > 0) {
+      cc.outstanding = Math.max(0, cc.limit - availBal);
+      cc.totalDue = cc.outstanding;
+    }
+    return;
+  }
+}
+
+function getAcctName(accountId) {
+  return allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
 }
 
 // ══════════════════════════════════════════════════════════
