@@ -433,29 +433,18 @@ body {
 .budget-row-hdr .bamt { font-family: 'Syne', sans-serif; font-weight: 600; }
 
 /* ── PIN LOCK ── */
-.pin-dot {
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--surface3); border: 2px solid var(--text3);
-  transition: all 0.2s;
-}
-.pin-dot.filled { background: var(--gold); border-color: var(--gold); transform: scale(1.15); }
-.pin-dot.error  { background: var(--red);  border-color: var(--red);  animation: pinShake 0.4s ease; }
-.pin-dot.success{ background: var(--green);border-color: var(--green); }
-.pin-btn {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); font-family: 'Syne', sans-serif;
-  font-size: 22px; font-weight: 700; cursor: pointer; transition: all 0.15s;
-}
-.pin-btn:active { transform: scale(0.92); background: var(--surface3); }
-@keyframes pinShake {
-  0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}
-}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--surface3);border:2px solid var(--text3);transition:all 0.2s}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);transform:scale(1.15)}
+.pin-dot.error{background:var(--red);border-color:var(--red);animation:pinShake 0.4s ease}
+.pin-dot.success{background:var(--green);border-color:var(--green)}
+.pin-btn{width:72px;height:72px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Syne',sans-serif;font-size:22px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.pin-btn:active{transform:scale(0.92);background:var(--surface3)}
+@keyframes pinShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════ PIN LOCK SCREEN ══════════════════════ -->
+<!-- PIN LOCK SCREEN -->
 <div id="pin-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:20px;">
   <div style="text-align:center;margin-bottom:40px;">
     <div style="font-size:52px;margin-bottom:12px;">💼</div>
@@ -463,24 +452,14 @@ body {
     <div style="font-size:13px;color:var(--text3);margin-top:6px;" id="pin-subtitle">Enter your PIN</div>
   </div>
   <div style="display:flex;gap:16px;margin-bottom:40px;" id="pin-dots">
-    <div class="pin-dot" id="dot-0"></div>
-    <div class="pin-dot" id="dot-1"></div>
-    <div class="pin-dot" id="dot-2"></div>
-    <div class="pin-dot" id="dot-3"></div>
+    <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div>
+    <div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(3,72px);gap:14px;">
-    <button onclick="pinPress('1')" class="pin-btn">1</button>
-    <button onclick="pinPress('2')" class="pin-btn">2</button>
-    <button onclick="pinPress('3')" class="pin-btn">3</button>
-    <button onclick="pinPress('4')" class="pin-btn">4</button>
-    <button onclick="pinPress('5')" class="pin-btn">5</button>
-    <button onclick="pinPress('6')" class="pin-btn">6</button>
-    <button onclick="pinPress('7')" class="pin-btn">7</button>
-    <button onclick="pinPress('8')" class="pin-btn">8</button>
-    <button onclick="pinPress('9')" class="pin-btn">9</button>
-    <div></div>
-    <button onclick="pinPress('0')" class="pin-btn">0</button>
-    <button onclick="pinPress('⌫')" class="pin-btn" style="font-size:20px;">⌫</button>
+    <button onclick="pinPress('1')" class="pin-btn">1</button><button onclick="pinPress('2')" class="pin-btn">2</button><button onclick="pinPress('3')" class="pin-btn">3</button>
+    <button onclick="pinPress('4')" class="pin-btn">4</button><button onclick="pinPress('5')" class="pin-btn">5</button><button onclick="pinPress('6')" class="pin-btn">6</button>
+    <button onclick="pinPress('7')" class="pin-btn">7</button><button onclick="pinPress('8')" class="pin-btn">8</button><button onclick="pinPress('9')" class="pin-btn">9</button>
+    <div></div><button onclick="pinPress('0')" class="pin-btn">0</button><button onclick="pinPress('⌫')" class="pin-btn" style="font-size:20px;">⌫</button>
   </div>
   <button id="pin-forgot" onclick="forgotPin()" style="margin-top:32px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;display:none;">Forgot PIN? Reset</button>
 </div>
@@ -492,24 +471,14 @@ body {
     <div class="modal-title" id="pin-setup-title">🔐 Set PIN</div>
     <div style="font-size:13px;color:var(--text3);margin-bottom:20px;" id="pin-setup-sub">Choose a 4-digit PIN</div>
     <div style="display:flex;gap:16px;justify-content:center;margin-bottom:28px;">
-      <div class="pin-dot" id="sdot-0"></div>
-      <div class="pin-dot" id="sdot-1"></div>
-      <div class="pin-dot" id="sdot-2"></div>
-      <div class="pin-dot" id="sdot-3"></div>
+      <div class="pin-dot" id="sdot-0"></div><div class="pin-dot" id="sdot-1"></div>
+      <div class="pin-dot" id="sdot-2"></div><div class="pin-dot" id="sdot-3"></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-      <button onclick="pinSetupPress('1')" class="pin-btn" style="width:100%;border-radius:12px;">1</button>
-      <button onclick="pinSetupPress('2')" class="pin-btn" style="width:100%;border-radius:12px;">2</button>
-      <button onclick="pinSetupPress('3')" class="pin-btn" style="width:100%;border-radius:12px;">3</button>
-      <button onclick="pinSetupPress('4')" class="pin-btn" style="width:100%;border-radius:12px;">4</button>
-      <button onclick="pinSetupPress('5')" class="pin-btn" style="width:100%;border-radius:12px;">5</button>
-      <button onclick="pinSetupPress('6')" class="pin-btn" style="width:100%;border-radius:12px;">6</button>
-      <button onclick="pinSetupPress('7')" class="pin-btn" style="width:100%;border-radius:12px;">7</button>
-      <button onclick="pinSetupPress('8')" class="pin-btn" style="width:100%;border-radius:12px;">8</button>
-      <button onclick="pinSetupPress('9')" class="pin-btn" style="width:100%;border-radius:12px;">9</button>
-      <div></div>
-      <button onclick="pinSetupPress('0')" class="pin-btn" style="width:100%;border-radius:12px;">0</button>
-      <button onclick="pinSetupPress('⌫')" class="pin-btn" style="width:100%;border-radius:12px;font-size:18px;">⌫</button>
+      <button onclick="pinSetupPress('1')" class="pin-btn" style="width:100%;border-radius:12px;">1</button><button onclick="pinSetupPress('2')" class="pin-btn" style="width:100%;border-radius:12px;">2</button><button onclick="pinSetupPress('3')" class="pin-btn" style="width:100%;border-radius:12px;">3</button>
+      <button onclick="pinSetupPress('4')" class="pin-btn" style="width:100%;border-radius:12px;">4</button><button onclick="pinSetupPress('5')" class="pin-btn" style="width:100%;border-radius:12px;">5</button><button onclick="pinSetupPress('6')" class="pin-btn" style="width:100%;border-radius:12px;">6</button>
+      <button onclick="pinSetupPress('7')" class="pin-btn" style="width:100%;border-radius:12px;">7</button><button onclick="pinSetupPress('8')" class="pin-btn" style="width:100%;border-radius:12px;">8</button><button onclick="pinSetupPress('9')" class="pin-btn" style="width:100%;border-radius:12px;">9</button>
+      <div></div><button onclick="pinSetupPress('0')" class="pin-btn" style="width:100%;border-radius:12px;">0</button><button onclick="pinSetupPress('⌫')" class="pin-btn" style="width:100%;border-radius:12px;font-size:18px;">⌫</button>
     </div>
     <button id="pin-disable-btn" onclick="disablePIN()" class="btn-outline" style="color:var(--red);border-color:rgba(248,113,113,0.3);display:none;">Remove PIN Lock</button>
     <button class="btn-outline" onclick="closeModal('pin-setup-modal')">Cancel</button>
@@ -520,18 +489,15 @@ body {
 <div class="modal-overlay" id="sms-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">📱 SMS Paste Parser</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Copy a bank SMS and paste below — app will auto-fill your expense</div>
+    <div class="modal-title">📱 SMS Parser</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste any bank SMS — expense, income, bill, or CC payment</div>
     <div class="form-group">
-      <label class="form-label">Paste SMS Here</label>
-      <textarea class="form-input" id="sms-input" rows="4" placeholder="e.g. INR 1,500.00 debited from A/c XX1234 on 01-06-26 at SWIGGY. Avl Bal: INR 23,456.00" style="resize:none;height:100px;font-size:13px;"></textarea>
+      <label class="form-label">Paste SMS</label>
+      <textarea class="form-input" id="sms-input" rows="4" placeholder="Paste your bank SMS here..." style="resize:none;height:90px;font-size:13px;"></textarea>
     </div>
     <button class="btn-primary" onclick="parseSMS()" style="margin-bottom:12px;">🔍 Parse SMS</button>
-
     <div id="sms-parsed" style="display:none;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Parsed Result — Confirm & Save</div>
       <div id="sms-parsed-rows" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:14px;"></div>
-
       <div class="form-group">
         <label class="form-label" id="sms-cat-label">Category</label>
         <div class="cat-grid" id="sms-cat-grid" style="margin-bottom:0;"></div>
@@ -540,7 +506,7 @@ body {
         <label class="form-label">Account</label>
         <div class="select-wrap"><select class="form-select" id="sms-account"></select></div>
       </div>
-      <button class="btn-primary" onclick="saveSMSExpense()">✅ Save Expense</button>
+      <button class="btn-primary" onclick="saveSMSExpense()">✅ Save</button>
     </div>
     <button class="btn-outline" onclick="closeModal('sms-modal')">Cancel</button>
   </div>
@@ -575,7 +541,7 @@ body {
         <div class="val red" id="dash-liabilities">₹0</div>
       </div>
       <div class="hero-stat">
-        <div class="lbl" id="dash-this-month-lbl">THIS MONTH</div>
+        <div class="lbl">THIS MONTH</div>
         <div class="val" id="dash-month-spend" style="color:var(--orange)">₹0</div>
       </div>
     </div>
@@ -608,11 +574,9 @@ body {
     <div id="dash-uae"></div>
   </div>
 
-  <!-- Income this month -->
+  <!-- Income This Month -->
   <div class="sec-hdr"><h2>💰 Income This Month</h2><a href="#" onclick="switchPage('income');return false">See all</a></div>
-  <div class="card">
-    <div id="dash-income"></div>
-  </div>
+  <div class="card"><div id="dash-income"></div></div>
 
   <!-- Money Lent -->
   <div class="sec-hdr"><h2>🤝 Money Lent</h2><a href="#" onclick="switchPage('lent');return false">See all</a></div>
@@ -763,54 +727,30 @@ body {
 <div class="page" id="page-income">
   <div class="topbar">
     <div class="topbar-row">
-      <div>
-        <h1>💰 Income</h1>
-        <div class="sub" id="income-sub">Track all your income sources</div>
-      </div>
+      <div><h1>💰 Income</h1><div class="sub" id="income-sub">Track your income</div></div>
       <button onclick="openIncomeModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
     </div>
   </div>
-
-  <!-- Month selector -->
   <div class="month-selector" style="padding-top:14px">
     <button class="month-btn" onclick="changeIncomeMonth(-1)">‹</button>
     <div class="month-label" id="income-month-label">June 2026</div>
     <button class="month-btn" onclick="changeIncomeMonth(1)">›</button>
   </div>
-
-  <!-- Summary stats -->
   <div class="exp-summary">
-    <div class="exp-stat">
-      <div class="lbl">Total Income</div>
-      <div class="val" id="income-total" style="color:var(--green)">₹0</div>
-    </div>
-    <div class="exp-stat">
-      <div class="lbl">Expenses</div>
-      <div class="val" id="income-exp" style="color:var(--red)">₹0</div>
-    </div>
-    <div class="exp-stat">
-      <div class="lbl">Saved</div>
-      <div class="val" id="income-saved" style="color:var(--gold)">₹0</div>
-    </div>
+    <div class="exp-stat"><div class="lbl">Total Income</div><div class="val" id="income-total" style="color:var(--green)">₹0</div></div>
+    <div class="exp-stat"><div class="lbl">Expenses</div><div class="val" id="income-exp" style="color:var(--red)">₹0</div></div>
+    <div class="exp-stat"><div class="lbl">Saved</div><div class="val" id="income-saved" style="color:var(--gold)">₹0</div></div>
   </div>
-
-  <!-- Savings rate bar -->
   <div style="margin:0 16px 14px;">
     <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
       <span style="color:var(--text3)">Savings Rate</span>
       <span id="income-savings-rate" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--gold)">0%</span>
     </div>
-    <div class="prog-bar">
-      <div class="prog-fill" id="income-savings-bar" style="width:0%;background:var(--gold)"></div>
-    </div>
+    <div class="prog-bar"><div class="prog-fill" id="income-savings-bar" style="width:0%;background:var(--gold)"></div></div>
   </div>
-
-  <!-- Category breakdown -->
   <div class="sec-hdr"><h2>📊 By Source</h2></div>
   <div id="income-breakdown" style="padding:0 16px 14px;"></div>
-
-  <!-- Income list -->
-  <div class="sec-hdr"><h2>Recent Income</h2></div>
+  <div class="sec-hdr"><h2>Transactions</h2></div>
   <div id="income-list" style="padding:0 16px;"></div>
 </div>
 
@@ -842,7 +782,7 @@ body {
     </div>
     <div class="settings-item" onclick="openSMSModal()">
       <div class="settings-icon" style="background:rgba(96,165,250,0.1)">📱</div>
-      <div class="settings-info"><div class="k">SMS Paste Parser</div><div class="v">Paste bank SMS to auto-add expense</div></div>
+      <div class="settings-info"><div class="k">SMS Parser</div><div class="v">Auto-detect expenses from SMS</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
@@ -901,13 +841,13 @@ body {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
     <span>Transfers</span>
   </button>
-  <button class="nav-btn" onclick="switchPage('accounts')" id="nav-accounts">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Accounts</span>
-  </button>
   <button class="nav-btn" onclick="switchPage('income')" id="nav-income">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
     <span>Income</span>
+  </button>
+  <button class="nav-btn" onclick="switchPage('accounts')" id="nav-accounts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Accounts</span>
   </button>
   <button class="nav-btn" onclick="switchPage('lent')" id="nav-lent">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -1125,57 +1065,29 @@ body {
   </div>
 </div>
 
-<!-- Add Income Modal -->
+<!-- Income Modal -->
 <div class="modal-overlay" id="income-modal">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="income-modal-title">💰 Add Income</div>
-
-    <div class="form-group">
-      <label class="form-label">Source / Description</label>
-      <input type="text" class="form-input" id="inc-desc" placeholder="e.g. Monthly Salary, Freelance, Rent" autocomplete="off">
+    <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="inc-desc" placeholder="e.g. Monthly Salary"></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <div class="select-wrap"><select class="form-select" id="inc-category">
+        <option value="Salary">💼 Salary</option><option value="Freelance">💻 Freelance</option>
+        <option value="Business">🏪 Business</option><option value="Rental Income">🏠 Rental Income</option>
+        <option value="Investment">📈 Investment</option><option value="Interest">🏦 Interest</option>
+        <option value="Gift">🎁 Gift / Bonus</option><option value="UAE Remittance">🇦🇪 UAE Remittance</option>
+        <option value="Other">📦 Other</option>
+      </select></div>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">Category</label>
-      <div class="select-wrap">
-        <select class="form-select" id="inc-category">
-          <option value="Salary">💼 Salary</option>
-          <option value="Freelance">💻 Freelance</option>
-          <option value="Business">🏪 Business</option>
-          <option value="Rental Income">🏠 Rental Income</option>
-          <option value="Investment">📈 Investment Returns</option>
-          <option value="Interest">🏦 Bank Interest</option>
-          <option value="Gift">🎁 Gift / Bonus</option>
-          <option value="UAE Remittance">🇦🇪 UAE Remittance</option>
-          <option value="Other">📦 Other</option>
-        </select>
-      </div>
-    </div>
-
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Amount (₹)</label>
-        <input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date</label>
-        <input type="date" class="form-input" id="inc-date">
-      </div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="inc-date"></div>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">Credited To Account</label>
-      <div class="select-wrap">
-        <select class="form-select" id="inc-account"></select>
-      </div>
+    <div class="form-group"><label class="form-label">Credited To Account</label>
+      <div class="select-wrap"><select class="form-select" id="inc-account"></select></div>
     </div>
-
-    <div class="form-group">
-      <label class="form-label">Note (optional)</label>
-      <input type="text" class="form-input" id="inc-note" placeholder="e.g. April salary, Q1 bonus">
-    </div>
-
+    <div class="form-group"><label class="form-label">Note (optional)</label><input type="text" class="form-input" id="inc-note" placeholder="e.g. April salary"></div>
     <button class="btn-primary" onclick="saveIncome()">Save Income</button>
     <button class="btn-outline" onclick="closeModal('income-modal')">Cancel</button>
   </div>
@@ -1389,21 +1301,12 @@ function renderDashboard() {
   const now = new Date();
   const monthExps = monthExpenses(now.getMonth(), now.getFullYear());
   const monthSpend = monthExps.reduce((s,e) => s+e.amount, 0);
-  const monthIncTotal = monthIncome(now.getMonth(), now.getFullYear()).reduce((s,i)=>s+i.amount, 0);
 
   document.getElementById('dash-networth').textContent = (netWorth<0?'- ':'')+fmt(Math.abs(netWorth));
   document.getElementById('dash-networth').style.color = netWorth < 0 ? 'var(--red)' : 'var(--text)';
   document.getElementById('dash-assets').textContent = fmt(assets);
   document.getElementById('dash-liabilities').textContent = fmt(liabilities);
   document.getElementById('dash-month-spend').textContent = fmt(monthSpend);
-  // Update THIS MONTH label to show context
-  const netMonthEl = document.getElementById('dash-this-month-lbl');
-  if(netMonthEl) netMonthEl.textContent = monthIncTotal > 0 ? 'NET THIS MONTH' : 'SPENT THIS MONTH';
-  const netMonthVal = document.getElementById('dash-month-spend');
-  if(monthIncTotal > 0) {
-    const net = monthIncTotal - monthSpend;
-    if(netMonthVal) { netMonthVal.textContent = (net>=0?'+':'-')+fmt(Math.abs(net)); netMonthVal.style.color = net>=0?'var(--green)':'var(--red)'; }
-  }
 
   // Chips
   const chips = document.getElementById('dash-chips');
@@ -1413,7 +1316,7 @@ function renderDashboard() {
     <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE Assets</div><div class="cval" style="color:#60A5FA">${fmt(uaeSavings)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
     <div class="chip" onclick="switchPage('lent')"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">Lent Out</div><div class="cval" style="color:#60A5FA">${fmt(lentOutstanding)}</div></div></div>
-    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt(monthIncTotal)}</div></div></div>
+    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+i.amount,0))}</div></div></div>
   `;
 
   // Due soon
@@ -1581,8 +1484,8 @@ function renderDashboard() {
   const lastUAE = uaeEl.lastElementChild;
   if(lastUAE) lastUAE.style.borderBottom = 'none';
 
-  // Render income + lent sections on dashboard
-  renderDashIncome();
+  // Render income + lent sections
+  try { renderDashIncome(); } catch(e) {}
   renderDashLent();
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
@@ -3162,35 +3065,6 @@ function renderLent() {
   }).join('');
 }
 
-function renderDashIncome() {
-  const el = document.getElementById('dash-income');
-  if(!el) return;
-  const now = new Date();
-  const incomes = monthIncome(now.getMonth(), now.getFullYear());
-  if(incomes.length===0) {
-    el.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="icon" style="font-size:28px">💰</div>No income logged this month</div>';
-    return;
-  }
-  // Group by category
-  const catTotals = {};
-  incomes.forEach(i => { catTotals[i.category]=(catTotals[i.category]||0)+i.amount; });
-  const total = incomes.reduce((s,i)=>s+i.amount,0);
-  el.innerHTML = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => {
-    const c = getIncCat(cat);
-    return `
-    <div class="acct-item" onclick="switchPage('income')">
-      <div class="acct-icon" style="background:${c.color}20">${c.emoji}</div>
-      <div class="acct-info">
-        <div class="acct-name">${cat}</div>
-        <div class="acct-type">${((amt/total)*100).toFixed(0)}% of income</div>
-      </div>
-      <div class="acct-bal">
-        <div class="amount" style="color:${c.color}">+${fmt(amt)}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
 function renderDashLent() {
   if(!D.lent) D.lent = [];
   const el = document.getElementById('dash-lent');
@@ -3226,181 +3100,144 @@ function renderDashLent() {
 // Already handled in renderDashboard net worth
 
 // ══════════════════════════════════════════════════════════
-// INCOME TRACKER
+// INCOME CATEGORIES
 // ══════════════════════════════════════════════════════════
 const INCOME_CATEGORIES = [
-  { name:'Salary',        emoji:'💼', color:'#34D399' },
-  { name:'Freelance',     emoji:'💻', color:'#60A5FA' },
-  { name:'Business',      emoji:'🏪', color:'#D4A843' },
-  { name:'Rental Income', emoji:'🏠', color:'#A78BFA' },
-  { name:'Investment',    emoji:'📈', color:'#2DD4BF' },
-  { name:'Interest',      emoji:'🏦', color:'#60A5FA' },
-  { name:'Gift',          emoji:'🎁', color:'#F472B6' },
-  { name:'UAE Remittance',emoji:'🇦🇪', color:'#34D399' },
-  { name:'Other',         emoji:'📦', color:'#94A3B8' },
+  {name:'Salary',emoji:'💼',color:'#34D399'},{name:'Freelance',emoji:'💻',color:'#60A5FA'},
+  {name:'Business',emoji:'🏪',color:'#D4A843'},{name:'Rental Income',emoji:'🏠',color:'#A78BFA'},
+  {name:'Investment',emoji:'📈',color:'#2DD4BF'},{name:'Interest',emoji:'🏦',color:'#60A5FA'},
+  {name:'Gift',emoji:'🎁',color:'#F472B6'},{name:'UAE Remittance',emoji:'🇦🇪',color:'#34D399'},
+  {name:'Other',emoji:'📦',color:'#94A3B8'},
 ];
+function getIncCat(name){return INCOME_CATEGORIES.find(c=>c.name===name)||INCOME_CATEGORIES[8];}
+function monthIncome(m,y){return(D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===m&&iy===y;});}
 
-let incViewMonth = new Date().getMonth();
-let incViewYear  = new Date().getFullYear();
-let editingIncId = null;
+let incViewMonth=new Date().getMonth(), incViewYear=new Date().getFullYear(), editingIncId=null;
 
-function getIncCat(name) {
-  return INCOME_CATEGORIES.find(c=>c.name===name) || INCOME_CATEGORIES[8];
-}
-
-function monthIncome(m, y) {
-  return (D.income||[]).filter(i => {
-    const [iy, im] = i.date.split('-').map(Number);
-    return (im-1)===m && iy===y;
-  });
-}
-
-function openIncomeModal(id) {
-  editingIncId = id || null;
-  const entry = id ? (D.income||[]).find(i=>i.id===id) : null;
-  document.getElementById('income-modal-title').textContent = id ? '✏️ Edit Income' : '💰 Add Income';
-  document.getElementById('inc-desc').value    = entry ? entry.desc    : '';
-  document.getElementById('inc-amount').value  = entry ? entry.amount  : '';
-  document.getElementById('inc-date').value    = entry ? entry.date    : today();
-  document.getElementById('inc-note').value    = entry ? (entry.note||'') : '';
-  document.getElementById('inc-category').value = entry ? entry.category : 'Salary';
-  const opts = allAccountOptions().map(o=>`<option value="${o.value}" ${entry&&entry.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
-  document.getElementById('inc-account').innerHTML = opts;
+function openIncomeModal(id){
+  editingIncId=id||null;
+  const e=id?(D.income||[]).find(i=>i.id===id):null;
+  document.getElementById('income-modal-title').textContent=id?'✏️ Edit Income':'💰 Add Income';
+  document.getElementById('inc-desc').value=e?e.desc:'';
+  document.getElementById('inc-amount').value=e?e.amount:'';
+  document.getElementById('inc-date').value=e?e.date:today();
+  document.getElementById('inc-note').value=e?(e.note||''):'';
+  document.getElementById('inc-category').value=e?e.category:'Salary';
+  const opts=allAccountOptions().map(o=>`<option value="${o.value}" ${e&&e.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
+  document.getElementById('inc-account').innerHTML=opts;
   openModal('income-modal');
 }
 
-function saveIncome() {
-  const desc    = document.getElementById('inc-desc').value.trim();
-  const amount  = parseFloat(document.getElementById('inc-amount').value);
-  const date    = document.getElementById('inc-date').value;
-  const cat     = document.getElementById('inc-category').value;
-  const accountId = document.getElementById('inc-account').value;
-  const note    = document.getElementById('inc-note').value.trim();
-
-  if(!desc)             { alert('Enter a description'); return; }
-  if(!amount||amount<=0){ alert('Enter a valid amount'); return; }
-
-  if(editingIncId) {
-    // Edit — reverse old account credit then apply new
-    const old = (D.income||[]).find(i=>i.id===editingIncId);
-    if(old) {
-      deductFromAccount(old.accountId, old.amount); // reverse old credit
-    }
-    const idx = (D.income||[]).findIndex(i=>i.id===editingIncId);
-    if(idx>=0) D.income[idx] = { id:editingIncId, desc, amount, date, category:cat, accountId, note };
-  } else {
-    if(!D.income) D.income = [];
-    D.income.push({ id:Date.now().toString(), desc, amount, date, category:cat, accountId, note });
+function saveIncome(){
+  const desc=document.getElementById('inc-desc').value.trim();
+  const amount=parseFloat(document.getElementById('inc-amount').value);
+  const date=document.getElementById('inc-date').value;
+  const cat=document.getElementById('inc-category').value;
+  const accountId=document.getElementById('inc-account').value;
+  const note=document.getElementById('inc-note').value.trim();
+  if(!desc){alert('Enter a description');return;}
+  if(!amount||amount<=0){alert('Enter a valid amount');return;}
+  if(!D.income)D.income=[];
+  if(editingIncId){
+    const old=(D.income||[]).find(i=>i.id===editingIncId);
+    if(old)deductFromAccount(old.accountId,old.amount);
+    const idx=(D.income||[]).findIndex(i=>i.id===editingIncId);
+    if(idx>=0)D.income[idx]={id:editingIncId,desc,amount,date,category:cat,accountId,note};
+  }else{
+    D.income.push({id:Date.now().toString(),desc,amount,date,category:cat,accountId,note});
   }
-  // Credit the account
-  creditToAccount(accountId, amount);
-  save();
-  closeModal('income-modal');
-  renderIncome();
-  renderDashboard();
-  showToast(`${fmt(amount)} credited to ${allAccountOptions().find(o=>o.value===accountId)?.label||'account'}`);
+  creditToAccount(accountId,amount);
+  save();closeModal('income-modal');renderIncome();renderDashboard();
+  showToast(`+${fmt(amount)} credited to ${getAcctName(accountId)}`);
 }
 
-function deleteIncome(id) {
-  if(!confirm('Delete this income entry?')) return;
-  const entry = (D.income||[]).find(i=>i.id===id);
-  if(entry) {
-    deductFromAccount(entry.accountId, entry.amount); // reverse credit
-    showToast('Income entry deleted and balance reversed');
-  }
-  D.income = (D.income||[]).filter(i=>i.id!==id);
-  save(); renderIncome(); renderDashboard();
+function deleteIncome(id){
+  if(!confirm('Delete this income entry?'))return;
+  const e=(D.income||[]).find(i=>i.id===id);
+  if(e)deductFromAccount(e.accountId,e.amount);
+  D.income=(D.income||[]).filter(i=>i.id!==id);
+  save();renderIncome();renderDashboard();
 }
 
-function changeIncomeMonth(dir) {
-  incViewMonth += dir;
-  if(incViewMonth > 11) { incViewMonth=0; incViewYear++; }
-  if(incViewMonth < 0)  { incViewMonth=11; incViewYear--; }
+function changeIncomeMonth(dir){
+  incViewMonth+=dir;
+  if(incViewMonth>11){incViewMonth=0;incViewYear++;}
+  if(incViewMonth<0){incViewMonth=11;incViewYear--;}
   renderIncome();
 }
 
-function creditToAccount(accountId, amount) {
-  // Opposite of deductFromAccount — adds to account balance
-  const b = D.accounts.indBanks.find(a=>a.id===accountId);
-  if(b) { b.balance = (b.balance||0) + amount; if(b.appBalance!==undefined) b.appBalance=b.balance; return; }
-  const c = D.accounts.indCards.find(a=>a.id===accountId);
-  if(c) { c.outstanding = Math.max(0,(c.outstanding||0)-amount); c.totalDue=Math.max(0,(c.totalDue||0)-amount); return; }
-  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  if(u) {
-    if(u.type!=='Credit Card') u.balanceAED=(u.balanceAED||0)+(amount/D.aedRate);
-    else { u.outstandingAED=Math.max(0,(u.outstandingAED||0)-(amount/D.aedRate)); u.balanceAED=u.outstandingAED; }
-  }
+function creditToAccount(accountId,amount){
+  const b=D.accounts.indBanks.find(a=>a.id===accountId);
+  if(b){b.balance=(b.balance||0)+amount;if(b.appBalance!==undefined)b.appBalance=b.balance;return;}
+  const c=D.accounts.indCards.find(a=>a.id===accountId);
+  if(c){c.outstanding=Math.max(0,(c.outstanding||0)-amount);c.totalDue=Math.max(0,(c.totalDue||0)-amount);return;}
+  const u=D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  if(u){if(u.type!=='Credit Card')u.balanceAED=(u.balanceAED||0)+(amount/D.aedRate);else{u.outstandingAED=Math.max(0,(u.outstandingAED||0)-(amount/D.aedRate));u.balanceAED=u.outstandingAED;}}
 }
 
-function renderIncome() {
-  if(!D.income) D.income=[];
-  document.getElementById('income-month-label').textContent = MONTHS[incViewMonth]+' '+incViewYear;
+function getAcctName(id){return allAccountOptions().find(o=>o.value===id)?.label||'account';}
 
-  const incomes  = monthIncome(incViewMonth, incViewYear);
-  const exps     = monthExpenses(incViewMonth, incViewYear);
-  const totalInc = incomes.reduce((s,i)=>s+i.amount, 0);
-  const totalExp = exps.reduce((s,e)=>s+e.amount, 0);
-  const saved    = totalInc - totalExp;
-  const savRate  = totalInc > 0 ? Math.max(0, saved/totalInc) : 0;
+function renderDashIncome(){
+  const el=document.getElementById('dash-income');
+  if(!el)return;
+  const now=new Date();
+  const incomes=monthIncome(now.getMonth(),now.getFullYear());
+  if(incomes.length===0){el.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="icon" style="font-size:28px">💰</div>No income this month</div>';return;}
+  const catTotals={};
+  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
+  const total=incomes.reduce((s,i)=>s+i.amount,0);
+  el.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+    const c=getIncCat(cat);
+    return `<div class="acct-item" onclick="switchPage('income')">
+      <div class="acct-icon" style="background:${c.color}20">${c.emoji}</div>
+      <div class="acct-info"><div class="acct-name">${cat}</div><div class="acct-type">${((amt/total)*100).toFixed(0)}% of income</div></div>
+      <div class="acct-bal"><div class="amount" style="color:${c.color}">+${fmt(amt)}</div></div>
+    </div>`;
+  }).join('');
+}
 
-  document.getElementById('income-total').textContent    = fmt(totalInc);
-  document.getElementById('income-exp').textContent      = fmt(totalExp);
-  document.getElementById('income-saved').textContent    = saved>=0 ? fmt(saved) : '-'+fmt(Math.abs(saved));
-  document.getElementById('income-saved').style.color    = saved>=0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('income-savings-rate').textContent = (savRate*100).toFixed(0)+'%';
-  document.getElementById('income-savings-rate').style.color = savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)';
-  const bar = document.getElementById('income-savings-bar');
-  if(bar) { bar.style.width=Math.min(savRate*100,100)+'%'; bar.style.background=savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)'; }
+function renderIncome(){
+  if(!D.income)D.income=[];
+  document.getElementById('income-month-label').textContent=MONTHS[incViewMonth]+' '+incViewYear;
+  const incomes=monthIncome(incViewMonth,incViewYear);
+  const exps=monthExpenses(incViewMonth,incViewYear);
+  const totalInc=incomes.reduce((s,i)=>s+i.amount,0);
+  const totalExp=exps.reduce((s,e)=>s+e.amount,0);
+  const saved=totalInc-totalExp;
+  const savRate=totalInc>0?Math.max(0,saved/totalInc):0;
+  document.getElementById('income-total').textContent=fmt(totalInc);
+  document.getElementById('income-exp').textContent=fmt(totalExp);
+  document.getElementById('income-saved').textContent=saved>=0?fmt(saved):'-'+fmt(Math.abs(saved));
+  document.getElementById('income-saved').style.color=saved>=0?'var(--green)':'var(--red)';
+  document.getElementById('income-savings-rate').textContent=(savRate*100).toFixed(0)+'%';
+  document.getElementById('income-savings-rate').style.color=savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)';
+  const bar=document.getElementById('income-savings-bar');
+  if(bar){bar.style.width=Math.min(savRate*100,100)+'%';bar.style.background=savRate>=0.2?'var(--green)':savRate>=0.1?'var(--gold)':'var(--red)';}
+  document.getElementById('income-sub').textContent=`${MONTHS_SHORT[incViewMonth]} ${incViewYear} · ${incomes.length} entries · Savings ${(savRate*100).toFixed(0)}%`;
 
-  document.getElementById('income-sub').textContent =
-    `${MONTHS_SHORT[incViewMonth]} ${incViewYear} · ${incomes.length} entries · Savings ${(savRate*100).toFixed(0)}%`;
-
-  // Category breakdown
-  const catTotals = {};
-  incomes.forEach(i => { catTotals[i.category]=(catTotals[i.category]||0)+i.amount; });
-  const breakdown = document.getElementById('income-breakdown');
-  if(Object.keys(catTotals).length === 0) {
-    breakdown.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0;">No income this month</div>';
-  } else {
-    breakdown.innerHTML = Object.entries(catTotals)
-      .sort((a,b)=>b[1]-a[1])
-      .map(([cat,amt]) => {
-        const c = getIncCat(cat);
-        const pct = totalInc>0 ? amt/totalInc : 0;
-        return `
-        <div style="background:var(--surface);border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:18px">${c.emoji}</span>
-              <span style="font-size:13px;font-weight:500">${cat}</span>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${c.color}">${fmt(amt)}</div>
-              <div style="font-size:10px;color:var(--text3)">${(pct*100).toFixed(0)}% of total</div>
-            </div>
-          </div>
-          <div class="prog-bar"><div class="prog-fill" style="width:${pct*100}%;background:${c.color}"></div></div>
-        </div>`;
-      }).join('');
-  }
-
-  // Income list
-  const el = document.getElementById('income-list');
-  const sorted = [...incomes].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  if(sorted.length===0) {
-    el.innerHTML='<div class="empty-state"><div class="icon">💰</div>No income in '+MONTHS[incViewMonth]+'.<br>Tap + to add one!</div>';
-    return;
-  }
-  el.innerHTML = sorted.map(i => {
-    const c = getIncCat(i.category);
-    const acc = getAcctById(i.accountId);
-    return `
-    <div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;">
-      <div style="width:38px;height:38px;border-radius:10px;background:${c.color}20;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${c.emoji}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.desc}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(i.date)} · ${acc?acc.name:'Unknown'}${i.note?' · '+i.note:''}</div>
+  const catTotals={};
+  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
+  const breakdown=document.getElementById('income-breakdown');
+  if(Object.keys(catTotals).length===0){breakdown.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0;">No income this month</div>';
+  }else{breakdown.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+    const c=getIncCat(cat);const pct=totalInc>0?amt/totalInc:0;
+    return `<div style="background:var(--surface);border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px">${c.emoji}</span><span style="font-size:13px;font-weight:500">${cat}</span></div>
+        <div style="text-align:right;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${c.color}">${fmt(amt)}</div><div style="font-size:10px;color:var(--text3)">${(pct*100).toFixed(0)}%</div></div>
       </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct*100}%;background:${c.color}"></div></div>
+    </div>`;}).join('');}
+
+  const el=document.getElementById('income-list');
+  const sorted=[...incomes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(sorted.length===0){el.innerHTML='<div class="empty-state"><div class="icon">💰</div>No income in '+MONTHS[incViewMonth]+'.<br>Tap + to add!</div>';return;}
+  el.innerHTML=sorted.map(i=>{
+    const c=getIncCat(i.category);const acc=getAcctById(i.accountId);
+    return `<div style="background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:${c.color}20;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${c.emoji}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.desc}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(i.date)} · ${acc?acc.name:'Unknown'}${i.note?' · '+i.note:''}</div></div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">+${fmt(i.amount)}</div>
         <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end;">
@@ -3408,501 +3245,362 @@ function renderIncome() {
           <button onclick="deleteIncome('${i.id}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
         </div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`;}).join('');
 }
-
-// ── Add income to dashboard dashboard chips & hero ───────────────────────────
-// Add income chip and update net worth to include monthly income context
-// (Net worth already correct via account balances — income shows in chips)
 
 // ══════════════════════════════════════════════════════════
 // PIN LOCK
 // ══════════════════════════════════════════════════════════
-let pinBuffer = '';
-let pinAttempts = 0;
-let pinSetupBuffer = '';
-let pinSetupFirst = '';
-let pinSetupStage = 'enter'; // 'enter' | 'confirm'
+let pinBuffer='',pinAttempts=0,pinSetupBuffer='',pinSetupFirst='',pinSetupStage='enter';
 
-function showPinScreen(show) {
-  const el = document.getElementById('pin-screen');
-  if(!el) return;
-  el.style.display = show ? 'flex' : 'none';
-  if(show) {
-    pinBuffer = ''; pinAttempts = 0;
-    updatePinDots();
-    const sub = document.getElementById('pin-subtitle');
-    if(sub) sub.textContent = 'Enter your PIN';
-    const forgot = document.getElementById('pin-forgot');
-    if(forgot) forgot.style.display = 'none';
-  }
+function showPinScreen(show){
+  const el=document.getElementById('pin-screen');if(!el)return;
+  el.style.display=show?'flex':'none';
+  if(show){pinBuffer='';pinAttempts=0;updatePinDots();
+    const sub=document.getElementById('pin-subtitle');if(sub)sub.textContent='Enter your PIN';
+    const forgot=document.getElementById('pin-forgot');if(forgot)forgot.style.display='none';}
 }
-
-function updatePinDots() {
-  for(let i=0;i<4;i++) {
-    const d = document.getElementById('dot-'+i);
-    if(d) { d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : ''); }
-  }
+function updatePinDots(){for(let i=0;i<4;i++){const d=document.getElementById('dot-'+i);if(d)d.className='pin-dot'+(i<pinBuffer.length?' filled':'');}}
+function pinPress(val){
+  if(val==='⌫'){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();return;}
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=val;updatePinDots();
+  if(pinBuffer.length===4){setTimeout(()=>{
+    const saved=localStorage.getItem('fintrack_pin');
+    if(pinBuffer===saved){for(let i=0;i<4;i++){const d=document.getElementById('dot-'+i);if(d)d.className='pin-dot success';}setTimeout(()=>{showPinScreen(false);pinBuffer='';pinAttempts=0;},300);}
+    else{pinAttempts++;for(let i=0;i<4;i++){const d=document.getElementById('dot-'+i);if(d)d.className='pin-dot error';}
+      const sub=document.getElementById('pin-subtitle');if(sub)sub.textContent=pinAttempts>=3?`Wrong PIN (${pinAttempts} attempts)`:'Wrong PIN. Try again.';
+      const forgot=document.getElementById('pin-forgot');if(forgot&&pinAttempts>=3)forgot.style.display='block';
+      setTimeout(()=>{pinBuffer='';updatePinDots();},600);}},100);}
 }
-
-function pinPress(val) {
-  if(val === '⌫') { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); return; }
-  if(pinBuffer.length >= 4) return;
-  pinBuffer += val;
-  updatePinDots();
-  if(pinBuffer.length === 4) {
-    setTimeout(() => {
-      const saved = localStorage.getItem('fintrack_pin');
-      if(pinBuffer === saved) {
-        for(let i=0;i<4;i++) { const d=document.getElementById('dot-'+i); if(d) d.className='pin-dot success'; }
-        setTimeout(() => { showPinScreen(false); pinBuffer=''; pinAttempts=0; }, 300);
-      } else {
-        pinAttempts++;
-        for(let i=0;i<4;i++) { const d=document.getElementById('dot-'+i); if(d) d.className='pin-dot error'; }
-        const sub = document.getElementById('pin-subtitle');
-        if(sub) sub.textContent = pinAttempts>=3 ? `Wrong PIN (${pinAttempts} attempts)` : 'Wrong PIN. Try again.';
-        const forgot = document.getElementById('pin-forgot');
-        if(forgot && pinAttempts>=3) forgot.style.display = 'block';
-        setTimeout(() => { pinBuffer=''; updatePinDots(); }, 600);
-      }
-    }, 100);
-  }
+function forgotPin(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');showPinScreen(false);updatePinStatus();showToast('PIN removed');}}
+function updateSetupDots(){for(let i=0;i<4;i++){const d=document.getElementById('sdot-'+i);if(d)d.className='pin-dot'+(i<pinSetupBuffer.length?' filled':'');}}
+function pinSetupPress(val){
+  if(val==='⌫'){pinSetupBuffer=pinSetupBuffer.slice(0,-1);updateSetupDots();return;}
+  if(pinSetupBuffer.length>=4)return;
+  pinSetupBuffer+=val;updateSetupDots();
+  if(pinSetupBuffer.length===4){setTimeout(()=>{
+    if(pinSetupStage==='enter'){pinSetupFirst=pinSetupBuffer;pinSetupBuffer='';pinSetupStage='confirm';
+      const t=document.getElementById('pin-setup-title');const s=document.getElementById('pin-setup-sub');
+      if(t)t.textContent='🔐 Confirm PIN';if(s)s.textContent='Enter the same PIN again';updateSetupDots();}
+    else{if(pinSetupBuffer===pinSetupFirst){localStorage.setItem('fintrack_pin',pinSetupBuffer);
+        closeModal('pin-setup-modal');updatePinStatus();pinSetupBuffer='';pinSetupFirst='';pinSetupStage='enter';
+        showToast('✅ PIN enabled!');}
+      else{for(let i=0;i<4;i++){const d=document.getElementById('sdot-'+i);if(d)d.className='pin-dot error';}
+        setTimeout(()=>{pinSetupBuffer='';pinSetupFirst='';pinSetupStage='enter';
+          const t=document.getElementById('pin-setup-title');const s=document.getElementById('pin-setup-sub');
+          if(t)t.textContent='🔐 Set PIN';if(s)s.textContent="PINs didn't match. Try again.";updateSetupDots();},700);}}},100);}
 }
-
-function forgotPin() {
-  if(confirm('Remove PIN lock? You can set a new one in Settings.')) {
-    localStorage.removeItem('fintrack_pin');
-    showPinScreen(false);
-    updatePinStatus();
-    showToast('PIN removed. Set a new one in Settings.');
-  }
+function openPinSetup(){
+  pinSetupBuffer='';pinSetupFirst='';pinSetupStage='enter';
+  const t=document.getElementById('pin-setup-title');const s=document.getElementById('pin-setup-sub');
+  const btn=document.getElementById('pin-disable-btn');
+  if(t)t.textContent='🔐 Set PIN';if(s)s.textContent='Choose a 4-digit PIN';
+  if(btn)btn.style.display=localStorage.getItem('fintrack_pin')?'block':'none';
+  updateSetupDots();openModal('pin-setup-modal');
 }
-
-// PIN Setup
-function updateSetupDots() {
-  for(let i=0;i<4;i++) {
-    const d = document.getElementById('sdot-'+i);
-    if(d) { d.className = 'pin-dot' + (i < pinSetupBuffer.length ? ' filled' : ''); }
-  }
-}
-
-function pinSetupPress(val) {
-  if(val === '⌫') { pinSetupBuffer = pinSetupBuffer.slice(0,-1); updateSetupDots(); return; }
-  if(pinSetupBuffer.length >= 4) return;
-  pinSetupBuffer += val;
-  updateSetupDots();
-  if(pinSetupBuffer.length === 4) {
-    setTimeout(() => {
-      if(pinSetupStage === 'enter') {
-        pinSetupFirst = pinSetupBuffer;
-        pinSetupBuffer = '';
-        pinSetupStage = 'confirm';
-        const title = document.getElementById('pin-setup-title');
-        const sub   = document.getElementById('pin-setup-sub');
-        if(title) title.textContent = '🔐 Confirm PIN';
-        if(sub)   sub.textContent   = 'Enter the same PIN again';
-        updateSetupDots();
-      } else {
-        if(pinSetupBuffer === pinSetupFirst) {
-          localStorage.setItem('fintrack_pin', pinSetupBuffer);
-          closeModal('pin-setup-modal');
-          updatePinStatus();
-          pinSetupBuffer=''; pinSetupFirst=''; pinSetupStage='enter';
-          showToast('✅ PIN enabled! App will lock when you switch away.');
-        } else {
-          for(let i=0;i<4;i++) { const d=document.getElementById('sdot-'+i); if(d) d.className='pin-dot error'; }
-          setTimeout(() => {
-            pinSetupBuffer=''; pinSetupFirst=''; pinSetupStage='enter';
-            const title=document.getElementById('pin-setup-title');
-            const sub=document.getElementById('pin-setup-sub');
-            if(title) title.textContent='🔐 Set PIN';
-            if(sub)   sub.textContent="PINs didn't match. Try again.";
-            updateSetupDots();
-          }, 700);
-        }
-      }
-    }, 100);
-  }
-}
-
-function openPinSetup() {
-  pinSetupBuffer=''; pinSetupFirst=''; pinSetupStage='enter';
-  const title=document.getElementById('pin-setup-title');
-  const sub=document.getElementById('pin-setup-sub');
-  const disableBtn=document.getElementById('pin-disable-btn');
-  if(title) title.textContent = '🔐 Set PIN';
-  if(sub)   sub.textContent   = 'Choose a 4-digit PIN to lock FinTrack';
-  if(disableBtn) disableBtn.style.display = localStorage.getItem('fintrack_pin') ? 'block' : 'none';
-  updateSetupDots();
-  openModal('pin-setup-modal');
-}
-
-function disablePIN() {
-  if(confirm('Remove PIN lock?')) {
-    localStorage.removeItem('fintrack_pin');
-    closeModal('pin-setup-modal');
-    updatePinStatus();
-    showToast('PIN lock removed');
-  }
-}
-
-function updatePinStatus() {
-  const el = document.getElementById('pin-status');
-  if(el) el.textContent = localStorage.getItem('fintrack_pin') ? '✅ Enabled — tap to change' : 'Not enabled';
-}
-
-// Lock when app goes to background
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden) {
-    localStorage.setItem('fintrack_last_active', Date.now().toString());
-  } else {
-    const pin = localStorage.getItem('fintrack_pin');
-    if(!pin) return;
-    const last = parseInt(localStorage.getItem('fintrack_last_active')||'0');
-    if(Date.now() - last > 30000) showPinScreen(true);
-  }
+function disablePIN(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');closeModal('pin-setup-modal');updatePinStatus();showToast('PIN removed');}}
+function updatePinStatus(){const el=document.getElementById('pin-status');if(el)el.textContent=localStorage.getItem('fintrack_pin')?'✅ Enabled — tap to change':'Not enabled';}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){localStorage.setItem('fintrack_last_active',Date.now().toString());}
+  else{const pin=localStorage.getItem('fintrack_pin');if(!pin)return;const last=parseInt(localStorage.getItem('fintrack_last_active')||'0');if(Date.now()-last>30000)showPinScreen(true);}
 });
 
 // ══════════════════════════════════════════════════════════
-// SMS PASTE PARSER
+// SMS PARSER
 // ══════════════════════════════════════════════════════════
-let smsParsed = null;
+let smsParsed=null;
+function openSMSModal(){smsParsed=null;const inp=document.getElementById('sms-input');const p=document.getElementById('sms-parsed');if(inp)inp.value='';if(p)p.style.display='none';openModal('sms-modal');}
 
-function openSMSModal() {
-  smsParsed = null;
-  const inp = document.getElementById('sms-input');
-  const parsed = document.getElementById('sms-parsed');
-  if(inp) inp.value = '';
-  if(parsed) parsed.style.display = 'none';
-  openModal('sms-modal');
-}
+function parseSMS(){
+  const sms=(document.getElementById('sms-input').value||'').trim();
+  if(!sms){alert('Paste an SMS first');return;}
+  const s=sms.replace(/\n/g,' ').replace(/\s+/g,' ');
+  let amount=0,txType='debit',acctHint='',availBal=null,availCredit=null,merchant='',date=today(),isUPI=false;
 
-function parseCCPaymentSMS(s, amount, acctHint, availCredit) {
-  // Find matching card
-  const allCards = [...D.accounts.indCards, ...D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card')];
-  let matchedCard = null;
-  if(acctHint) matchedCard = allCards.find(c => (c.name||'').includes(acctHint));
-  if(!matchedCard) matchedCard = allCards.find(c => c.outstanding > 0); // fallback: first card with balance
+  // Amount
+  const amtPats=[/(?:of|for)\s+(?:Rs\.?|INR|₹)\s*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,/(?:Rs\.?|INR|₹)[:\s]*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,/([\d,]+(?:\.\d{1,2})?)\s*(?:Rs\.?|INR|₹)/i,/bill\s+of\s+(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i];
+  for(const p of amtPats){const m=s.match(p);if(m){amount=parseFloat(m[1].replace(/,/g,''));break;}}
 
-  const cardOpts = allCards.map(c=>`<option value="${c.id}" ${matchedCard&&c.id===matchedCard.id?'selected':''}>${c.name} (${fmt(c.outstanding||0)} outstanding)</option>`).join('');
-  const bankOpts = allAccountOptions().filter(o => !allCards.find(c=>c.id===o.value))
-    .map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  // Type
+  if(/total\s*(?:amt\s*)?due|min\s*(?:amt\s*)?due|payable\s*by|payment\s*is\s*due|bill\s+has\s+been\s+generated|pay\s+your\s+bill/i.test(s)) txType='bill';
+  else if(/credited\s+to\s+your.*credit\s+card/i.test(s)) txType='cc_payment';
+  else if(/you.ve\s+paid|transfer\s+successful|transaction.*processed/i.test(s)) txType='cc_purchase';
+  else if(/credit\s+alert|credited|received|refund|cashback/i.test(s)) txType='credit';
+  else if(/UPI\s+debit|debited|debit|withdrawn/i.test(s)) txType='debit';
 
-  document.getElementById('sms-parsed-rows').innerHTML = `
-    <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--green);margin-bottom:8px;">✅ CREDIT CARD PAYMENT CONFIRMED</div>
-      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Payment Amount</span><span style="font-weight:700;color:var(--green)">₹${amount.toLocaleString('en-IN')}</span></div>
-      ${availCredit?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Available Credit Now</span><span style="font-weight:600;color:var(--blue)">₹${availCredit.toLocaleString('en-IN')}</span></div>`:''}
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;">This will reduce the card outstanding and deduct from your bank account.</div>
-    </div>
-    <div class="form-group" style="margin-bottom:12px;">
-      <label class="form-label">Credit Card Paid</label>
-      <div class="select-wrap"><select class="form-select" id="cc-pay-card">${cardOpts}</select></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Paid From Bank Account</label>
-      <div class="select-wrap"><select class="form-select" id="cc-pay-bank">${bankOpts}</select></div>
-    </div>`;
+  // Account hint
+  const acctPats=[/[Aa]\/[Cc]\s*X{0,2}(\d{4})/,/ending\s+in\s+X{0,2}(\d{4})/i,/ending\s+X{0,2}(\d{4})/i,/[Cc]ard\s+[Xx](\d{4})/i,/\bX{1,2}(\d{4})\b/,/[Xx](\d{4})\b/];
+  for(const p of acctPats){const m=s.match(p);if(m){acctHint=m[1];break;}}
 
-  const catGrid = document.getElementById('sms-cat-grid');
-  const catLbl  = document.getElementById('sms-cat-label');
-  const accEl   = document.getElementById('sms-account');
-  if(catGrid) catGrid.style.display='none';
-  if(catLbl)  catLbl.style.display='none';
-  if(accEl)   accEl.style.display='none';
-  // Hide parent account form-group
-  if(accEl && accEl.parentElement) accEl.parentElement.style.display='none';
+  // Balances
+  for(const p of[/(?:Avl|Avail|Available)\s*(?:Bal|Balance)?[:\s.]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,/Bal[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i]){const m=s.match(p);if(m){availBal=parseFloat(m[1].replace(/,/g,''));break;}}
+  const aclm=s.match(/Available\s+Credit\s+(?:limit\s+)?(?:is\s+)?(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  if(aclm)availCredit=parseFloat(aclm[1].replace(/,/g,''));
+
+  // Route special types
+  if(txType==='bill'){parseBillSMS(s,amount,acctHint);return;}
+  if(txType==='cc_payment'){parseCCPaymentSMS(s,amount,acctHint,availCredit);return;}
+
+  // Merchant
+  isUPI=/UPI|GPay|Google Pay|PhonePe|BHIM|RRN|VPA/i.test(s);
+  const vpam=s.match(/from\s+VPA\s+([A-Za-z0-9@._-]+)/i);
+  const vpa=vpam?vpam[1]:'';
+  const mPats=[/(?:paid\s+(?:Rs\.?[\d,. ]+\s+)?on|at)\s+([A-Za-z][A-Za-z0-9 &\-\.]{2,30})(?:\s+with|\s+on|\.)/i,/from\s+VPA\s+([A-Za-z0-9@._-]+)/i,/UPI[\/\s]+\d+[\/\s]+([A-Za-z0-9 ._@-]{3,25})/i];
+  for(const p of mPats){const m=s.match(p);if(m&&m[1].trim().length>2){merchant=m[1].trim();if(merchant.includes('@'))merchant=merchant.split('@')[0].replace(/[0-9_]/g,' ').trim();break;}}
+  if(!merchant&&isUPI)merchant=txType==='cc_purchase'?'Card Purchase':'UPI Transfer';
+
+  // Date
+  const dm=s.match(/(\d{2})[-\/](\d{2})[-\/](\d{2,4})/)||s.match(/(\d{2})[-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-](\d{2,4})/i);
+  if(dm){try{let[,d,mo,y]=dm;const mm={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};if(isNaN(mo))mo=mm[mo.toLowerCase()]||mo;if(y.length===2)y='20'+y;date=`${y}-${mo.toString().padStart(2,'0')}-${d.padStart(2,'0')}`;}catch(e){}}
+
+  // Category
+  const catKw={'Food & Dining':/swiggy|zomato|restaurant|cafe|food|pizza|dominos/i,'Groceries':/dmart|bigbasket|grocer|kirana/i,'Fuel':/petrol|diesel|fuel|iocl|bpcl|hpcl|nayara/i,'Shopping':/amazon|flipkart|myntra|ajio|mall|shop|dreamplug/i,'Medical':/pharma|medical|hospital|clinic|apollo/i,'Travel':/uber|ola|rapido|irctc|train|flight|metro/i,'Utilities':/electricity|water|gas|airtel|jio|recharge|bill/i,'Entertainment':/netflix|hotstar|prime|spotify|cinema/i};
+  let suggestCat='Miscellaneous';
+  for(const[cat,pat]of Object.entries(catKw)){if(pat.test(s)||pat.test(merchant)){suggestCat=cat;break;}}
+  if(txType==='cc_purchase')txType='debit';
+  if(!amount){alert('Could not detect amount');return;}
+
+  smsParsed={amount,txType,merchant,date,acctHint,availBal,availCredit,suggestCat,isUPI,vpa};
+
+  // Show result
+  document.getElementById('sms-parsed-rows').innerHTML=[
+    ['Amount',`<span style="font-weight:700;color:${txType==='debit'?'var(--red)':'var(--green)'}">${txType==='debit'?'−':'+'}${fmt(amount)}</span>`],
+    ['Type',txType==='debit'?'⬇️ Debit':'⬆️ Credit'],
+    ['Merchant',merchant||'Not detected'],
+    ['Date',fmtDate(date)],
+    ['Avl Bal',availBal?fmt(availBal):'—'],
+    ['Acct',acctHint?'...'+acctHint:'—'],
+  ].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;"><span style="color:var(--text3)">${k}</span><span>${v}</span></div>`).join('');
+
+  const lbl=document.getElementById('sms-cat-label');if(lbl)lbl.textContent=txType==='credit'?'INCOME CATEGORY':'EXPENSE CATEGORY';
+  const catLbl=document.getElementById('sms-cat-label');if(catLbl)catLbl.style.display='';
+  const catGrid=document.getElementById('sms-cat-grid');if(catGrid)catGrid.style.display='';
+  const accEl=document.getElementById('sms-account');if(accEl&&accEl.parentElement)accEl.parentElement.style.display='';
+
+  if(txType==='credit'){
+    let sugInc='Other';
+    if(/salary|payroll/i.test(s))sugInc='Salary';else if(/freelance|consulting/i.test(s))sugInc='Freelance';else if(/interest/i.test(s))sugInc='Interest';
+    smsParsed.suggestCat=sugInc;smsParsed.isIncome=true;
+    document.getElementById('sms-cat-grid').innerHTML=INCOME_CATEGORIES.map(c=>`<div class="cat-btn ${c.name===sugInc?'selected':''}" onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')"><span class="emoji">${c.emoji}</span><span class="name" style="font-size:9px">${c.name}</span></div>`).join('');
+  }else{
+    smsParsed.isIncome=false;
+    document.getElementById('sms-cat-grid').innerHTML=CATEGORIES.map(c=>`<div class="cat-btn ${c.name===suggestCat?'selected':''}" onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')"><span class="emoji">${c.emoji}</span><span class="name">${c.name}</span></div>`).join('');
+  }
+
+  const sel=document.getElementById('sms-account');
+  sel.innerHTML=allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  if(acctHint){const opts=Array.from(sel.options);const match=opts.find(o=>o.text.replace(/\D/g,'').slice(-4)===acctHint)||opts.find(o=>o.text.includes(acctHint));if(match)sel.value=match.value;}
 
   document.getElementById('sms-parsed').style.display='block';
-  smsParsed = { isCCPayment: true, amount, acctHint, availCredit };
-  showToast('✅ CC Payment SMS detected — confirm accounts and save');
-}
-
-function parseBillSMS(s, rawSMS) {
-  let totalDue=null, minDue=null, dueDate='', cardHint='', cardName='';
-
-  // Total due
-  const tdPats = [
-    /Total\s*(?:Amt\s*)?Due[:\s]*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /Total\s*Due[:\s]*(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-  ];
-  for(const p of tdPats) { const m=s.match(p); if(m){totalDue=parseFloat(m[1].replace(/,/g,''));break;} }
-
-  // Min due
-  const mdPats = [
-    /Min\s*(?:Amt\s*)?Due[:\s]*(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /Min\s*Due[:\s]*(?:INR|Rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-  ];
-  for(const p of mdPats) { const m=s.match(p); if(m){minDue=parseFloat(m[1].replace(/,/g,''));break;} }
-
-  // Due date
-  const ddPats = [
-    /(?:Due\s*Date|Payable\s*by)[:\s]*([\d]{2}[-\/]([\d]{2})[-\/]([\d]{2,4}))/i,
-    /(?:Due\s*Date|Payable\s*by)[:\s]*([\d]{2}[-\/][\d]{2}[-\/][\d]{2,4})/i,
-  ];
-  for(const p of ddPats) { const m=s.match(p); if(m){dueDate=m[1];break;} }
-
-  // Card hint — last 4 digits
-  const cardPats = [/[Xx]{1,2}(\d{4})/, /x(\d{4})/i, /ending\s*[Xx]*(\d{2,4})/i, /Card\s+[Xx]*(\d{4})/i];
-  for(const p of cardPats) { const m=s.match(p); if(m){cardHint=m[1].slice(-4);break;} }
-
-  // Card name from SMS
-  const cnm = s.match(/(?:for|of)\s+([A-Za-z ]+(?:Credit|Debit)\s*Card)/i) ||
-              s.match(/((?:Kotak|SBI|HDFC|ICICI|Axis|Amex|OneCard|One Card)[A-Za-z ]*(?:Card|CC))/i);
-  if(cnm) cardName = cnm[1].trim();
-
-  if(!totalDue && !minDue) {
-    alert('Could not detect bill amounts. Try pasting the full SMS.');
-    return;
-  }
-
-  // Find matching card in accounts
-  const allCards = [...D.accounts.indCards, ...D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card')];
-  let matchedCard = null;
-  if(cardHint) matchedCard = allCards.find(c => (c.name||'').includes(cardHint) || (c.id||'').includes(cardHint));
-  if(!matchedCard && cardName) matchedCard = allCards.find(c => {
-    const nm = c.name.toLowerCase();
-    return cardName.toLowerCase().split(' ').some(w => w.length>3 && nm.includes(w));
-  });
-
-  // Parse due date to ISO
-  let dueDateISO = '';
-  if(dueDate) {
-    try {
-      const parts = dueDate.split(/[-\/]/);
-      let [d,mo,y] = parts;
-      if(y && y.length===2) y='20'+y;
-      dueDateISO = `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
-    } catch(e){}
-  }
-
-  // Show bill SMS result UI
-  const inp = document.getElementById('sms-input');
-  const parsedEl = document.getElementById('sms-parsed');
-  const rowsEl = document.getElementById('sms-parsed-rows');
-  const catGrid = document.getElementById('sms-cat-grid');
-  const accEl = document.getElementById('sms-account');
-  const catLbl = document.getElementById('sms-cat-label');
-
-  rowsEl.innerHTML = `
-    <div style="background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px;">💳 CREDIT CARD BILL DETECTED</div>
-      ${cardName?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Card</span><span style="font-weight:600">${cardName}${cardHint?' (X'+cardHint+')':''}</span></div>`:''}
-      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Total Due</span><span style="font-weight:700;color:var(--red)">${totalDue?'₹'+totalDue.toLocaleString('en-IN'):'—'}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Minimum Due</span><span style="font-weight:700;color:var(--orange)">${minDue?'₹'+minDue.toLocaleString('en-IN'):'—'}</span></div>
-      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;"><span style="color:var(--text3)">Due Date</span><span style="font-weight:600;color:${dueDateISO&&new Date(dueDateISO)<new Date()?'var(--red)':'var(--text)'}">${dueDate||'—'}</span></div>
-    </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px;">Select the card below to update its due amounts:</div>`;
-
-  // Card selector
-  const cardOpts = allCards.map(c=>`<option value="${c.id}" ${matchedCard&&c.id===matchedCard.id?'selected':''}>${c.name}</option>`).join('');
-  accEl.innerHTML = cardOpts;
-  if(catLbl) catLbl.style.display='none';
-  catGrid.style.display='none';
-
-  // Replace save button temporarily
-  parsedEl.style.display='block';
-
-  // Store bill data for saving
-  smsParsed = {
-    isBill: true, totalDue, minDue, dueDate: dueDateISO,
-    cardHint, cardName, matchedCardId: matchedCard?matchedCard.id:null
-  };
-
-  showToast('💳 Bill SMS detected — tap Save to update card dues');
-}
-
-function parseSMS() {
-  const sms = (document.getElementById('sms-input').value||'').trim();
-  if(!sms) { alert('Please paste an SMS first'); return; }
-
-  const s = sms.replace(/\n/g,' ').replace(/\s+/g,' ');
-  let amount=0, txType='debit', acctHint='', availBal=null, availCredit=null;
-  let merchant='', date=today(), vpa='', isUPI=false;
-  let totalDue=null, minDue=null, dueDate='';
-
-  // ══ UNIVERSAL AMOUNT DETECTION ══════════════════════════════════════════════
-  const amtPats = [
-    /(?:of|for)\s+(?:Rs\.?|INR|₹)\s*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /(?:Rs\.?|INR|₹)[:\s]*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /([\d,]+(?:\.\d{1,2})?)\s*(?:Rs\.?|INR|₹)/i,
-    /(?:paid|credited|debited|due)\s+(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /bill\s+of\s+(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-  ];
-  for(const p of amtPats) { const m=s.match(p); if(m){amount=parseFloat(m[1].replace(/,/g,''));break;} }
-
-  // ══ UNIVERSAL TYPE DETECTION (priority order) ════════════════════════════════
-  if(/total\s*(?:amt\s*)?due|min\s*(?:amt\s*)?due|payable\s*by|payment\s*is\s*due|e-statement|bill\s+has\s+been\s+generated|pay\s+your\s+bill/i.test(s)) {
-    txType = 'bill';
-  } else if(/credited\s+to\s+your.*credit\s+card|payment.*credited.*card/i.test(s)) {
-    txType = 'cc_payment';
-  } else if(/you.ve\s+paid|transfer\s+successful|transaction.*processed|has\s+been\s+processed/i.test(s)) {
-    txType = 'cc_purchase';
-  } else if(/credit\s+alert|credited|received|refund|cashback/i.test(s)) {
-    txType = 'credit';
-  } else if(/UPI\s+debit|debited|debit|spent|withdrawn/i.test(s)) {
-    txType = 'debit';
-  }
-
-  // ══ UNIVERSAL ACCOUNT HINT ══════════════════════════════════════════════════
-  const acctPats = [
-    /[Aa]\/[Cc]\s*X{0,2}(\d{4})/,
-    /ending\s+in\s+X{0,2}(\d{4})/i,
-    /ending\s+X{0,2}(\d{4})/i,
-    /[Cc]ard\s+[Xx](\d{4})/i,
-    /\bX{1,2}(\d{4})\b/,
-    /[Xx](\d{4})\b/,
-  ];
-  for(const p of acctPats) { const m=s.match(p); if(m){acctHint=m[1];break;} }
-
-  // ══ BALANCES ════════════════════════════════════════════════════════════════
-  const balPats = [
-    /(?:Avl|Avail|Available)\s*(?:Bal|Balance)?[:\s.]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    /Bal[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-  ];
-  for(const p of balPats) { const m=s.match(p); if(m){availBal=parseFloat(m[1].replace(/,/g,''));break;} }
-
-  const aclm = s.match(/Available\s+Credit\s+(?:limit\s+)?(?:is\s+)?(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  if(aclm) availCredit = parseFloat(aclm[1].replace(/,/g,''));
-
-  // ══ BILL FIELDS ═════════════════════════════════════════════════════════════
-  if(txType === 'bill') {
-    const tdPats = [
-      /Total\s*(?:Amt\s*)?Due[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-      /Pay\s+(?:your\s+)?bill\s+of\s+(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i,
-    ];
-    for(const p of tdPats) { const m=s.match(p); if(m){totalDue=parseFloat(m[1].replace(/,/g,''));break;} }
-    if(!totalDue) totalDue = amount;
-
-    const mdm = s.match(/Min\s*(?:Amt\s*)?Due[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-    if(mdm) minDue = parseFloat(mdm[1].replace(/,/g,''));
-
-    const ddPats = [
-      /(?:Due\s*Date|Payable\s*by)[:\s]*(\d{2}[-\/]\d{2}[-\/]\d{2,4})/i,
-      /(?:Due\s*Date|Payable\s*by)[:\s]*(\d{2}[-\/][A-Za-z]{3}[-\/]\d{2,4})/i,
-    ];
-    for(const p of ddPats) { const m=s.match(p); if(m){dueDate=m[1];break;} }
-
-    parseBillSMS(s, sms, totalDue, minDue, dueDate, acctHint, amount); return;
-  }
-
-  // ══ ROUTE SPECIAL TYPES ══════════════════════════════════════════════════════
-  if(txType === 'cc_payment') { parseCCPaymentSMS(s, amount, acctHint, availCredit); return; }
-
-  // ══ UNIVERSAL MERCHANT DETECTION ════════════════════════════════════════════
-  isUPI = /UPI|GPay|Google Pay|PhonePe|BHIM|RRN|VPA/i.test(s);
-  const vpam = s.match(/from\s+VPA\s+([A-Za-z0-9@._-]+)/i);
-  if(vpam) vpa = vpam[1];
-  const merchPats = [
-    /(?:paid\s+(?:Rs\.?[\d,. ]+\s+)?on|at)\s+([A-Za-z][A-Za-z0-9 &\-\.]{2,30})(?:\s+with|\s+on|\s+via|\.)/i,
-    /from\s+VPA\s+([A-Za-z0-9@._-]+)/i,
-    /UPI[\/\s]+\d+[\/\s]+([A-Za-z0-9 ._@-]{3,25})/i,
-    /Info:\s*([A-Za-z0-9 &\-\.]{3,30})/i,
-  ];
-  for(const p of merchPats) {
-    const m=s.match(p);
-    if(m && m[1] && m[1].trim().length > 2) {
-      merchant = m[1].trim();
-      if(merchant.includes('@')) merchant = merchant.split('@')[0].replace(/[0-9_]/g,' ').trim();
-      break;
-    }
-  }
-  if(!merchant && isUPI) merchant = txType==='cc_purchase' ? 'Card Purchase' : 'UPI Transfer';
-
-  // ══ DATE DETECTION ════════════════════════════════════════════════════════════
-  const datePats = [
-    /(\d{2})[-\/](\d{2})[-\/](\d{2,4})/,
-    /(\d{2})[-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-](\d{2,4})/i,
-  ];
-  const monthMap = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
-  for(const dp of datePats) {
-    const dm=s.match(dp);
-    if(dm) {
-      try {
-        let [,d,mo,y]=dm;
-        if(isNaN(mo)) mo=monthMap[mo.toLowerCase()]||mo;
-        if(y.length===2) y='20'+y;
-        date=`${y}-${mo.toString().padStart(2,'0')}-${d.padStart(2,'0')}`;
-        break;
-      } catch(e){}
-    }
-  }
-
-  // ══ EXPENSE CATEGORY ════════════════════════════════════════════════════════
-  const catKw = {
-    'Food & Dining': /swiggy|zomato|restaurant|cafe|food|pizza|dominos|barbeque/i,
-    'Groceries':     /dmart|bigbasket|grocer|kirana|reliance fresh|supermarket/i,
-    'Fuel':          /petrol|diesel|fuel|iocl|bpcl|hpcl|nayara|shell/i,
-    'Shopping':      /amazon|flipkart|myntra|ajio|mall|shop|meesho|dreamplug/i,
-    'Medical':       /pharma|medical|hospital|clinic|doctor|apollo|netmeds/i,
-    'Travel':        /uber|ola|rapido|irctc|train|flight|metro|redbus|makemytrip/i,
-    'Utilities':     /electricity|water|gas|airtel|jio|recharge|bill|bsnl/i,
-    'Entertainment': /netflix|hotstar|prime|spotify|cinema|pvr|inox/i,
-  };
-  let suggestCat = 'Miscellaneous';
-  for(const [cat,pat] of Object.entries(catKw)) {
-    if(pat.test(s)||pat.test(merchant)) { suggestCat=cat; break; }
-  }
-  // cc_purchase treated as debit expense
-  if(txType === 'cc_purchase') txType = 'debit';
-
-  if(!amount) { alert('Could not detect amount. Copy the full SMS text.'); return; }
-  smsParsed = { amount, txType, merchant, date, acctHint, availBal, availCredit, suggestCat, isUPI, vpa };
-
-  // ══ SHOW PARSED RESULTS ══════════════════════════════════════════════════════
-  document.getElementById('sms-parsed-rows').innerHTML = [
-    ['Amount',    `<span style="font-weight:700;color:${txType==='debit'?'var(--red)':'var(--green)'}">${txType==='debit'?'−':'+'}${fmt(amount)}</span>`],
-    ['Type',      txType==='debit'?'⬇️ Debit / Purchase':'⬆️ Credit / Income'],
-    ['Merchant',  merchant||'Not detected'],
-    ['Date',      fmtDate(date)],
-    ['Avl Bal',   availBal ? fmt(availBal) : '—'],
-    ['Acct Hint', acctHint ? '...'+acctHint : '—'],
-  ].map(([k,v])=>`
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      <span style="color:var(--text3)">${k}</span><span>${v}</span>
-    </div>`).join('');
-
-  // Category grid
-  const smsLabelEl = document.getElementById('sms-cat-label');
-  if(smsLabelEl) smsLabelEl.textContent = txType==='credit' ? 'INCOME CATEGORY' : 'EXPENSE CATEGORY';
-
-  if(txType === 'credit') {
-    let suggestIncomeCat = 'Other';
-    if(/salary|sal |payroll|ctc/i.test(s)) suggestIncomeCat = 'Salary';
-    else if(/freelance|consulting/i.test(s)) suggestIncomeCat = 'Freelance';
-    else if(/rent|rental/i.test(s)) suggestIncomeCat = 'Rental Income';
-    else if(/interest|int /i.test(s)) suggestIncomeCat = 'Interest';
-    else if(/dividend|return|profit/i.test(s)) suggestIncomeCat = 'Investment';
-    smsParsed.suggestCat = suggestIncomeCat;
-    smsParsed.isIncome = true;
-    document.getElementById('sms-cat-grid').innerHTML = INCOME_CATEGORIES.map(c=>`
-      <div class="cat-btn ${c.name===suggestIncomeCat?'selected':''}"
-        onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">
-        <span class="emoji">${c.emoji}</span><span class="name" style="font-size:9px">${c.name}</span>
-      </div>`).join('');
-  } else {
-    smsParsed.isIncome = false;
-    document.getElementById('sms-cat-grid').innerHTML = CATEGORIES.map(c=>`
-      <div class="cat-btn ${c.name===suggestCat?'selected':''}"
-        onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">
-        <span class="emoji">${c.emoji}</span><span class="name">${c.name}</span>
-      </div>`).join('');
-  }
-
-  // Account dropdown with smart matching
-  const sel = document.getElementById('sms-account');
-  const acctOpts = allAccountOptions();
-  sel.innerHTML = acctOpts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-  if(acctHint) {
-    const opts = Array.from(sel.options);
-    const match = opts.find(o=>o.text.replace(/\D/g,'').slice(-4)===acctHint) ||
-                  opts.find(o=>o.text.includes(acctHint));
-    if(match) sel.value = match.value;
-  }
-
-  document.getElementById('sms-parsed').style.display = 'block';
   showToast(`Parsed: ${txType==='credit'?'⬆️ Credit':'⬇️ Debit'} of ${fmt(amount)}`);
 }
 
+function parseBillSMS(s,totalDue,cardHint){
+  let minDue=null,dueDate='',cardName='';
+  const mdm=s.match(/Min\s*(?:Amt\s*)?Due[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)/i);if(mdm)minDue=parseFloat(mdm[1].replace(/,/g,''));
+  const ddm=s.match(/(?:Due\s*Date|Payable\s*by)[:\s]*(\d{2}[-\/]\d{2}[-\/]\d{2,4})/i);if(ddm)dueDate=ddm[1];
+  const cnm=s.match(/(?:for|of)\s+([A-Za-z ]+(?:Credit|Debit)\s*Card)/i)||s.match(/((?:Kotak|SBI|HDFC|ICICI|Axis|Amex|OneCard|One Card|SBM)[A-Za-z ]*(?:Card|CC))/i);if(cnm)cardName=cnm[1].trim();
+  const allCards=[...D.accounts.indCards,...D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card')];
+  let matchedCard=null;
+  if(cardHint)matchedCard=allCards.find(c=>(c.name||'').includes(cardHint));
+  if(!matchedCard&&cardName)matchedCard=allCards.find(c=>cardName.toLowerCase().split(' ').some(w=>w.length>3&&c.name.toLowerCase().includes(w)));
+  let dueDateISO='';
+  if(dueDate){try{const pts=dueDate.split(/[-\/]/);let[d,mo,y]=pts;if(y&&y.length===2)y='20'+y;dueDateISO=`${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;}catch(e){}}
+  const cardOpts=allCards.map(c=>`<option value="${c.id}" ${matchedCard&&c.id===matchedCard.id?'selected':''}>${c.name}</option>`).join('');
+  document.getElementById('sms-parsed-rows').innerHTML=`
+    <div style="background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:8px;padding:10px 12px;margin-bottom:6px;">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px;">💳 CREDIT CARD BILL</div>
+      ${cardName?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Card</span><span>${cardName}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Total Due</span><span style="font-weight:700;color:var(--red)">${totalDue?fmt(totalDue):'—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Min Due</span><span style="font-weight:700;color:var(--orange)">${minDue?fmt(minDue):'—'}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;"><span style="color:var(--text3)">Due Date</span><span>${dueDate||'—'}</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);">Select card to update:</div>
+    <div class="select-wrap" style="margin-top:8px;"><select class="form-select" id="bill-card-sel">${cardOpts}</select></div>`;
+  const catGrid=document.getElementById('sms-cat-grid');const catLbl=document.getElementById('sms-cat-label');const accEl=document.getElementById('sms-account');
+  if(catGrid)catGrid.style.display='none';if(catLbl)catLbl.style.display='none';if(accEl&&accEl.parentElement)accEl.parentElement.style.display='none';
+  document.getElementById('sms-parsed').style.display='block';
+  smsParsed={isBill:true,totalDue,minDue,dueDate:dueDateISO};
+  showToast('💳 Bill SMS — tap Save to update card dues');
+}
 
+function parseCCPaymentSMS(s,amount,acctHint,availCredit){
+  const allCards=[...D.accounts.indCards,...D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card')];
+  let matchedCard=null;if(acctHint)matchedCard=allCards.find(c=>(c.name||'').includes(acctHint));
+  if(!matchedCard)matchedCard=allCards.find(c=>(c.outstanding||0)>0);
+  const cardOpts=allCards.map(c=>`<option value="${c.id}" ${matchedCard&&c.id===matchedCard.id?'selected':''}>${c.name} (${fmt(c.outstanding||0)} outstanding)</option>`).join('');
+  const bankOpts=allAccountOptions().filter(o=>!allCards.find(c=>c.id===o.value)).map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  document.getElementById('sms-parsed-rows').innerHTML=`
+    <div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--green);margin-bottom:8px;">✅ CC PAYMENT CONFIRMED</div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">Payment</span><span style="font-weight:700;color:var(--green)">${fmt(amount)}</span></div>
+      ${availCredit?`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;"><span style="color:var(--text3)">Available Credit</span><span style="color:var(--blue)">${fmt(availCredit)}</span></div>`:''}
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Card Paid</label><div class="select-wrap"><select class="form-select" id="cc-pay-card">${cardOpts}</select></div></div>
+    <div class="form-group"><label class="form-label">Paid From Bank</label><div class="select-wrap"><select class="form-select" id="cc-pay-bank">${bankOpts}</select></div></div>`;
+  const catGrid=document.getElementById('sms-cat-grid');const catLbl=document.getElementById('sms-cat-label');const accEl=document.getElementById('sms-account');
+  if(catGrid)catGrid.style.display='none';if(catLbl)catLbl.style.display='none';if(accEl&&accEl.parentElement)accEl.parentElement.style.display='none';
+  document.getElementById('sms-parsed').style.display='block';
+  smsParsed={isCCPayment:true,amount,acctHint,availCredit};
+  showToast('✅ CC Payment detected');
+}
+
+function saveSMSExpense(){
+  if(!smsParsed){alert('Parse an SMS first');return;}
+
+  // Restore hidden elements
+  function restoreSMSUI(){const catGrid=document.getElementById('sms-cat-grid');const catLbl=document.getElementById('sms-cat-label');const accEl=document.getElementById('sms-account');if(catGrid)catGrid.style.display='';if(catLbl)catLbl.style.display='';if(accEl&&accEl.parentElement)accEl.parentElement.style.display='';}
+
+  if(smsParsed.isCCPayment){
+    const cardId=document.getElementById('cc-pay-card')?.value;const bankId=document.getElementById('cc-pay-bank')?.value;
+    if(!cardId||!bankId){alert('Select both accounts');return;}
+    D.transfers.push({id:Date.now().toString(),fromId:bankId,toId:cardId,amount:smsParsed.amount,date:today(),type:'Credit Card Payment',note:'Auto (SMS)'});
+    applyTransfer(bankId,cardId,smsParsed.amount,'Credit Card Payment');
+    if(smsParsed.availCredit){const card=D.accounts.indCards.find(c=>c.id===cardId);if(card&&card.limit>0){card.outstanding=Math.max(0,card.limit-smsParsed.availCredit);}}
+    save();restoreSMSUI();closeModal('sms-modal');renderDashboard();renderPage(currentPage);
+    showToast(`✅ ${fmt(smsParsed.amount)} CC payment logged`);smsParsed=null;return;
+  }
+
+  if(smsParsed.isBill){
+    const cardId=document.getElementById('bill-card-sel')?.value||document.getElementById('sms-account')?.value;
+    const card=D.accounts.indCards.find(c=>c.id===cardId)||D.accounts.uaeAccounts.find(u=>u.id===cardId);
+    if(!card){alert('Card not found');return;}
+    if(smsParsed.totalDue)card.totalDue=smsParsed.totalDue;
+    if(smsParsed.minDue)card.minDue=smsParsed.minDue;
+    if(smsParsed.dueDate){const day=parseInt(smsParsed.dueDate.split('-')[2]);if(day>=1&&day<=31)card.dueDate=day;}
+    save();restoreSMSUI();closeModal('sms-modal');renderDashboard();renderPage(currentPage);
+    showToast(`✅ ${card.name} updated — Due: ${fmt(smsParsed.totalDue||0)}`);smsParsed=null;return;
+  }
+
+  if(!smsParsed.amount){alert('No amount detected');return;}
+  const accountId=document.getElementById('sms-account').value;
+  const cat=smsParsed.suggestCat||'Miscellaneous';
+
+  if(smsParsed.txType==='credit'||smsParsed.isIncome){
+    if(!D.income)D.income=[];
+    D.income.push({id:Date.now().toString(),desc:smsParsed.merchant||'SMS Credit',amount:smsParsed.amount,date:smsParsed.date,category:cat,accountId,note:'Auto (SMS)'});
+    creditToAccount(accountId,smsParsed.amount);
+    if(smsParsed.availBal!==null){const bank=D.accounts.indBanks.find(b=>b.id===accountId);if(bank){bank.balance=smsParsed.availBal;bank.lastReconciled=today();}}
+    save();restoreSMSUI();closeModal('sms-modal');renderDashboard();renderPage(currentPage);
+    showToast(`+${fmt(smsParsed.amount)} income logged`);smsParsed=null;return;
+  }
+
+  D.expenses.push({id:Date.now().toString(),category:cat,desc:smsParsed.merchant||'SMS Transaction',amount:smsParsed.amount,date:smsParsed.date,accountId,mode:'Auto (SMS)'});
+  deductFromAccount(accountId,smsParsed.amount);
+  if(smsParsed.availBal!==null){const bank=D.accounts.indBanks.find(b=>b.id===accountId);if(bank){bank.balance=smsParsed.availBal;bank.appBalance=smsParsed.availBal;bank.lastReconciled=today();}}
+  save();restoreSMSUI();closeModal('sms-modal');renderDashboard();renderPage(currentPage);
+  const balMsg=smsParsed.availBal!==null?` · Balance: ${fmt(smsParsed.availBal)}`:'';
+  showToast(`${fmt(smsParsed.amount)} deducted from ${getAcctName(accountId)}${balMsg}`);
+  smsParsed=null;
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+renderDashboard();
+// PIN init
+(function(){const pin=localStorage.getItem('fintrack_pin');if(pin)showPinScreen(true);updatePinStatus();})();
+
+// ══════════════════════════════════════════════════════════
+// SERVICE WORKER + PWA INSTALL
+// ══════════════════════════════════════════════════════════
+// Global error handler — shows what broke
+window.addEventListener('error', (e) => {
+  console.error('FinTrack error:', e.message, 'at', e.filename, e.lineno);
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+
+      // Detect new version available
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+          }
+        });
+      });
+    }).catch(err => console.log('SW error:', err));
+
+    // When SW activates new version, reload page automatically
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  });
+}
+
+function showUpdateBanner() {
+  if(document.getElementById('update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.style.cssText = 'position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));left:16px;right:16px;z-index:9999;background:linear-gradient(135deg,#1E8449,#27AE60);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);animation:fadeUp 0.3s ease;';
+  banner.innerHTML = `
+    <div style="font-size:20px">🆕</div>
+    <div style="flex:1"><div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff">Update Available!</div><div style="font-size:11px;color:rgba(255,255,255,0.8)">New version of FinTrack is ready</div></div>
+    <button onclick="applyUpdate()" style="background:white;border:none;border-radius:7px;padding:7px 12px;color:#1E8449;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">Update</button>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:18px;cursor:pointer;">×</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+function applyUpdate() {
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if(reg?.waiting) { reg.waiting.postMessage('skipWaiting'); }
+    else { window.location.reload(); }
+  });
+}
+
+// Capture install prompt and show a banner
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  if (document.getElementById('install-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.style.cssText = `
+    position:fixed; top:0; left:0; right:0; z-index:9999;
+    background:linear-gradient(135deg,#1A2B4A,#2E4B7A);
+    border-bottom:1px solid rgba(212,168,67,0.4);
+    padding:12px 16px; display:flex; align-items:center; gap:12px;
+    animation:slideDown 0.4s ease;
+  `;
+  banner.innerHTML = `
+    <style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>
+    <div style="font-size:28px">💼</div>
+    <div style="flex:1">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#F1F5F9">Install FinTrack</div>
+      <div style="font-size:11px;color:#94A3B8;margin-top:1px">Add to home screen for the best experience</div>
+    </div>
+    <button onclick="installApp()" style="background:linear-gradient(135deg,#D4A843,#F0C96A);border:none;border-radius:8px;padding:8px 14px;color:#0F1923;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">Install</button>
+    <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#64748B;font-size:20px;cursor:pointer;padding:0 4px;">×</button>
+  `;
+  document.body.prepend(banner);
+}
+
+async function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('install-banner')?.remove();
+  }
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner')?.remove();
+  console.log('FinTrack installed!');
+});
+</script>
+</body>
+</html>
