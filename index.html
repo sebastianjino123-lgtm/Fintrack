@@ -533,7 +533,7 @@ body {
       <div id="sms-parsed-rows" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:14px;"></div>
 
       <div class="form-group">
-        <label class="form-label">Category</label>
+        <label class="form-label" id="sms-cat-label">Category</label>
         <div class="cat-grid" id="sms-cat-grid" style="margin-bottom:0;"></div>
       </div>
       <div class="form-group">
@@ -3657,24 +3657,60 @@ function parseSMS() {
       <span style="color:var(--text3)">${k}</span><span>${v}</span>
     </div>`).join('');
 
-  // Category grid
-  document.getElementById('sms-cat-grid').innerHTML = CATEGORIES.map(c=>`
-    <div class="cat-btn ${c.name===suggestCat?'selected':''}" onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">
-      <span class="emoji">${c.emoji}</span><span class="name">${c.name}</span>
-    </div>`).join('');
+  // Category grid — show income categories for credit, expense for debit
+  const smsLabelEl = document.getElementById('sms-cat-label');
+  if(smsLabelEl) smsLabelEl.textContent = txType==='credit' ? 'INCOME CATEGORY' : 'EXPENSE CATEGORY';
 
-  // Account dropdown
+  if(txType === 'credit') {
+    // Suggest income category from merchant/SMS text
+    let suggestIncomeCat = 'Other';
+    if(/salary|sal |payroll|ctc/i.test(s)) suggestIncomeCat = 'Salary';
+    else if(/freelance|consulting|project/i.test(s)) suggestIncomeCat = 'Freelance';
+    else if(/refund|cashback|reversal/i.test(s)) suggestIncomeCat = 'Other';
+    else if(/rent|rental/i.test(s)) suggestIncomeCat = 'Rental Income';
+    else if(/interest|int /i.test(s)) suggestIncomeCat = 'Interest';
+    else if(/dividend|return|profit/i.test(s)) suggestIncomeCat = 'Investment';
+    else if(/imps|neft|rtgs|transfer/i.test(s)) suggestIncomeCat = 'Other';
+    smsParsed.suggestCat = suggestIncomeCat;
+    smsParsed.isIncome = true;
+
+    document.getElementById('sms-cat-grid').innerHTML = INCOME_CATEGORIES.map(c=>`
+      <div class="cat-btn ${c.name===suggestIncomeCat?'selected':''}"
+        onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">
+        <span class="emoji">${c.emoji}</span><span class="name" style="font-size:9px">${c.name}</span>
+      </div>`).join('');
+  } else {
+    smsParsed.isIncome = false;
+    document.getElementById('sms-cat-grid').innerHTML = CATEGORIES.map(c=>`
+      <div class="cat-btn ${c.name===suggestCat?'selected':''}"
+        onclick="smsParsed.suggestCat='${c.name}';document.querySelectorAll('#sms-cat-grid .cat-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected')">
+        <span class="emoji">${c.emoji}</span><span class="name">${c.name}</span>
+      </div>`).join('');
+  }
+
+  // Account dropdown — build and auto-select by last 4 digits
   const sel = document.getElementById('sms-account');
-  sel.innerHTML = allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-  // Try match by last 4 digits
+  const acctOpts = allAccountOptions();
+  sel.innerHTML = acctOpts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+
+  // Smart account matching — try multiple strategies
   if(acctHint) {
     const opts = Array.from(sel.options);
-    const match = opts.find(o => o.text.includes(acctHint));
+    // Strategy 1: exact last-4 match in account name
+    let match = opts.find(o => o.text.replace(/\D/g,'').endsWith(acctHint));
+    // Strategy 2: last-4 appears anywhere in label
+    if(!match) match = opts.find(o => o.text.includes(acctHint));
+    // Strategy 3: match against actual account data
+    if(!match) {
+      const allAccts = [...D.accounts.indBanks, ...D.accounts.indCards, ...D.accounts.uaeAccounts];
+      const acctData = allAccts.find(a => (a.accountNo||'').endsWith(acctHint) || (a.name||'').includes(acctHint));
+      if(acctData) match = opts.find(o => o.value === acctData.id);
+    }
     if(match) sel.value = match.value;
   }
 
   document.getElementById('sms-parsed').style.display = 'block';
-  showToast(`Parsed: ${txType==='debit'?'Debit':'Credit'} of ${fmt(amount)}`);
+  showToast(`Parsed: ${txType==='credit'?'⬆️ Credit':'⬇️ Debit'} of ${fmt(amount)}`);
 }
 
 function saveSMSExpense() {
@@ -3691,7 +3727,7 @@ function saveSMSExpense() {
       desc: smsParsed.merchant || 'SMS Credit',
       amount: smsParsed.amount,
       date: smsParsed.date,
-      category: 'Other',
+      category: smsParsed.suggestCat || 'Other', // use selected income category
       accountId,
       note: 'Auto (SMS)',
       mode: 'Auto (SMS)'
