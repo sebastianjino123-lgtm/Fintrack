@@ -653,36 +653,63 @@ body {
 <div class="page" id="page-accounts">
   <div class="topbar"><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
 
-  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
-    <span>🏦 Indian Bank Accounts</span>
-    <div style="display:flex;gap:6px">
-      <button onclick="openMonthlyReconcile()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">🔄 Reconcile</button>
-      <button onclick="openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div onclick="toggleAcctSection('acct-banks')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🏦 Indian Bank Accounts</span>
+      <span id="acct-banks-arrow" style="font-size:10px;color:var(--text3);">▼</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button onclick="event.stopPropagation();openMonthlyReconcile()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
+      <button onclick="event.stopPropagation();openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
     </div>
   </div>
   <div id="acct-banks"></div>
 
-  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
-    <span>💳 Credit Cards</span>
-    <button onclick="openAddModal('card')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:7px;padding:5px 10px;color:#F87171;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div onclick="toggleAcctSection('acct-cards')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">💳 Credit Cards</span>
+      <span id="acct-cards-arrow" style="font-size:10px;color:var(--text3);">▼</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      
+      <button onclick="event.stopPropagation();openAddModal('card')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:7px;padding:5px 10px;color:#F87171;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
   </div>
   <div id="acct-cards"></div>
 
-  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
-    <span>🇦🇪 UAE Accounts</span>
-    <button onclick="openAddModal('uae')" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:5px 10px;color:#34D399;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div onclick="toggleAcctSection('acct-uae')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🇦🇪 UAE Accounts</span>
+      <span id="acct-uae-arrow" style="font-size:10px;color:var(--text3);">▼</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      
+      <button onclick="event.stopPropagation();openAddModal('uae')" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:5px 10px;color:#34D399;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
   </div>
   <div id="acct-uae"></div>
 
-  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
-    <span>🏠 Loans</span>
-    <button onclick="openAddModal('loan')" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:7px;padding:5px 10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div onclick="toggleAcctSection('acct-loans')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🏠 Loans</span>
+      <span id="acct-loans-arrow" style="font-size:10px;color:var(--text3);">▼</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      
+      <button onclick="event.stopPropagation();openAddModal('loan')" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:7px;padding:5px 10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
   </div>
   <div id="acct-loans"></div>
 
-  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
-    <span>🎰 Chit Funds</span>
-    <button onclick="openAddModal('chit')" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:7px;padding:5px 10px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div onclick="toggleAcctSection('acct-chits')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🎰 Chit Funds</span>
+      <span id="acct-chits-arrow" style="font-size:10px;color:var(--text3);">▼</span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      
+      <button onclick="event.stopPropagation();openAddModal('chit')" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:7px;padding:5px 10px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
   </div>
   <div id="acct-chits"></div>
 </div>
@@ -1685,6 +1712,15 @@ function renderTransfers() {
 // ACCOUNTS
 // ══════════════════════════════════════════════════════════
 
+const acctCollapsed = {};
+function toggleAcctSection(id) {
+  acctCollapsed[id] = !acctCollapsed[id];
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id+'-arrow');
+  if(el) el.style.display = acctCollapsed[id] ? 'none' : '';
+  if(arrow) arrow.textContent = acctCollapsed[id] ? '▶' : '▼';
+}
+
 function renderAccounts() {
   const bankTotal = D.accounts.indBanks.reduce((s,b)=>s+b.balance,0);
   const ccDebt = D.accounts.indCards.reduce((s,c)=>s+c.outstanding,0);
@@ -1869,12 +1905,17 @@ function renderAccounts() {
         ${(()=>{const{overdue,arrears}=chitOverdueMonths(c);return overdue>0?`<div class="acct-detail-row"><span class="k" style="color:var(--red)">⚠️ Overdue</span><span class="v red">${overdue} month${overdue>1?'s':''} · ${fmt(arrears)}</span></div>`:''})()}
       </div>
     </div>`}).join('');
+  // Restore collapsed state
+  Object.keys(acctCollapsed).forEach(id => {
+    const el=document.getElementById(id);
+    const arrow=document.getElementById(id+'-arrow');
+    if(el && acctCollapsed[id]) el.style.display='none';
+    if(arrow) arrow.textContent = acctCollapsed[id] ? '▶' : '▼';
+  });
 }
 
 // ══════════════════════════════════════════════════════════
 // SETTINGS
-// ══════════════════════════════════════════════════════════
-
 function renderSettings() {
   document.getElementById('set-rate').textContent = D.aedRate.toFixed(4);
   updatePinStatus();
