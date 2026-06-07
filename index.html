@@ -949,7 +949,7 @@ body {
 
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Amount (₹)</label>
+        <label class="form-label">Amount (₹) — for UAE transfers, enter INR equivalent</label>
         <input type="number" class="form-input" id="tr-amt" placeholder="0" inputmode="decimal">
       </div>
       <div class="form-group">
@@ -1976,9 +1976,12 @@ function saveTransfer() {
   // Apply balance changes to both accounts
   applyTransfer(fromId, toId, amt, trType);
 
-  save(); closeModal('tr-modal'); renderTransfers();
+  save(); closeModal('tr-modal');
   renderDashboard();
-  showToast(`Transfer of ${fmt(amt)} applied to both accounts`);
+  renderPage(currentPage); // re-render whatever page is active
+  const fromName = allTransferOptions().find(o=>o.value===fromId)?.label || fromId;
+  const toName   = allTransferOptions().find(o=>o.value===toId)?.label   || toId;
+  showToast(`${fmt(amt)} moved: ${fromName.split(' (')[0]} → ${toName.split(' (')[0]}`);
 }
 
 function applyTransfer(fromId, toId, amt, trType, reverse) {
