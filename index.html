@@ -1978,10 +1978,20 @@ function saveTransfer() {
 
   save(); closeModal('tr-modal');
   renderDashboard();
-  renderPage(currentPage); // re-render whatever page is active
-  const fromName = allTransferOptions().find(o=>o.value===fromId)?.label || fromId;
-  const toName   = allTransferOptions().find(o=>o.value===toId)?.label   || toId;
-  showToast(`${fmt(amt)} moved: ${fromName.split(' (')[0]} → ${toName.split(' (')[0]}`);
+  renderPage(currentPage);
+
+  // Show exact balances after transfer for confirmation
+  const fromAcctAfter = D.accounts.indBanks.find(a=>a.id===fromId) ||
+                        D.accounts.indCards.find(a=>a.id===fromId) ||
+                        D.accounts.uaeAccounts.find(a=>a.id===fromId);
+  const toAcctAfter   = D.accounts.indBanks.find(a=>a.id===toId) ||
+                        D.accounts.indCards.find(a=>a.id===toId) ||
+                        D.accounts.uaeAccounts.find(a=>a.id===toId);
+  const fromName = allTransferOptions().find(o=>o.value===fromId)?.label?.split(' (')[0] || 'Source';
+  const toName   = allTransferOptions().find(o=>o.value===toId)?.label?.split(' (')[0]   || 'Dest';
+  const fromBal  = fromAcctAfter ? (fromAcctAfter.balance !== undefined ? fmt(fromAcctAfter.balance) : fmtAED(fromAcctAfter.balanceAED||0)+' AED') : '—';
+  const toBal    = toAcctAfter   ? (toAcctAfter.balance   !== undefined ? fmt(toAcctAfter.balance)   : fmtAED(toAcctAfter.balanceAED||0)+' AED')   : '—';
+  showToast(`✅ ${fmt(amt)} transferred · ${fromName}: ${fromBal} · ${toName}: ${toBal}`);
 }
 
 function applyTransfer(fromId, toId, amt, trType, reverse) {
