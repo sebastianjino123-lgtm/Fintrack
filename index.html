@@ -949,8 +949,17 @@ body {
 
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Amount (₹) — for UAE transfers, enter INR equivalent</label>
-        <input type="number" class="form-input" id="tr-amt" placeholder="0" inputmode="decimal">
+        <label class="form-label" id="tr-amt-label">Amount</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" class="form-input" id="tr-amt" placeholder="0" inputmode="decimal" style="flex:1">
+          <div class="select-wrap" style="width:80px;">
+            <select class="form-select" id="tr-currency" style="padding:12px 8px;">
+              <option value="INR">₹ INR</option>
+              <option value="AED">AED</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;" id="tr-convert-hint"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Date</label>
@@ -1954,12 +1963,52 @@ function openTransferModal() {
   const opts = allTransferOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
   document.getElementById('tr-from').innerHTML = opts;
   document.getElementById('tr-to').innerHTML = opts;
+  // Reset currency
+  const cur = document.getElementById('tr-currency');
+  if(cur) cur.value = 'INR';
+  updateTransferHint();
+  // Update hint when accounts change
+  document.getElementById('tr-from').onchange = updateTransferHint;
+  document.getElementById('tr-to').onchange = updateTransferHint;
+  document.getElementById('tr-amt').oninput = updateTransferHint;
+  document.getElementById('tr-currency').onchange = updateTransferHint;
   openModal('tr-modal');
 }
 
+function updateTransferHint() {
+  const fromId = document.getElementById('tr-from')?.value;
+  const toId   = document.getElementById('tr-to')?.value;
+  const amt    = parseFloat(document.getElementById('tr-amt')?.value)||0;
+  const cur    = document.getElementById('tr-currency')?.value || 'INR';
+  const hint   = document.getElementById('tr-convert-hint');
+  const label  = document.getElementById('tr-amt-label');
+  if(!hint) return;
+  const fromIsUAE = D.accounts.uaeAccounts.find(u=>u.id===fromId);
+  const toIsUAE   = D.accounts.uaeAccounts.find(u=>u.id===toId);
+  if(fromIsUAE || toIsUAE) {
+    if(cur === 'AED' && amt > 0) {
+      hint.textContent = `= ₹${(amt * D.aedRate).toLocaleString('en-IN', {maximumFractionDigits:0})} INR at rate ${D.aedRate}`;
+      hint.style.color = 'var(--teal)';
+    } else if(cur === 'INR' && amt > 0) {
+      hint.textContent = `= AED ${(amt / D.aedRate).toLocaleString('en-IN', {maximumFractionDigits:2})} at rate ${D.aedRate}`;
+      hint.style.color = 'var(--teal)';
+    } else {
+      hint.textContent = `UAE account involved — select AED or INR`;
+      hint.style.color = 'var(--text3)';
+    }
+    if(label) label.textContent = 'Amount (select currency)';
+  } else {
+    hint.textContent = '';
+    if(label) label.textContent = 'Amount (₹)';
+  }
+}
+
 function saveTransfer() {
-  const amt = parseFloat(document.getElementById('tr-amt').value);
-  if(!amt || amt <= 0) { alert('Enter a valid amount'); return; }
+  const rawAmt   = parseFloat(document.getElementById('tr-amt').value);
+  const currency = document.getElementById('tr-currency')?.value || 'INR';
+  if(!rawAmt || rawAmt <= 0) { alert('Enter a valid amount'); return; }
+  // Always store amount in INR internally
+  const amt = currency === 'AED' ? rawAmt * D.aedRate : rawAmt;
   const fromId = document.getElementById('tr-from').value;
   const toId   = document.getElementById('tr-to').value;
   const trType = document.getElementById('tr-type').value;
@@ -2015,9 +2064,10 @@ function applyTransfer(fromId, toId, amt, trType, reverse) {
       fromAcct.balance = (fromAcct.balance||0) - (amt * sign);
       if(fromAcct.appBalance !== undefined) fromAcct.appBalance = fromAcct.balance;
     } else if(D.accounts.indCards.find(a=>a.id===fromId)) {
-      // Paying FROM a bank TO credit card reduces CC outstanding
+      // Paying FROM credit card (e.g. CC to bank) increases outstanding
       fromAcct.outstanding = Math.max(0, (fromAcct.outstanding||0) - (amt * sign));
       fromAcct.totalDue    = Math.max(0, (fromAcct.totalDue||0)    - (amt * sign));
+      fromAcct.minDue      = Math.max(0, (fromAcct.minDue||0)      - (amt * sign));
     } else if(D.accounts.uaeAccounts.find(a=>a.id===fromId)) {
       if(fromAcct.type === 'Credit Card') {
         fromAcct.outstandingAED = Math.max(0, (fromAcct.outstandingAED||0) - (amt/D.aedRate * sign));
@@ -2038,12 +2088,16 @@ function applyTransfer(fromId, toId, amt, trType, reverse) {
       toAcct.balance = (toAcct.balance||0) + (amt * sign);
       if(toAcct.appBalance !== undefined) toAcct.appBalance = toAcct.balance;
     } else if(D.accounts.indCards.find(a=>a.id===toId)) {
-      // Transfer TO credit card = payment = reduces outstanding
+      // Transfer TO credit card = payment = reduces outstanding, totalDue, minDue
       toAcct.outstanding = Math.max(0, (toAcct.outstanding||0) - (amt * sign));
       toAcct.totalDue    = Math.max(0, (toAcct.totalDue||0)    - (amt * sign));
+      toAcct.minDue      = Math.max(0, (toAcct.minDue||0)      - (amt * sign));
     } else if(D.accounts.uaeAccounts.find(a=>a.id===toId)) {
       if(toAcct.type === 'Credit Card') {
-        toAcct.outstandingAED = Math.max(0, (toAcct.outstandingAED||0) - (amt/D.aedRate * sign));
+        const aedAmt = amt / D.aedRate;
+        toAcct.outstandingAED = Math.max(0, (toAcct.outstandingAED||0) - (aedAmt * sign));
+        toAcct.totalDueAED    = Math.max(0, (toAcct.totalDueAED||0)    - (aedAmt * sign));
+        toAcct.minDueAED      = Math.max(0, (toAcct.minDueAED||0)      - (aedAmt * sign));
         toAcct.balanceAED = toAcct.outstandingAED;
       } else {
         toAcct.balanceAED = (toAcct.balanceAED||0) + (amt/D.aedRate * sign);
@@ -3473,7 +3527,11 @@ function saveSMSExpense(){
     if(!cardId||!bankId){alert('Select both accounts');return;}
     D.transfers.push({id:Date.now().toString(),fromId:bankId,toId:cardId,amount:smsParsed.amount,date:today(),type:'Credit Card Payment',note:'Auto (SMS)'});
     applyTransfer(bankId,cardId,smsParsed.amount,'Credit Card Payment');
-    if(smsParsed.availCredit){const card=D.accounts.indCards.find(c=>c.id===cardId);if(card&&card.limit>0){card.outstanding=Math.max(0,card.limit-smsParsed.availCredit);}}
+    if(smsParsed.availCredit){const card=D.accounts.indCards.find(c=>c.id===cardId);if(card&&card.limit>0){
+      card.outstanding=Math.max(0,card.limit-smsParsed.availCredit);
+      card.totalDue=Math.max(0,(card.totalDue||0)-smsParsed.amount);
+      card.minDue=Math.max(0,(card.minDue||0)-smsParsed.amount);
+    }}
     save();restoreSMSUI();closeModal('sms-modal');renderDashboard();renderPage(currentPage);
     showToast(`✅ ${fmt(smsParsed.amount)} CC payment logged`);smsParsed=null;return;
   }
