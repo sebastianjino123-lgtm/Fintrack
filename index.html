@@ -605,6 +605,10 @@ body {
         <button onclick="openExpenseModal()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
       </div>
     </div>
+    <div style="padding:8px 0 4px;">
+      <input type="text" id="exp-search" placeholder="🔍 Search expenses..." oninput="renderExpenses()"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-size:13px;box-sizing:border-box;">
+    </div>
   </div>
 
   <div class="month-selector">
@@ -1874,13 +1878,24 @@ function renderExpenses() {
     </div>`;
   }).join('');
 
-  // Expense list
+  // Expense list — apply search filter
+  const expSearchQ = (document.getElementById('exp-search')?.value||'').toLowerCase().trim();
+  const filteredExps = expSearchQ
+    ? exps.filter(e =>
+        (e.desc||'').toLowerCase().includes(expSearchQ) ||
+        (e.category||'').toLowerCase().includes(expSearchQ) ||
+        (e.amount||'').toString().includes(expSearchQ) ||
+        (e.mode||'').toLowerCase().includes(expSearchQ)
+      )
+    : exps;
   const el = document.getElementById('exp-list');
-  if(exps.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">💸</div>No expenses in '+MONTHS[expViewMonth]+'.<br>Tap + to add one!</div>';
+  if(filteredExps.length === 0) {
+    el.innerHTML = expSearchQ
+      ? '<div class="empty-state"><div class="icon">🔍</div>No expenses match "'+expSearchQ+'"</div>'
+      : '<div class="empty-state"><div class="icon">💸</div>No expenses in '+MONTHS[expViewMonth]+'.<br>Tap + to add one!</div>';
     return;
   }
-  const sorted = [...exps].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sorted = [...filteredExps].sort((a,b)=>new Date(b.date)-new Date(a.date));
   el.innerHTML = sorted.map(e => {
     const cat = getCat(e.category);
     const acc = getAcctById(e.accountId);
@@ -1938,7 +1953,7 @@ function renderTransfers() {
     const from = getAcctById(t.fromId);
     const to   = getAcctById(t.toId);
     return `
-    <div class="transfer-item" onclick="deleteTransfer('${t.id}')">
+    <div class="transfer-item" onclick="twoTapDelete(this,()=>deleteTransfer('${t.id}'))">
       <div class="transfer-flow">
         <div class="transfer-acc">${from?from.name:t.fromId}</div>
         <div class="transfer-arrow">→</div>
@@ -2213,6 +2228,34 @@ let editingExpenseId = null;
 function safeConfirm(msg) {
   try { return window.confirm(msg); } catch(e) { return true; }
 }
+
+// Two-tap delete for any button — no confirm dialog needed
+// Usage: onclick="twoTapDelete(this, () => actualDeleteFn())"
+function twoTapDelete(btn, deleteFn) {
+  if(btn.dataset.confirmPending !== '1') {
+    btn.dataset.confirmPending = '1';
+    const orig = btn.textContent;
+    btn.dataset.origText = orig;
+    btn.textContent = '⚠️ Tap again to delete';
+    btn.style.background = 'rgba(248,113,113,0.25)';
+    btn.style.borderColor = 'rgba(248,113,113,0.6)';
+    btn.style.color = 'var(--red)';
+    setTimeout(() => {
+      if(btn && btn.dataset.confirmPending === '1') {
+        btn.dataset.confirmPending = '0';
+        btn.textContent = btn.dataset.origText || orig;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
+    }, 3000);
+    return;
+  }
+  btn.dataset.confirmPending = '0';
+  btn.textContent = btn.dataset.origText || btn.textContent;
+  btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+  deleteFn();
+}
 function openExpenseModal(id) {
   editingExpenseId = id || null;
   const exp = id ? D.expenses.find(e=>e.id===id) : null;
@@ -2476,7 +2519,6 @@ function applyTransfer(fromId, toId, amt, trType, reverse) {
 }
 
 function deleteTransfer(id) {
-  if(!safeConfirm('Delete this transfer?')) return;
   const tr = D.transfers.find(t=>t.id===id);
   if(tr) {
     // Reverse the balance changes
@@ -2953,9 +2995,18 @@ function refreshUAEFields(id) {
 // DELETE ACCOUNT
 // ══════════════════════════════════════════════════════════
 function deleteAccount(id, type) {
-  if(!safeConfirm('Delete this account? This cannot be undone.')) return;
-  D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
-  save(); closeModal('acct-modal'); renderPage(currentPage);
+  // Find the delete button to use twoTapDelete
+  const btn = document.activeElement;
+  const doDelete = () => {
+    D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
+    save(); closeModal('acct-modal'); renderPage(currentPage);
+    showToast('Account deleted');
+  };
+  if(btn && btn.tagName === 'BUTTON') {
+    twoTapDelete(btn, doDelete);
+  } else {
+    doDelete(); // fallback
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3369,7 +3420,6 @@ function saveLent() {
 }
 
 function deleteLent(id) {
-  if(!safeConfirm('Delete this entry?')) return;
   const entry = D.lent.find(l=>l.id===id);
   if(entry) {
     // Reverse the original deduction (money comes back)
@@ -3524,7 +3574,7 @@ function renderLent() {
       <div style="display:flex;gap:8px">
         ${entry.status !== 'settled' ? `<button onclick="openRepayModal('${entry.id}')" style="flex:1;padding:9px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;">💰 Repayment</button>` : ''}
         <button onclick="openLentModal('${entry.id}')" style="flex:1;padding:9px;background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">✏️ Edit</button>
-        <button onclick="deleteLent('${entry.id}')" style="padding:9px 12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
+        <button onclick="twoTapDelete(this,()=>deleteLent('${entry.id}'))" style="padding:9px 12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
       </div>
     </div>`;
   }).join('');
@@ -3605,12 +3655,16 @@ function saveIncome(){
   if(!D.income)D.income=[];
   if(editingIncId){
     const old=(D.income||[]).find(i=>i.id===editingIncId);
-    if(old)deductFromAccount(old.accountId,old.amount);
+    if(old){
+      // Reverse old credit fully before applying new
+      deductFromAccount(old.accountId, old.amount);
+    }
     const idx=(D.income||[]).findIndex(i=>i.id===editingIncId);
     if(idx>=0)D.income[idx]={id:editingIncId,desc,amount,date,category:cat,accountId,note};
   }else{
     D.income.push({id:Date.now().toString(),desc,amount,date,category:cat,accountId,note});
   }
+  // Credit new amount to new account
   creditToAccount(accountId,amount);
   save();closeModal('income-modal');renderIncome();renderDashboard();
   showToast(`+${fmt(amount)} credited to ${getAcctName(accountId)}`);
@@ -3724,7 +3778,7 @@ function renderIncome(){
         <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">+${fmt(i.amount)}</div>
         <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end;">
           <button onclick="openIncomeModal('${i.id}')" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:3px 8px;color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;">✏️</button>
-          <button onclick="deleteIncome('${i.id}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
+          <button onclick="twoTapDelete(this,()=>deleteIncome('${i.id}'))" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
         </div>
       </div>
     </div>`;}).join('');
@@ -4206,7 +4260,7 @@ function renderBorrowings() {
       <div style="border-top:1px solid var(--border);display:flex;">
         <button onclick="openBorrowModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button>
         ${b.status!=='settled'?`<button onclick="openBrepayModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;">💰 Repay</button>`:''}
-        <button onclick="deleteBorrowing('${b.id}')" style="flex:1;padding:10px;background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
+        <button onclick="twoTapDelete(this,()=>deleteBorrowing('${b.id}'))" style="flex:1;padding:10px;background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
       </div>
     </div>`;
   }).join('');

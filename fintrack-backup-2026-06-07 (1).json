@@ -1,0 +1,366 @@
+{
+  "aedRate": 25,
+  "alertThreshold": 50000,
+  "accounts": {
+    "indBanks": [
+      {
+        "id": "b1",
+        "name": "SBI Salary Account",
+        "bank": "State Bank of India",
+        "balance": 0,
+        "minBal": 1000,
+        "type": "Savings",
+        "color": "#2DD4BF",
+        "appBalance": 0,
+        "lastReconciled": "2026-06-07"
+      },
+      {
+        "id": "b2",
+        "name": "HDFC Savings",
+        "bank": "HDFC Bank",
+        "balance": 50437,
+        "minBal": 5000,
+        "type": "Savings",
+        "color": "#60A5FA",
+        "appBalance": 50437,
+        "lastReconciled": "2026-06-07"
+      },
+      {
+        "id": "b3",
+        "name": "South Indian Bank ",
+        "bank": "South Indian Bank ",
+        "balance": 20530.479999999996,
+        "minBal": 1000,
+        "type": "Savings",
+        "color": "#A78BFA",
+        "appBalance": 20530.479999999996,
+        "lastReconciled": "2026-06-07"
+      },
+      {
+        "id": "b4",
+        "name": "Indusind bank ",
+        "bank": "Indusind bank ",
+        "balance": 209,
+        "minBal": 0,
+        "type": "Savings",
+        "color": "#F472B6"
+      },
+      {
+        "id": "b5",
+        "name": "Kotak Mahindra",
+        "bank": "Kotak Mahindra Bank",
+        "balance": 0,
+        "minBal": 0,
+        "type": "Savings",
+        "color": "#FB923C"
+      },
+      {
+        "id": "b6",
+        "name": "Federal Bank ",
+        "bank": "Federal Bank ",
+        "balance": 0,
+        "minBal": 1000,
+        "type": "Savings",
+        "color": "#34D399"
+      }
+    ],
+    "indCards": [
+      {
+        "id": "c1",
+        "name": "Kotak Credit card ",
+        "bank": "Kotak credit card ",
+        "limit": 31500,
+        "outstanding": 20723,
+        "minDue": 0,
+        "totalDue": 0,
+        "dueDate": 20,
+        "color": "#F87171"
+      },
+      {
+        "id": "c2",
+        "name": "SBI Credit Card",
+        "bank": "SBI Card",
+        "limit": 92000,
+        "outstanding": 73652,
+        "minDue": 9710,
+        "totalDue": 14510,
+        "dueDate": 22,
+        "color": "#FB923C"
+      },
+      {
+        "id": "c3",
+        "name": "One card ",
+        "bank": "Sbm",
+        "limit": 7500,
+        "outstanding": 8023,
+        "minDue": 401,
+        "totalDue": 8023,
+        "dueDate": 18,
+        "color": "#A78BFA"
+      }
+    ],
+    "uaeAccounts": [
+      {
+        "id": "u1",
+        "name": "Adcb Savings",
+        "bank": "ADCB Bank",
+        "balanceAED": 236,
+        "type": "Savings",
+        "color": "#34D399",
+        "limitAED": 0,
+        "outstandingAED": 0,
+        "minDueAED": 0,
+        "totalDueAED": 0,
+        "dueDate": 20
+      },
+      {
+        "id": "u2",
+        "name": "ADCB Credit Card",
+        "bank": "ADCB Bank",
+        "balanceAED": 1320,
+        "type": "Credit Card",
+        "color": "#F87171",
+        "limitAED": 22000,
+        "outstandingAED": 1320,
+        "minDueAED": 0,
+        "totalDueAED": 0,
+        "dueDate": 20
+      }
+    ],
+    "loans": [
+      {
+        "id": "l2",
+        "name": "Car Loan",
+        "lender": "Cholam",
+        "principal": 0,
+        "outstanding": 88650,
+        "emi": 9850,
+        "rate": 9,
+        "dueDay": 30,
+        "tenure": 12,
+        "completed": 4,
+        "loanType": "emi"
+      },
+      {
+        "id": "loan_1780252266164",
+        "name": "Kissan loan",
+        "loanType": "overdraft",
+        "lender": "Union Bank",
+        "outstanding": 40000,
+        "rate": 0,
+        "color": "#F87171",
+        "odLimit": 30000
+      },
+      {
+        "id": "loan_1780252397451",
+        "name": "Gold loan",
+        "loanType": "gold",
+        "lender": "Sbi",
+        "outstanding": 90000,
+        "rate": 10.5,
+        "color": "#F87171",
+        "pawnedValue": 120000,
+        "interestDue": 0,
+        "maturityDate": "2026-07-30"
+      },
+      {
+        "id": "loan_1780252516692",
+        "name": "Society loan",
+        "loanType": "overdraft",
+        "lender": "Ptcd",
+        "outstanding": 140000,
+        "rate": 10.5,
+        "color": "#F87171",
+        "odLimit": 140000
+      },
+      {
+        "id": "loan_1780252687527",
+        "name": "Money view",
+        "loanType": "emi",
+        "lender": "Money view",
+        "outstanding": 14633,
+        "rate": 0,
+        "color": "#F87171",
+        "principal": 18325,
+        "emi": 3692,
+        "dueDay": 3,
+        "tenure": 6,
+        "completed": 2
+      }
+    ],
+    "chits": [
+      {
+        "id": "ch1",
+        "name": "Chit Fund 1",
+        "organizer": "Binil",
+        "value": 100000,
+        "monthly": 5000,
+        "totalMonths": 24,
+        "completed": 8,
+        "payoutReceived": false,
+        "dueDay": 1,
+        "startDate": "2025-07-22"
+      }
+    ]
+  },
+  "budgets": {
+    "Groceries": 10000,
+    "Food & Dining": 8000,
+    "Fuel": 6000,
+    "Utilities": 4000,
+    "Shopping": 8000,
+    "Medical": 5000,
+    "Travel": 10000,
+    "Entertainment": 4000,
+    "Education": 5000,
+    "Rent/EMI": 0,
+    "Chit Payment": 0,
+    "Miscellaneous": 5000
+  },
+  "expenses": [
+    {
+      "id": "1780201424783",
+      "category": "Miscellaneous",
+      "desc": "One card",
+      "amount": 394,
+      "date": "2026-05-31",
+      "accountId": "b3",
+      "mode": "UPI"
+    },
+    {
+      "id": "1780822216762",
+      "category": "Miscellaneous",
+      "desc": "UPI Transfer",
+      "amount": 5000,
+      "date": "2026-06-05",
+      "accountId": "b3",
+      "mode": "Auto (SMS)"
+    },
+    {
+      "id": "1780822389164",
+      "category": "Miscellaneous",
+      "desc": "SMS Transaction",
+      "amount": 29.5,
+      "date": "2026-06-07",
+      "accountId": "b3",
+      "mode": "Auto (SMS)"
+    }
+  ],
+  "transfers": [
+    {
+      "id": "1780822293751",
+      "fromId": "b3",
+      "toId": "b2",
+      "amount": 50000,
+      "date": "2026-06-07",
+      "type": "Bank to Bank",
+      "note": ""
+    },
+    {
+      "id": "1780824995450",
+      "fromId": "u1",
+      "toId": "u2",
+      "amount": 48750,
+      "date": "2026-06-07",
+      "type": "Credit Card Payment",
+      "note": ""
+    },
+    {
+      "id": "1780825856552",
+      "fromId": "b6",
+      "toId": "loan_1780252687527",
+      "amount": 3692,
+      "date": "2026-06-07",
+      "type": "Loan EMI Payment",
+      "note": ""
+    }
+  ],
+  "lent": [
+    {
+      "id": "1780114275797",
+      "friend": "Sumesh",
+      "amount": 30000,
+      "date": "2026-05-30",
+      "accountId": "b2",
+      "returnDate": "",
+      "note": "",
+      "recovered": 0,
+      "status": "pending",
+      "repayments": []
+    },
+    {
+      "id": "1780114304109",
+      "friend": "Siraj",
+      "amount": 10000,
+      "date": "2026-05-30",
+      "accountId": "b3",
+      "returnDate": "",
+      "note": "",
+      "recovered": 0,
+      "status": "pending",
+      "repayments": []
+    },
+    {
+      "id": "1780832261249",
+      "friend": "Manoj",
+      "amount": 4000,
+      "date": "2026-06-07",
+      "accountId": "b1",
+      "returnDate": "2026-06-30",
+      "note": "",
+      "recovered": 0,
+      "status": "pending",
+      "repayments": []
+    },
+    {
+      "id": "1780832366677",
+      "friend": "Pious",
+      "amount": 4000,
+      "date": "2026-06-07",
+      "accountId": "b1",
+      "returnDate": "2026-07-31",
+      "note": "",
+      "recovered": 0,
+      "status": "pending",
+      "repayments": []
+    }
+  ],
+  "currentMonth": 4,
+  "currentYear": 2026,
+  "income": [
+    {
+      "id": "1780822140703",
+      "desc": "SMS Credit",
+      "amount": 77732.42,
+      "date": "2026-06-07",
+      "category": "UAE Remittance",
+      "accountId": "b3",
+      "note": "Auto (SMS)"
+    },
+    {
+      "id": "1780825339335",
+      "desc": "Investment angel",
+      "amount": 3692,
+      "date": "2026-06-07",
+      "category": "Investment",
+      "accountId": "b6",
+      "note": ""
+    }
+  ],
+  "borrowings": [
+    {
+      "id": "1780833321621",
+      "lender": "Hari",
+      "amount": 10000,
+      "date": "2026-06-07",
+      "accountId": "b1",
+      "returnDate": "2026-06-30",
+      "rate": 0,
+      "note": "",
+      "status": "pending",
+      "repaid": 0,
+      "repayments": []
+    }
+  ],
+  "netWorthHistory": []
+}
