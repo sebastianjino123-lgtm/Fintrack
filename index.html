@@ -2046,71 +2046,71 @@ function saveTransfer() {
 function applyTransfer(fromId, toId, amt, trType, reverse) {
   const sign = reverse ? -1 : 1;
 
-  // Helper to get any account
-  const findAcct = (id) => {
-    return D.accounts.indBanks.find(a=>a.id===id) ||
-           D.accounts.indCards.find(a=>a.id===id) ||
-           D.accounts.uaeAccounts.find(a=>a.id===id) ||
-           D.accounts.loans.find(a=>a.id===id) ||
-           D.accounts.chits.find(a=>a.id===id);
-  };
+  // ── DEDUCT FROM source ──────────────────────────────────────────────────────
+  const fromBank = D.accounts.indBanks.find(a=>a.id===fromId);
+  const fromCard = D.accounts.indCards.find(a=>a.id===fromId);
+  const fromUAE  = D.accounts.uaeAccounts.find(a=>a.id===fromId);
+  const fromLoan = D.accounts.loans.find(a=>a.id===fromId);
+  const fromChit = D.accounts.chits.find(a=>a.id===fromId);
 
-  const fromAcct = findAcct(fromId);
-  const toAcct   = findAcct(toId);
-
-  // DEDUCT FROM source account
-  if(fromAcct) {
-    if(D.accounts.indBanks.find(a=>a.id===fromId)) {
-      fromAcct.balance = (fromAcct.balance||0) - (amt * sign);
-      if(fromAcct.appBalance !== undefined) fromAcct.appBalance = fromAcct.balance;
-    } else if(D.accounts.indCards.find(a=>a.id===fromId)) {
-      // Paying FROM credit card (e.g. CC to bank) increases outstanding
-      fromAcct.outstanding = Math.max(0, (fromAcct.outstanding||0) - (amt * sign));
-      fromAcct.totalDue    = Math.max(0, (fromAcct.totalDue||0)    - (amt * sign));
-      fromAcct.minDue      = Math.max(0, (fromAcct.minDue||0)      - (amt * sign));
-    } else if(D.accounts.uaeAccounts.find(a=>a.id===fromId)) {
-      if(fromAcct.type === 'Credit Card') {
-        fromAcct.outstandingAED = Math.max(0, (fromAcct.outstandingAED||0) - (amt/D.aedRate * sign));
-        fromAcct.balanceAED = fromAcct.outstandingAED;
-      } else {
-        fromAcct.balanceAED = (fromAcct.balanceAED||0) - (amt/D.aedRate * sign);
-      }
+  if(fromBank) {
+    fromBank.balance = (fromBank.balance||0) - (amt * sign);
+    if(fromBank.appBalance !== undefined) fromBank.appBalance = fromBank.balance;
+  } else if(fromCard) {
+    fromCard.outstanding = Math.max(0, (fromCard.outstanding||0) - (amt * sign));
+    fromCard.totalDue    = Math.max(0, (fromCard.totalDue||0)    - (amt * sign));
+    fromCard.minDue      = Math.max(0, (fromCard.minDue||0)      - (amt * sign));
+  } else if(fromUAE) {
+    if(fromUAE.type === 'Credit Card') {
+      fromUAE.outstandingAED = Math.max(0, (fromUAE.outstandingAED||0) - (amt/D.aedRate * sign));
+      fromUAE.balanceAED = fromUAE.outstandingAED;
+    } else {
+      fromUAE.balanceAED = (fromUAE.balanceAED||0) - (amt/D.aedRate * sign);
     }
-    // Loans & chits: reduce outstanding
-    else if(D.accounts.loans.find(a=>a.id===fromId)) {
-      fromAcct.outstanding = Math.max(0, (fromAcct.outstanding||0) - (amt * sign));
-    }
+  } else if(fromLoan) {
+    // Paying FROM a loan account (rare — skip balance change)
+    // Loan outstanding doesn't change when paying FROM it
+  } else if(fromChit) {
+    // Paying FROM chit — skip
   }
 
-  // ADD TO destination account
-  if(toAcct) {
-    if(D.accounts.indBanks.find(a=>a.id===toId)) {
-      toAcct.balance = (toAcct.balance||0) + (amt * sign);
-      if(toAcct.appBalance !== undefined) toAcct.appBalance = toAcct.balance;
-    } else if(D.accounts.indCards.find(a=>a.id===toId)) {
-      // Transfer TO credit card = payment = reduces outstanding, totalDue, minDue
-      toAcct.outstanding = Math.max(0, (toAcct.outstanding||0) - (amt * sign));
-      toAcct.totalDue    = Math.max(0, (toAcct.totalDue||0)    - (amt * sign));
-      toAcct.minDue      = Math.max(0, (toAcct.minDue||0)      - (amt * sign));
-    } else if(D.accounts.uaeAccounts.find(a=>a.id===toId)) {
-      if(toAcct.type === 'Credit Card') {
-        const aedAmt = amt / D.aedRate;
-        toAcct.outstandingAED = Math.max(0, (toAcct.outstandingAED||0) - (aedAmt * sign));
-        toAcct.totalDueAED    = Math.max(0, (toAcct.totalDueAED||0)    - (aedAmt * sign));
-        toAcct.minDueAED      = Math.max(0, (toAcct.minDueAED||0)      - (aedAmt * sign));
-        toAcct.balanceAED = toAcct.outstandingAED;
-      } else {
-        toAcct.balanceAED = (toAcct.balanceAED||0) + (amt/D.aedRate * sign);
+  // ── ADD TO destination ──────────────────────────────────────────────────────
+  const toBank = D.accounts.indBanks.find(a=>a.id===toId);
+  const toCard = D.accounts.indCards.find(a=>a.id===toId);
+  const toUAE  = D.accounts.uaeAccounts.find(a=>a.id===toId);
+  const toLoan = D.accounts.loans.find(a=>a.id===toId);
+  const toChit = D.accounts.chits.find(a=>a.id===toId);
+
+  if(toBank) {
+    toBank.balance = (toBank.balance||0) + (amt * sign);
+    if(toBank.appBalance !== undefined) toBank.appBalance = toBank.balance;
+  } else if(toCard) {
+    // Payment to CC — reduces outstanding, totalDue, minDue
+    toCard.outstanding = Math.max(0, (toCard.outstanding||0) - (amt * sign));
+    toCard.totalDue    = Math.max(0, (toCard.totalDue||0)    - (amt * sign));
+    toCard.minDue      = Math.max(0, (toCard.minDue||0)      - (amt * sign));
+  } else if(toUAE) {
+    if(toUAE.type === 'Credit Card') {
+      const aedAmt = amt / D.aedRate;
+      toUAE.outstandingAED = Math.max(0, (toUAE.outstandingAED||0) - (aedAmt * sign));
+      toUAE.totalDueAED    = Math.max(0, (toUAE.totalDueAED||0)    - (aedAmt * sign));
+      toUAE.minDueAED      = Math.max(0, (toUAE.minDueAED||0)      - (aedAmt * sign));
+      toUAE.balanceAED     = toUAE.outstandingAED;
+    } else {
+      toUAE.balanceAED = (toUAE.balanceAED||0) + (amt/D.aedRate * sign);
+    }
+  } else if(toLoan) {
+    // Payment to loan — reduces outstanding AND updates completed months
+    toLoan.outstanding = Math.max(0, (toLoan.outstanding||0) - (amt * sign));
+    // If EMI loan, increment completed months
+    if(toLoan.loanType === 'emi' || !toLoan.loanType) {
+      if(amt >= (toLoan.emi||0) * 0.9) { // close to EMI amount = one month paid
+        toLoan.completed = Math.min((toLoan.completed||0) + 1, toLoan.tenure||999);
       }
     }
-    // Loans: transfer TO loan = payment = reduces outstanding
-    else if(D.accounts.loans.find(a=>a.id===toId)) {
-      toAcct.outstanding = Math.max(0, (toAcct.outstanding||0) - (amt * sign));
-    }
-    // Chits: reduce remaining obligation
-    else if(D.accounts.chits.find(a=>a.id===toId)) {
-      toAcct.completed = Math.min((toAcct.completed||0) + 1, toAcct.totalMonths);
-    }
+  } else if(toChit) {
+    // Chit payment — increment completed months
+    toChit.completed = Math.min((toChit.completed||0) + 1, toChit.totalMonths||99);
   }
 }
 
