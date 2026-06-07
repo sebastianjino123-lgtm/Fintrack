@@ -2241,6 +2241,7 @@ function openAcctModal(id) {
     fields = `
       <div class="form-group"><label class="form-label">Chit Name</label><input type="text" class="form-input" id="ae-name" value="${acct.name}"></div>
       <div class="form-group"><label class="form-label">Organizer</label><input type="text" class="form-input" id="ae-organizer" value="${acct.organizer}"></div>
+      <div class="form-group"><label class="form-label">Chit Start Date</label><input type="date" class="form-input" id="ae-startdate" value="${acct.startDate||''}"></div>
       <div class="form-group"><label class="form-label">Chit Value (₹)</label><input type="number" class="form-input" id="ae-value" value="${acct.value}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Monthly Contribution (₹)</label><input type="number" class="form-input" id="ae-monthly" value="${acct.monthly}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Total Months</label><input type="number" class="form-input" id="ae-totalmonths" value="${acct.totalMonths}" inputmode="numeric"></div>
