@@ -1163,8 +1163,8 @@ const defaultData = {
       { id:'l3', name:'Personal Loan 1', lender:'', principal:0, outstanding:0, emi:0, rate:12,  dueDay:10,tenure:36,  completed:0 },
     ],
     chits: [
-      { id:'ch1', name:'Chit Fund 1', organizer:'', value:0, monthly:0, totalMonths:10, completed:0, payoutReceived:false },
-      { id:'ch2', name:'Chit Fund 2', organizer:'', value:0, monthly:0, totalMonths:10, completed:0, payoutReceived:false },
+      { id:'ch1', name:'Chit Fund 1', organizer:'', value:0, monthly:0, totalMonths:10, completed:0, payoutReceived:false, dueDay:1, startDate:'' },
+      { id:'ch2', name:'Chit Fund 2', organizer:'', value:0, monthly:0, totalMonths:10, completed:0, payoutReceived:false, dueDay:1, startDate:'' },
     ]
   },
   budgets: {
@@ -1187,6 +1187,8 @@ let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.pars
 // Migrate old saved data to support new fields
 if (!D.lent) D.lent = [];
 if (!D.income) D.income = [];
+// Migrate chits to add dueDay and startDate if missing
+(D.accounts.chits||[]).forEach(c => { if(!c.dueDay) c.dueDay = 1; if(!c.startDate) c.startDate = ''; });
 if (D.accounts.uaeAccounts && !D.accounts.uaeAccounts[0].hasOwnProperty('outstandingAED')) {
   D.accounts.uaeAccounts = D.accounts.uaeAccounts.map(u => ({
     ...u,
@@ -1392,7 +1394,33 @@ function renderDashboard() {
   });
   D.accounts.chits.forEach(c => {
     if(c.monthly <= 0 || c.completed >= c.totalMonths) return;
-    dues.push({ name: c.name, amount: fmt(c.monthly), diff: 15, label:'ok' });
+    const now5 = new Date(); now5.setHours(0,0,0,0);
+
+    // Check overdue months using start date
+    const { overdue, arrears, elapsed } = chitOverdueMonths(c);
+
+    if(overdue > 0) {
+      // Has missed payments — show as urgent overdue
+      dues.push({
+        name: c.name + ' 🎰',
+        amount: fmt(arrears),
+        diff: -overdue, // negative = overdue
+        label: 'urgent',
+        sub: `${overdue} month${overdue>1?'s':''} overdue · ${fmt(c.monthly)}/month`
+      });
+    } else {
+      // Calculate next due date
+      const d5 = new Date(now5); d5.setDate(c.dueDay||1);
+      if(d5 <= now5) d5.setMonth(d5.getMonth()+1);
+      const diff5 = Math.round((d5 - now5)/(1000*60*60*24));
+      dues.push({
+        name: c.name + ' 🎰',
+        amount: fmt(c.monthly),
+        diff: diff5,
+        label: diff5<=0?'urgent':diff5<=3?'urgent':diff5<=7?'soon':'ok',
+        sub: `Month ${(c.completed||0)+1} of ${c.totalMonths}`
+      });
+    }
   });
   // Add overdue lent entries to dues
   (D.lent||[]).filter(l => l.status!=='settled' && l.returnDate).forEach(l => {
@@ -1834,8 +1862,11 @@ function renderAccounts() {
       </div>
       <div class="acct-detail-rows">
         <div class="acct-detail-row"><span class="k">Monthly Contribution</span><span class="v">${fmt(c.monthly)}</span></div>
+        <div class="acct-detail-row"><span class="k">Due Date</span><span class="v">${c.dueDay||1}${['th','st','nd','rd'][[...([11,12,13].includes(c.dueDay)?[0]:[(c.dueDay%10===1)?1:(c.dueDay%10===2)?2:(c.dueDay%10===3)?3:0])][0]||0]} of each month</span></div>
         <div class="acct-detail-row"><span class="k">Total Paid</span><span class="v">${fmt(c.monthly*c.completed)}</span></div>
         <div class="acct-detail-row"><span class="k">Remaining Obligation</span><span class="v orange">${fmt(c.monthly*(c.totalMonths-c.completed))}</span></div>
+        <div class="acct-detail-row"><span class="k">Next Payment</span><span class="v">Month ${(c.completed||0)+1} of ${c.totalMonths}</span></div>
+        ${(()=>{const{overdue,arrears}=chitOverdueMonths(c);return overdue>0?`<div class="acct-detail-row"><span class="k" style="color:var(--red)">⚠️ Overdue</span><span class="v red">${overdue} month${overdue>1?'s':''} · ${fmt(arrears)}</span></div>`:''})()}
       </div>
     </div>`}).join('');
 }
@@ -2214,6 +2245,7 @@ function openAcctModal(id) {
       <div class="form-group"><label class="form-label">Monthly Contribution (₹)</label><input type="number" class="form-input" id="ae-monthly" value="${acct.monthly}" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Total Months</label><input type="number" class="form-input" id="ae-totalmonths" value="${acct.totalMonths}" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="ae-completed" value="${acct.completed}" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Monthly Due Date (day of month)</label><input type="number" class="form-input" id="ae-dueday" value="${acct.dueDay||1}" min="1" max="31" inputmode="numeric"></div>
       <div class="form-group"><label class="form-label">Payout Received?</label>
         <div class="select-wrap"><select class="form-select" id="ae-payout"><option value="false" ${!acct.payoutReceived?'selected':''}>No</option><option value="true" ${acct.payoutReceived?'selected':''}>Yes</option></select></div>
       </div>
@@ -2315,10 +2347,12 @@ function saveAccountEdit() {
   if(idx>=0) {
     if(g('ae-name')) list[idx].name = g('ae-name');
     if(g('ae-organizer')) list[idx].organizer = g('ae-organizer');
+    const sd = g('ae-startdate'); if(sd) list[idx].startDate = sd;
     list[idx].value = gn('ae-value') ?? list[idx].value;
     list[idx].monthly = gn('ae-monthly') ?? list[idx].monthly;
     const tmC = g('ae-totalmonths'); if(tmC !== null) list[idx].totalMonths = parseInt(tmC)||list[idx].totalMonths;
     const cmpC = g('ae-completed'); if(cmpC !== null) list[idx].completed = Math.min(parseInt(cmpC)||0, list[idx].totalMonths);
+    const ddC = g('ae-dueday'); if(ddC !== null && ddC !== '') list[idx].dueDay = parseInt(ddC)||1;
     if(g('ae-payout')) list[idx].payoutReceived = g('ae-payout')==='true';
     save(); closeModal('acct-modal'); renderPage(currentPage); return;
   }
@@ -2652,10 +2686,12 @@ function openAddModal(type) {
     fields = `
       <div class="form-group"><label class="form-label">Chit Name</label><input type="text" class="form-input" id="add-name" placeholder="e.g. Chit Fund 3"></div>
       <div class="form-group"><label class="form-label">Organizer</label><input type="text" class="form-input" id="add-organizer" placeholder="Organizer name"></div>
+      <div class="form-group"><label class="form-label">Chit Start Date</label><input type="date" class="form-input" id="add-startdate-chit"></div>
       <div class="form-group"><label class="form-label">Chit Value (₹)</label><input type="number" class="form-input" id="add-value" placeholder="0" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Monthly Contribution (₹)</label><input type="number" class="form-input" id="add-monthly" placeholder="0" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Total Months</label><input type="number" class="form-input" id="add-totalmonths" placeholder="10" inputmode="numeric"></div>
-      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>`;
+      <div class="form-group"><label class="form-label">Months Completed</label><input type="number" class="form-input" id="add-completed" placeholder="0" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">Monthly Due Date (day of month)</label><input type="number" class="form-input" id="add-dueday-chit" placeholder="1" min="1" max="31" inputmode="numeric"></div>`;
   }
 
   document.getElementById('acct-modal-title').textContent = {
@@ -2713,7 +2749,7 @@ function saveNewAccount(type, id, color) {
     }
     D.accounts.loans.push(baseLoan);
   } else if(type === 'chit') {
-    D.accounts.chits.push({ id, name, organizer: g('add-organizer')||'', value: gn('add-value'), monthly: gn('add-monthly'), totalMonths: gi('add-totalmonths')||10, completed: gi('add-completed'), payoutReceived: false });
+    D.accounts.chits.push({ id, name, organizer: g('add-organizer')||'', value: gn('add-value'), monthly: gn('add-monthly'), totalMonths: gi('add-totalmonths')||10, completed: gi('add-completed')||0, payoutReceived: false, dueDay: gi('add-dueday-chit')||1, startDate: g('add-startdate-chit')||'' });
   }
 
   // Restore save button
@@ -3234,6 +3270,23 @@ function changeIncomeMonth(dir){
   if(incViewMonth>11){incViewMonth=0;incViewYear++;}
   if(incViewMonth<0){incViewMonth=11;incViewYear--;}
   renderIncome();
+}
+
+function chitOverdueMonths(c) {
+  // Returns { elapsed, overdue, arrears }
+  if(!c.startDate || !c.monthly) return { elapsed:0, overdue:0, arrears:0 };
+  const [sy,sm,sd] = c.startDate.split('-').map(Number);
+  const start = new Date(sy, sm-1, sd);
+  const now = new Date(); now.setHours(0,0,0,0);
+  // Months elapsed since start (counting from 1)
+  const elapsed = Math.floor(
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    (now.getMonth() - start.getMonth()) +
+    (now.getDate() >= (c.dueDay||1) ? 1 : 0)
+  );
+  const effective = Math.min(elapsed, c.totalMonths);
+  const overdue = Math.max(0, effective - (c.completed||0));
+  return { elapsed: effective, overdue, arrears: overdue * c.monthly };
 }
 
 function creditToAccount(accountId,amount){
