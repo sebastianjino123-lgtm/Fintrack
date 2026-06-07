@@ -578,6 +578,10 @@ body {
   <div class="sec-hdr"><h2>💰 Income This Month</h2><a href="#" onclick="switchPage('income');return false">See all</a></div>
   <div class="card"><div id="dash-income"></div></div>
 
+  <!-- Borrowings -->
+  <div class="sec-hdr"><h2>💸 Borrowings</h2><a href="#" onclick="switchPage('borrow');return false">See all</a></div>
+  <div class="card"><div id="dash-borrow"></div></div>
+
   <!-- Money Lent -->
   <div class="sec-hdr"><h2>🤝 Money Lent</h2><a href="#" onclick="switchPage('lent');return false">See all</a></div>
   <div class="card">
@@ -722,7 +726,10 @@ body {
         <h1>🤝 Money Lent</h1>
         <div class="sub" id="lent-summary-sub">Track money given to friends</div>
       </div>
-      <button onclick="openLentModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="switchPage('borrow')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:7px 10px;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;">💸 Borrowed</button>
+        <button onclick="openLentModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+      </div>
     </div>
   </div>
 
@@ -782,6 +789,45 @@ body {
   <div id="income-breakdown" style="padding:0 16px 14px;"></div>
   <div class="sec-hdr"><h2>Transactions</h2></div>
   <div id="income-list" style="padding:0 16px;"></div>
+</div>
+
+<!-- ══════════════════════ BORROWINGS PAGE ══════════════════════ -->
+<div class="page" id="page-borrow">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <h1>💸 Borrowings</h1>
+        <div class="sub" id="borrow-sub">Money you owe to others</div>
+      </div>
+      <button onclick="openBorrowModal()" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:7px 12px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="exp-summary" style="padding-top:14px">
+    <div class="exp-stat">
+      <div class="lbl">Total Borrowed</div>
+      <div class="val" id="borrow-total" style="color:var(--red)">₹0</div>
+    </div>
+    <div class="exp-stat">
+      <div class="lbl">Repaid</div>
+      <div class="val" id="borrow-repaid" style="color:var(--green)">₹0</div>
+    </div>
+    <div class="exp-stat">
+      <div class="lbl">Outstanding</div>
+      <div class="val" id="borrow-outstanding" style="color:var(--orange)">₹0</div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;padding:0 16px 14px;">
+    <button class="borrow-tab active" onclick="switchBorrowTab('all')" id="btab-all" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;">All</button>
+    <button class="borrow-tab" onclick="switchBorrowTab('pending')" id="btab-pending" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Pending</button>
+    <button class="borrow-tab" onclick="switchBorrowTab('partial')" id="btab-partial" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Partial</button>
+    <button class="borrow-tab" onclick="switchBorrowTab('settled')" id="btab-settled" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Settled</button>
+  </div>
+
+  <div id="borrow-list" style="padding:0 16px"></div>
 </div>
 
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
@@ -1132,6 +1178,91 @@ body {
   </div>
 </div>
 
+<!-- Add Borrowing Modal -->
+<div class="modal-overlay" id="borrow-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="borrow-modal-title">💸 Add Borrowing</div>
+
+    <div class="form-group">
+      <label class="form-label">Lender Name (who gave you money)</label>
+      <input type="text" class="form-input" id="borrow-lender" placeholder="e.g. John, Uncle Mathew" autocomplete="off">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input type="number" class="form-input" id="borrow-amount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date Borrowed</label>
+        <input type="date" class="form-input" id="borrow-date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Credited To Account</label>
+      <div class="select-wrap">
+        <select class="form-select" id="borrow-account"></select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Expected Return Date (optional)</label>
+      <input type="date" class="form-input" id="borrow-return-date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Interest Rate (% p.a.) — 0 if none</label>
+      <input type="number" class="form-input" id="borrow-rate" placeholder="0" step="0.1" inputmode="decimal">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Note (optional)</label>
+      <input type="text" class="form-input" id="borrow-note" placeholder="Reason or purpose">
+    </div>
+
+    <button class="btn-primary" onclick="saveBorrowing()">Save</button>
+    <button class="btn-outline" onclick="closeModal('borrow-modal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Record Borrow Repayment Modal -->
+<div class="modal-overlay" id="brepay-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="brepay-modal-title">💰 Record Repayment</div>
+    <div id="brepay-summary" style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Amount Repaid (₹)</label>
+        <input type="number" class="form-input" id="brepay-amount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="brepay-date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">From Account</label>
+      <div class="select-wrap">
+        <select class="form-select" id="brepay-account"></select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Note (optional)</label>
+      <input type="text" class="form-input" id="brepay-note" placeholder="e.g. UPI transfer">
+    </div>
+
+    <button class="btn-primary" onclick="saveBorrowRepayment()">Record Repayment</button>
+    <button class="btn-outline" style="color:var(--green);border-color:rgba(52,211,153,0.3);margin-top:8px" onclick="markBorrowSettled()">Mark as Fully Settled</button>
+    <button class="btn-outline" onclick="closeModal('brepay-modal')">Cancel</button>
+  </div>
+</div>
+
 <!-- AED Rate Modal -->
 <div class="modal-overlay" id="rate-modal">
   <div class="modal">
@@ -1202,6 +1333,7 @@ const defaultData = {
   expenses: [],
   transfers: [],
   lent: [],
+  borrowings: [],
   income: [],
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear()
@@ -1214,6 +1346,7 @@ let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.pars
 // Migrate old saved data to support new fields
 if (!D.lent) D.lent = [];
 if (!D.income) D.income = [];
+if (!D.borrowings) D.borrowings = [];
 // Migrate chits to add dueDay and startDate if missing
 (D.accounts.chits||[]).forEach(c => { if(!c.dueDay) c.dueDay = 1; if(!c.startDate) c.startDate = ''; });
 if (D.accounts.uaeAccounts && !D.accounts.uaeAccounts[0].hasOwnProperty('outstandingAED')) {
@@ -1309,6 +1442,7 @@ function renderPage(page) {
   else if (page === 'transfers') renderTransfers();
   else if (page === 'accounts') renderAccounts();
   else if (page === 'lent') renderLent();
+  else if (page === 'borrow') renderBorrowings();
   else if (page === 'income') renderIncome();
   else if (page === 'settings') renderSettings();
 }
@@ -1335,7 +1469,8 @@ function renderDashboard() {
   const assets     = bankTotal + uaeSavings;
   const ccDebt     = D.accounts.indCards.reduce((s,c) => s+c.outstanding, 0);
   const loanDebt   = D.accounts.loans.reduce((s,l) => s+l.outstanding, 0);
-  const liabilities = ccDebt + loanDebt + uaeCCDebt;
+  const borrowOutstanding = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0);
+  const liabilities = ccDebt + loanDebt + uaeCCDebt + borrowOutstanding;
   const lentOutstanding = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered),0);
   const netWorth    = assets - liabilities + lentOutstanding;
 
@@ -1357,6 +1492,7 @@ function renderDashboard() {
     <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE Assets</div><div class="cval" style="color:#60A5FA">${fmt(uaeSavings)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
     <div class="chip" onclick="switchPage('lent')"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">Lent Out</div><div class="cval" style="color:#60A5FA">${fmt(lentOutstanding)}</div></div></div>
+    <div class="chip" onclick="switchPage('borrow')"><div class="dot" style="background:#F87171"></div><div><div class="clbl">Borrowed</div><div class="cval" style="color:#F87171">${fmt((D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0))}</div></div></div>
     <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+i.amount,0))}</div></div></div>
   `;
 
@@ -1553,6 +1689,7 @@ function renderDashboard() {
 
   // Render income + lent sections
   try { renderDashIncome(); } catch(e) {}
+  try { renderDashBorrow(); } catch(e) {}
   renderDashLent();
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
@@ -3043,36 +3180,51 @@ function saveLent() {
   if(!friend) { alert('Enter friend name'); return; }
   if(!amount || amount <= 0) { alert('Enter a valid amount'); return; }
 
+  const accountId = document.getElementById('lent-account').value;
   if(editingLentId) {
     const idx = D.lent.findIndex(l => l.id === editingLentId);
     if(idx >= 0) {
-      D.lent[idx].friend = friend;
-      D.lent[idx].amount = amount;
-      D.lent[idx].date = date;
-      D.lent[idx].returnDate = document.getElementById('lent-return-date').value;
-      D.lent[idx].note = document.getElementById('lent-note').value;
-      D.lent[idx].accountId = document.getElementById('lent-account').value;
+      // Reverse old deduction, apply new
+      const old = D.lent[idx];
+      creditToAccount(old.accountId, old.amount);
+      D.lent[idx] = { ...old, friend, amount, date, accountId,
+        returnDate: document.getElementById('lent-return-date').value,
+        note: document.getElementById('lent-note').value
+      };
+      deductFromAccount(accountId, amount);
     }
   } else {
     D.lent.push({
       id: Date.now().toString(),
-      friend, amount, date,
-      accountId: document.getElementById('lent-account').value,
+      friend, amount, date, accountId,
       returnDate: document.getElementById('lent-return-date').value,
       note: document.getElementById('lent-note').value,
       recovered: 0,
-      status: 'pending', // pending | partial | settled
+      status: 'pending',
       repayments: []
     });
+    // Deduct from account when money is lent out
+    deductFromAccount(accountId, amount);
+    showToast(`${fmt(amount)} lent to ${friend} — deducted from account`);
   }
   save(); closeModal('lent-modal');
-  renderLent(); renderDashLent();
+  renderLent(); renderDashLent(); renderDashboard();
 }
 
 function deleteLent(id) {
   if(!confirm('Delete this entry?')) return;
+  const entry = D.lent.find(l=>l.id===id);
+  if(entry) {
+    // Reverse the original deduction (money comes back)
+    creditToAccount(entry.accountId, entry.amount);
+    // Reverse any repayments already received (they were credited back)
+    (entry.repayments||[]).forEach(r => {
+      if(r.accountId) deductFromAccount(r.accountId, r.amount);
+    });
+    showToast('Lent entry deleted — account balances reversed');
+  }
   D.lent = D.lent.filter(l => l.id !== id);
-  save(); renderLent(); renderDashLent();
+  save(); renderLent(); renderDashLent(); renderDashboard();
 }
 
 let repayingLentId = null;
@@ -3106,15 +3258,19 @@ function saveRepayment() {
   if(!amt || amt <= 0) { alert('Enter valid amount'); return; }
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
+  const repayAccountId = document.getElementById('repay-account').value;
   entry.recovered = Math.min(entry.recovered + amt, entry.amount);
   entry.repayments.push({
     date: document.getElementById('repay-date').value,
     amount: amt,
-    accountId: document.getElementById('repay-account').value,
+    accountId: repayAccountId,
     note: document.getElementById('repay-note').value
   });
   entry.status = entry.recovered >= entry.amount ? 'settled' : 'partial';
-  save(); closeModal('repay-modal'); renderLent(); renderDashLent();
+  // Credit repayment back to the account
+  creditToAccount(repayAccountId, amt);
+  save(); closeModal('repay-modal'); renderLent(); renderDashLent(); renderDashboard();
+  showToast(`+${fmt(amt)} received from ${entry.friend} — credited to account`);
 }
 
 function markSettled() {
@@ -3125,9 +3281,13 @@ function markSettled() {
   entry.recovered = entry.amount;
   entry.status = 'settled';
   if(remaining > 0) {
-    entry.repayments.push({ date: today(), amount: remaining, note: 'Marked settled', accountId: '' });
+    const settleAcct = document.getElementById('repay-account')?.value || entry.accountId;
+    entry.repayments.push({ date: today(), amount: remaining, note: 'Marked settled', accountId: settleAcct });
+    // Credit remaining to account
+    if(settleAcct) creditToAccount(settleAcct, remaining);
   }
-  save(); closeModal('repay-modal'); renderLent(); renderDashLent();
+  save(); closeModal('repay-modal'); renderLent(); renderDashLent(); renderDashboard();
+  showToast(`✅ Settled with ${entry.friend}`);
 }
 
 function switchLentTab(tab) {
@@ -3662,6 +3822,237 @@ function saveSMSExpense(){
   const balMsg=smsParsed.availBal!==null?` · Balance: ${fmt(smsParsed.availBal)}`:'';
   showToast(`${fmt(smsParsed.amount)} deducted from ${getAcctName(accountId)}${balMsg}`);
   smsParsed=null;
+}
+
+// ══════════════════════════════════════════════════════════
+// BORROWINGS
+// ══════════════════════════════════════════════════════════
+let currentBorrowId = null;
+let borrowTab = 'all';
+
+function openBorrowModal(id) {
+  currentBorrowId = id || null;
+  const b = id ? (D.borrowings||[]).find(x=>x.id===id) : null;
+  document.getElementById('borrow-modal-title').textContent = id ? '✏️ Edit Borrowing' : '💸 Add Borrowing';
+  document.getElementById('borrow-lender').value      = b ? b.lender      : '';
+  document.getElementById('borrow-amount').value      = b ? b.amount      : '';
+  document.getElementById('borrow-date').value        = b ? b.date        : today();
+  document.getElementById('borrow-return-date').value = b ? (b.returnDate||'') : '';
+  document.getElementById('borrow-rate').value        = b ? (b.rate||0)   : 0;
+  document.getElementById('borrow-note').value        = b ? (b.note||'')  : '';
+  const opts = allAccountOptions().map(o=>`<option value="${o.value}" ${b&&b.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
+  document.getElementById('borrow-account').innerHTML = opts;
+  openModal('borrow-modal');
+}
+
+function saveBorrowing() {
+  const lender    = document.getElementById('borrow-lender').value.trim();
+  const amount    = parseFloat(document.getElementById('borrow-amount').value);
+  const date      = document.getElementById('borrow-date').value;
+  const accountId = document.getElementById('borrow-account').value;
+  const returnDate= document.getElementById('borrow-return-date').value;
+  const rate      = parseFloat(document.getElementById('borrow-rate').value)||0;
+  const note      = document.getElementById('borrow-note').value.trim();
+  if(!lender)             { alert('Enter lender name'); return; }
+  if(!amount || amount<=0){ alert('Enter a valid amount'); return; }
+  if(!D.borrowings) D.borrowings = [];
+  if(currentBorrowId) {
+    const idx = D.borrowings.findIndex(b=>b.id===currentBorrowId);
+    if(idx>=0) {
+      const old = D.borrowings[idx];
+      // Reverse old credit
+      deductFromAccount(old.accountId, old.amount);
+      D.borrowings[idx] = { ...old, lender, amount, date, accountId, returnDate, rate, note };
+    }
+  } else {
+    D.borrowings.push({
+      id: Date.now().toString(),
+      lender, amount, date, accountId, returnDate, rate, note,
+      status: 'pending',
+      repaid: 0,
+      repayments: []
+    });
+  }
+  // Credit the account (money received)
+  creditToAccount(accountId, amount);
+  save(); closeModal('borrow-modal'); renderBorrowings(); renderDashboard();
+  showToast(`💸 ${fmt(amount)} borrowed from ${lender}`);
+}
+
+function deleteBorrowing(id) {
+  if(!confirm('Delete this borrowing?')) return;
+  const b = (D.borrowings||[]).find(x=>x.id===id);
+  if(b) {
+    // Reverse the credit (money was received, remove from account)
+    deductFromAccount(b.accountId, b.amount);
+    // Also reverse any repayments
+    (b.repayments||[]).forEach(r => creditToAccount(r.accountId, r.amount));
+    showToast('Borrowing deleted and balances reversed');
+  }
+  D.borrowings = (D.borrowings||[]).filter(x=>x.id!==id);
+  save(); renderBorrowings(); renderDashboard();
+}
+
+function openBrepayModal(id) {
+  currentBorrowId = id;
+  const b = (D.borrowings||[]).find(x=>x.id===id);
+  if(!b) return;
+  const outstanding = b.amount - b.repaid;
+  document.getElementById('brepay-modal-title').textContent = `💰 Repay to ${b.lender}`;
+  document.getElementById('brepay-summary').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="color:var(--text3)">Total Borrowed</span><span style="font-weight:700">${fmt(b.amount)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="color:var(--text3)">Already Repaid</span><span style="color:var(--green);font-weight:700">${fmt(b.repaid)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;">
+      <span style="color:var(--text3)">Outstanding</span><span style="color:var(--red);font-weight:700;font-size:16px">${fmt(outstanding)}</span>
+    </div>`;
+  document.getElementById('brepay-amount').value = outstanding;
+  document.getElementById('brepay-date').value   = today();
+  document.getElementById('brepay-note').value   = '';
+  const opts = allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  document.getElementById('brepay-account').innerHTML = opts;
+  openModal('brepay-modal');
+}
+
+function saveBorrowRepayment() {
+  const amount    = parseFloat(document.getElementById('brepay-amount').value);
+  const date      = document.getElementById('brepay-date').value;
+  const accountId = document.getElementById('brepay-account').value;
+  const note      = document.getElementById('brepay-note').value.trim();
+  if(!amount || amount<=0){ alert('Enter a valid amount'); return; }
+  const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
+  if(!b) return;
+  const outstanding = b.amount - b.repaid;
+  if(amount > outstanding + 0.01) { alert(`Max repayment is ${fmt(outstanding)}`); return; }
+  if(!b.repayments) b.repayments = [];
+  b.repayments.push({ id: Date.now().toString(), amount, date, accountId, note });
+  b.repaid = (b.repaid||0) + amount;
+  if(b.repaid >= b.amount - 0.01) b.status = 'settled';
+  else b.status = 'partial';
+  // Deduct repayment from account
+  deductFromAccount(accountId, amount);
+  save(); closeModal('brepay-modal'); renderBorrowings(); renderDashboard();
+  showToast(`✅ ${fmt(amount)} repaid to ${b.lender}${b.status==='settled'?' — Fully Settled!':''}`);
+}
+
+function markBorrowSettled() {
+  const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
+  if(!b) return;
+  if(!confirm(`Mark borrowing from ${b.lender} as fully settled?`)) return;
+  b.status = 'settled';
+  b.repaid = b.amount;
+  save(); closeModal('brepay-modal'); renderBorrowings(); renderDashboard();
+  showToast(`✅ Borrowing from ${b.lender} marked as settled`);
+}
+
+function switchBorrowTab(tab) {
+  borrowTab = tab;
+  ['all','pending','partial','settled'].forEach(t => {
+    const el = document.getElementById('btab-'+t);
+    if(!el) return;
+    el.style.background   = t===tab ? 'var(--surface)'  : 'var(--surface2)';
+    el.style.color        = t===tab ? 'var(--text)'     : 'var(--text3)';
+    el.style.borderColor  = t===tab ? 'var(--border)'   : 'transparent';
+    el.style.fontWeight   = t===tab ? '700'             : '400';
+  });
+  renderBorrowings();
+}
+
+function renderDashBorrow() {
+  const el = document.getElementById('dash-borrow');
+  if(!el) return;
+  const active = (D.borrowings||[]).filter(b=>b.status!=='settled').slice(0,3);
+  if(active.length===0) {
+    el.innerHTML='<div class="empty-state" style="padding:12px 0"><div class="icon" style="font-size:24px">💸</div>No active borrowings</div>';
+    return;
+  }
+  el.innerHTML = active.map(b => {
+    const outstanding = b.amount - b.repaid;
+    const pct = b.amount > 0 ? Math.min(b.repaid/b.amount,1) : 0;
+    const overdue = b.returnDate && new Date(b.returnDate) < new Date();
+    return `<div class="acct-item" onclick="switchPage('borrow')">
+      <div class="acct-icon" style="background:rgba(248,113,113,0.1)">💸</div>
+      <div class="acct-info">
+        <div class="acct-name">${b.lender}</div>
+        <div class="acct-type">${overdue?'⚠️ Overdue · ':''} Repaid ${fmt(b.repaid)} of ${fmt(b.amount)}</div>
+      </div>
+      <div class="acct-bal"><div class="amount" style="color:var(--red)">₹${outstanding.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderBorrowings() {
+  if(!D.borrowings) D.borrowings = [];
+  const total     = D.borrowings.reduce((s,b)=>s+b.amount, 0);
+  const repaid    = D.borrowings.reduce((s,b)=>s+b.repaid, 0);
+  const outstanding = total - repaid;
+  document.getElementById('borrow-total').textContent       = fmt(total);
+  document.getElementById('borrow-repaid').textContent      = fmt(repaid);
+  document.getElementById('borrow-outstanding').textContent = fmt(outstanding);
+  const count = D.borrowings.length;
+  const active = D.borrowings.filter(b=>b.status!=='settled').length;
+  document.getElementById('borrow-sub').textContent = `${count} borrowing${count!==1?'s':''} · ${active} active`;
+
+  const filtered = borrowTab === 'all' ? D.borrowings :
+                   D.borrowings.filter(b => b.status === borrowTab);
+
+  const el = document.getElementById('borrow-list');
+  if(!el) return;
+  if(filtered.length===0) {
+    el.innerHTML=`<div class="empty-state"><div class="icon">💸</div>No ${borrowTab==='all'?'':''+borrowTab+' '}borrowings yet.<br>Tap + to add one!</div>`;
+    return;
+  }
+
+  el.innerHTML = [...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(b => {
+    const outstanding = b.amount - b.repaid;
+    const pct = b.amount>0 ? Math.min(b.repaid/b.amount,1) : 0;
+    const overdue = b.returnDate && new Date(b.returnDate)<new Date() && b.status!=='settled';
+    const statusColor = b.status==='settled'?'var(--green)':overdue?'var(--red)':b.status==='partial'?'var(--orange)':'var(--text3)';
+    const statusLabel = b.status==='settled'?'✅ Settled':overdue?'⚠️ Overdue':b.status==='partial'?'Partial':'Pending';
+    return `
+    <div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);overflow:hidden;">
+      <div style="padding:14px 14px 10px;display:flex;align-items:flex-start;gap:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">💸</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div style="font-size:14px;font-weight:600">${b.lender}</div>
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--red)">₹${outstanding.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:11px;color:var(--text3);">${fmtDate(b.date)}${b.returnDate?' · Due: '+fmtDate(b.returnDate):''}${b.rate?` · ${b.rate}% p.a.`:''}</div>
+            <div style="font-size:10px;font-weight:600;color:${statusColor}">${statusLabel}</div>
+          </div>
+        </div>
+      </div>
+
+      ${b.status!=='settled'?`
+      <div style="padding:0 14px 8px;">
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct*100}%;background:var(--green)"></div></div>
+        <div class="prog-labels"><span>Repaid ${fmt(b.repaid)}</span><span>Of ${fmt(b.amount)}</span></div>
+      </div>`:''}
+
+      ${b.note?`<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);">📝 ${b.note}</div>`:''}
+
+      ${(b.repayments||[]).length>0?`
+      <div style="border-top:1px solid var(--border);padding:8px 14px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Repayments</div>
+        ${[...(b.repayments||[])].reverse().map(r=>`
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
+            <span style="color:var(--text3)">${fmtDate(r.date)}${r.note?' · '+r.note:''}</span>
+            <span style="color:var(--green);font-weight:600">+${fmt(r.amount)}</span>
+          </div>`).join('')}
+      </div>`:''}
+
+      <div style="border-top:1px solid var(--border);display:flex;">
+        <button onclick="openBorrowModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button>
+        ${b.status!=='settled'?`<button onclick="openBrepayModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;">💰 Repay</button>`:''}
+        <button onclick="deleteBorrowing('${b.id}')" style="flex:1;padding:10px;background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════
