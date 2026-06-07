@@ -1585,7 +1585,7 @@ function renderDashboard() {
 
   const now = new Date();
   const monthExps = monthExpenses(now.getMonth(), now.getFullYear());
-  const monthSpend = monthExps.reduce((s,e) => s+e.amount, 0);
+  const monthSpend = monthExps.reduce((s,e) => s+(e.amountAED ? e.amountAED*D.aedRate : e.amount), 0);
 
   document.getElementById('dash-networth').textContent = (netWorth<0?'- ':'')+fmt(Math.abs(netWorth));
   document.getElementById('dash-networth').style.color = netWorth < 0 ? 'var(--red)' : 'var(--text)';
@@ -1851,7 +1851,7 @@ let expViewYear  = new Date().getFullYear();
 function renderExpenses() {
   document.getElementById('exp-month-label').textContent = MONTHS[expViewMonth] + ' ' + expViewYear;
   const exps = monthExpenses(expViewMonth, expViewYear);
-  const total = exps.reduce((s,e)=>s+e.amount,0);
+  const total = exps.reduce((s,e)=>s+(e.amountAED ? e.amountAED*D.aedRate : e.amount), 0);
   const largest = exps.reduce((m,e)=>Math.max(m,e.amount),0);
   document.getElementById('exp-total').textContent = fmt(total);
   document.getElementById('exp-count').textContent = exps.length;
@@ -1860,7 +1860,10 @@ function renderExpenses() {
   // Budget bars
   const bb = document.getElementById('budget-bars');
   const catTotals = {};
-  exps.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0) + e.amount; });
+  exps.forEach(e => {
+    const val = e.amountAED ? e.amountAED * D.aedRate : e.amount;
+    catTotals[e.category] = (catTotals[e.category]||0) + val;
+  });
   const cats = Object.keys(D.budgets).filter(c => D.budgets[c] > 0 || catTotals[c] > 0);
   bb.innerHTML = cats.map(cat => {
     const spent = catTotals[cat] || 0;
@@ -1908,7 +1911,8 @@ function renderExpenses() {
         <div class="exp-meta">${fmtDate(e.date)} · ${acc?acc.name:'Unknown'} · ${e.mode}</div>
       </div>
       <div style="text-align:right;">
-        <div class="exp-amount">${fmt(e.amount)}</div>
+        <div class="exp-amount">${e.amountAED ? 'AED '+e.amountAED : fmt(e.amount)}</div>
+        ${e.amountAED ? `<div style="font-size:9px;color:var(--text3);">≈${fmt(e.amountAED*D.aedRate)}</div>` : ''}
         ${isLarge ? '<div style="text-align:right;font-size:9px;color:var(--red);margin-top:2px">🔴 Large</div>' : ''}
       </div>
     </div>`;
@@ -2284,6 +2288,7 @@ function openExpenseModal(id) {
   const delInner = document.getElementById('exp-delete-btn-inner');
   if(delInner && id) delInner.dataset.expId = id;
   openModal('exp-modal');
+  setTimeout(updateExpCurrency, 50);
 }
 
 function deleteExpenseFromModal() {
@@ -2304,7 +2309,9 @@ function deleteExpenseFromModal() {
   if(btn) { btn.dataset.confirmPending = '0'; btn.textContent = '🗑️ Delete Expense'; btn.style.background = ''; }
   const exp = D.expenses.find(e=>e.id===id);
   if(exp) {
-    refundToAccount(exp.accountId, exp.amount);
+    // For UAE expenses, amountAED is the native value; for others, amount is INR
+  const refundAmt = exp.amountAED || exp.amount;
+  refundToAccount(exp.accountId, refundAmt);
     D.expenses = D.expenses.filter(e=>e.id!==id);
   }
   editingExpenseId = null;
@@ -2320,14 +2327,34 @@ function selectCat(name) {
   if(el) el.classList.add('selected');
 }
 
+function updateExpCurrency() {
+  const accountId = document.getElementById('exp-account')?.value;
+  const amt = parseFloat(document.getElementById('exp-amt')?.value)||0;
+  const hint = document.getElementById('exp-currency-hint');
+  const lbl  = document.getElementById('exp-amt-label');
+  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  if(u) {
+    if(hint) { hint.style.display='block'; hint.textContent = amt>0 ? `= ₹${(amt*D.aedRate).toLocaleString('en-IN',{maximumFractionDigits:0})} at rate ${D.aedRate}` : 'Enter amount in AED'; }
+    if(lbl) lbl.textContent = 'Amount (AED)';
+  } else {
+    if(hint) { hint.style.display='none'; hint.textContent=''; }
+    if(lbl) lbl.textContent = 'Amount';
+  }
+}
+
 function saveExpense() {
-  const amt = parseFloat(document.getElementById('exp-amt').value);
+  const rawAmt = parseFloat(document.getElementById('exp-amt').value);
   const desc = document.getElementById('exp-desc').value.trim();
   const date = document.getElementById('exp-date').value;
   const accountId = document.getElementById('exp-account').value;
   const mode = document.getElementById('exp-mode').value;
-  if(!amt || amt <= 0) { alert('Please enter a valid amount'); return; }
+  if(!rawAmt || rawAmt <= 0) { alert('Please enter a valid amount'); return; }
   if(!selectedCategory) { alert('Please select a category'); return; }
+  // If UAE account, store AED directly. Convert to INR only for display using current rate.
+  const isUAEAcct = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  const amt    = rawAmt;                        // store original value (AED for UAE, INR for others)
+  const amtAED = isUAEAcct ? rawAmt : null;     // null for non-UAE
+  const rateUsed = null;                        // no longer needed - use current rate for display
   const acctName = allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
   if(editingExpenseId) {
     const idx = D.expenses.findIndex(e=>e.id===editingExpenseId);
@@ -2336,14 +2363,20 @@ function saveExpense() {
       // Reverse old deduction
       refundToAccount(old.accountId, old.amount);
       // Apply new deduction
-      D.expenses[idx] = { ...old, category: selectedCategory, desc, amount: amt, date, accountId, mode };
+      const updObj = { ...old, category: selectedCategory, desc, amount: amt, date, accountId, mode };
+      if(amtAED !== null) { updObj.amountAED = amtAED; updObj.aedRate = rateUsed; }
+      D.expenses[idx] = updObj;
       deductFromAccount(accountId, amt);
-      showToast(`Expense updated · ${fmt(amt)} deducted from ${acctName}`);
+      const dispAmt = amtAED ? `AED ${amtAED} (≈${fmt(amtAED*D.aedRate)})` : fmt(amt);
+      showToast(`Expense updated · ${dispAmt} deducted from ${acctName}`);
     }
   } else {
-    D.expenses.push({ id: Date.now().toString(), category: selectedCategory, desc, amount: amt, date, accountId, mode });
-    deductFromAccount(accountId, amt);
-    showToast(`${fmt(amt)} deducted from ${acctName}`);
+    const expObj = { id: Date.now().toString(), category: selectedCategory, desc, amount: amt, date, accountId, mode };
+    if(amtAED !== null) { expObj.amountAED = amtAED; expObj.aedRate = rateUsed; }
+    D.expenses.push(expObj);
+    deductFromAccount(accountId, amt);  // amt = AED for UAE, INR for others
+    const dispAmt2 = amtAED ? `AED ${amtAED} (≈${fmt(amtAED*D.aedRate)})` : fmt(amt);
+    showToast(`${dispAmt2} deducted from ${acctName}`);
   }
   editingExpenseId = null;
   save(); closeModal('exp-modal');
@@ -2353,7 +2386,9 @@ function saveExpense() {
 function deleteExpense(id) {
   const exp = D.expenses.find(e=>e.id===id);
   if(!exp) return;
-  refundToAccount(exp.accountId, exp.amount);
+  // For UAE expenses, amountAED is the native value; for others, amount is INR
+  const refundAmt = exp.amountAED || exp.amount;
+  refundToAccount(exp.accountId, refundAmt);
   D.expenses = D.expenses.filter(e=>e.id!==id);
   save(); renderPage(currentPage); renderDashboard();
   showToast('Expense deleted — amount refunded');
@@ -2754,20 +2789,20 @@ function deductFromAccount(accountId, amount) {
     c.totalDue    = (c.totalDue    || 0) + amount;
     return;
   }
-  // UAE accounts
+  // UAE accounts — amount IS already in AED (stored natively), no conversion needed
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
   if(u) {
     if(u.type !== 'Credit Card') {
-      u.balanceAED = (u.balanceAED || 0) - (amount / D.aedRate);
+      u.balanceAED = (u.balanceAED || 0) - amount;
     } else {
-      u.outstandingAED = (u.outstandingAED || 0) + (amount / D.aedRate);
+      u.outstandingAED = (u.outstandingAED || 0) + amount;
       u.balanceAED = u.outstandingAED;
     }
     return;
   }
 }
 
-function refundToAccount(accountId, amount) {
+function refundToAccount(accountId, amount, amtAED) {
   let b = D.accounts.indBanks.find(a => a.id === accountId);
   if(b) {
     b.balance = (b.balance || 0) + amount;
@@ -2782,10 +2817,11 @@ function refundToAccount(accountId, amount) {
   }
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
   if(u) {
+    // amount IS already in AED (stored natively), use directly
     if(u.type !== 'Credit Card') {
-      u.balanceAED = (u.balanceAED || 0) + (amount / D.aedRate);
+      u.balanceAED = (u.balanceAED || 0) + amount;
     } else {
-      u.outstandingAED = Math.max(0, (u.outstandingAED || 0) - (amount / D.aedRate));
+      u.outstandingAED = Math.max(0, (u.outstandingAED || 0) - amount);
       u.balanceAED = u.outstandingAED;
     }
     return;
