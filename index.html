@@ -578,6 +578,12 @@ body {
   <div class="sec-hdr"><h2>💰 Income This Month</h2><a href="#" onclick="switchPage('income');return false">See all</a></div>
   <div class="card"><div id="dash-income"></div></div>
 
+  <!-- Net Worth History -->
+  <div class="sec-hdr"><h2>📈 Net Worth History</h2></div>
+  <div class="card" style="padding:14px 16px;">
+    <div id="dash-nw-history" style="overflow-x:auto;"></div>
+  </div>
+
   <!-- Borrowings -->
   <div class="sec-hdr"><h2>💸 Borrowings</h2><a href="#" onclick="switchPage('borrow');return false">See all</a></div>
   <div class="card"><div id="dash-borrow"></div></div>
@@ -882,7 +888,7 @@ body {
     </div>
     <div class="settings-item">
       <div class="settings-icon" style="background:rgba(212,168,67,0.1)">📤</div>
-      <div class="settings-info"><div class="k">Export as JSON File</div><div class="v">Download backup to phone</div></div>
+      <div class="settings-info"><div class="k">Export as JSON File</div><div class="v" id="backup-status">Download backup to phone</div></div>
       <button onclick="exportData()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">Export</button>
     </div>
     <div class="settings-item">
@@ -941,7 +947,7 @@ body {
 <div class="modal-overlay" id="exp-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add Expense</div>
+    <div class="modal-title" id="exp-modal-title">➕ Add Expense</div>
 
     <div class="form-group">
       <label class="form-label">Category</label>
@@ -982,6 +988,9 @@ body {
     </div>
 
     <button class="btn-primary" onclick="saveExpense()">Save Expense</button>
+    <div id="exp-delete-wrap" style="display:none;">
+      <button class="btn-outline" id="exp-delete-btn-inner" onclick="deleteExpenseFromModal()" style="color:var(--red);border-color:rgba(248,113,113,0.3);">🗑️ Delete Expense</button>
+    </div>
     <button class="btn-outline" onclick="closeModal('exp-modal')">Cancel</button>
   </div>
 </div>
@@ -1335,11 +1344,106 @@ const defaultData = {
   lent: [],
   borrowings: [],
   income: [],
+  netWorthHistory: [],
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear()
 };
 
-function save() { localStorage.setItem('fintrack_data', JSON.stringify(D)); }
+function save() {
+  snapshotNetWorth();
+  localStorage.setItem('fintrack_data', JSON.stringify(D));
+}
+
+function exportBackup() {
+  const data = JSON.stringify(D, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `fintrack-backup-${today()}.json`; a.click();
+  localStorage.setItem('fintrack_last_backup', Date.now().toString());
+  updateBackupStatus();
+  showToast('✅ Backup downloaded — save to Google Drive!');
+}
+
+function snapshotNetWorth() {
+  if(!D.netWorthHistory) D.netWorthHistory = [];
+  // Calculate current net worth
+  const bankTotal    = D.accounts.indBanks.reduce((s,b)=>s+(b.balance||0), 0);
+  const uaeSavings   = D.accounts.uaeAccounts.filter(u=>u.type!=='Credit Card').reduce((s,u)=>s+(u.balanceAED||0)*D.aedRate, 0);
+  const ccDebt       = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0), 0);
+  const loanDebt     = D.accounts.loans.reduce((s,l)=>s+(l.outstanding||0), 0);
+  const uaeCCDebt    = D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate, 0);
+  const borrowDebt   = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0);
+  const lentOut      = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered),0);
+  const netWorth     = bankTotal + uaeSavings - ccDebt - loanDebt - uaeCCDebt - borrowDebt + lentOut;
+
+  // Store one snapshot per month — overwrite if same month
+  const monthKey = today().substring(0,7); // YYYY-MM
+  const existing = D.netWorthHistory.findIndex(h=>h.month===monthKey);
+  const snapshot = { month: monthKey, netWorth: Math.round(netWorth), date: today() };
+  if(existing >= 0) D.netWorthHistory[existing] = snapshot;
+  else D.netWorthHistory.push(snapshot);
+  // Keep last 24 months
+  if(D.netWorthHistory.length > 24) D.netWorthHistory = D.netWorthHistory.slice(-24);
+}
+
+function renderNetWorthHistory() {
+  const el = document.getElementById('dash-nw-history');
+  if(!el) return;
+  const history = (D.netWorthHistory||[]).slice(-12);
+  if(history.length < 2) {
+    el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">History builds up as you use the app 📈</div>';
+    return;
+  }
+  const maxVal = Math.max(...history.map(h=>Math.abs(h.netWorth)));
+  const last = history[history.length-1];
+  const change = last.netWorth - history[0].netWorth;
+  el.innerHTML = '<div style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:8px;">'
+    + history.map((h,i) => {
+        const pct = maxVal>0?Math.abs(h.netWorth)/maxVal:0;
+        const barH = Math.max(3, Math.round(pct*68));
+        const color = h.netWorth>=0?'#34D399':'#F87171';
+        const isLast = i===history.length-1;
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;background:'+color+(isLast?'':'99')+';border-radius:3px 3px 0 0;height:'+barH+'px;"></div><div style="font-size:7px;color:var(--text3);margin-top:2px;">'+h.month.substring(5)+'</div></div>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    + '<div><div style="font-size:11px;color:var(--text3)">Current Net Worth</div>'
+    + '<div style="font-family:Syne,sans-serif;font-size:15px;font-weight:800;color:'+(last.netWorth>=0?'#34D399':'#F87171')+'">'+fmt(last.netWorth)+'</div></div>'
+    + '<div style="text-align:right;"><div style="font-size:11px;color:var(--text3)">'+history.length+' months</div>'
+    + '<div style="font-size:13px;font-weight:700;color:'+(change>=0?'#34D399':'#F87171')+'">'+(change>=0?'↗ +':'↘ ')+fmt(Math.abs(change))+'</div></div>'
+    + '</div>';
+}
+
+function updateBackupStatus() {
+  const el = document.getElementById('backup-status');
+  if(!el) return;
+  const last = parseInt(localStorage.getItem('fintrack_last_backup')||'0');
+  if(!last) { el.textContent='Never backed up ⚠️'; el.style.color='var(--red)'; return; }
+  const days = Math.floor((Date.now()-last)/(1000*60*60*24));
+  el.textContent = days===0?'Backed up today ✅':`Last backup: ${days} day${days!==1?'s':''} ago`;
+  el.style.color = days>7?'var(--red)':days>3?'var(--orange)':'var(--green)';
+}
+
+function showBackupBanner() {
+  if(document.getElementById('backup-banner')) return;
+  const last = parseInt(localStorage.getItem('fintrack_last_backup')||'0');
+  const days = last?Math.floor((Date.now()-last)/(1000*60*60*24)):999;
+  if(days < 7) return;
+  const banner = document.createElement('div');
+  banner.id = 'backup-banner';
+  banner.style.cssText = 'position:fixed;bottom:72px;left:16px;right:16px;z-index:999;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.35);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(8px);';
+  banner.innerHTML = `
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--red)">⚠️ Backup your data!</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${days>=999?'Never backed up':'Last backup '+days+' days ago'}</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="exportBackup();document.getElementById('backup-banner').remove()" style="background:var(--red);border:none;border-radius:8px;padding:7px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer;">Backup Now</button>
+      <button onclick="document.getElementById('backup-banner').remove()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text3);font-size:12px;cursor:pointer;">Later</button>
+    </div>`;
+  document.body.appendChild(banner);
+}
 
 let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.parse(JSON.stringify(defaultData));
 
@@ -1347,6 +1451,7 @@ let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.pars
 if (!D.lent) D.lent = [];
 if (!D.income) D.income = [];
 if (!D.borrowings) D.borrowings = [];
+if (!D.netWorthHistory) D.netWorthHistory = [];
 // Migrate chits to add dueDay and startDate if missing
 (D.accounts.chits||[]).forEach(c => { if(!c.dueDay) c.dueDay = 1; if(!c.startDate) c.startDate = ''; });
 if (D.accounts.uaeAccounts && !D.accounts.uaeAccounts[0].hasOwnProperty('outstandingAED')) {
@@ -1691,6 +1796,8 @@ function renderDashboard() {
   try { renderDashIncome(); } catch(e) {}
   try { renderDashBorrow(); } catch(e) {}
   renderDashLent();
+  try { renderNetWorthHistory(); } catch(e) {}
+  setTimeout(showBackupBanner, 1000);
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
   const thisMonth = new Date().getMonth();
@@ -1779,13 +1886,13 @@ function renderExpenses() {
     const acc = getAcctById(e.accountId);
     const isLarge = e.amount >= D.alertThreshold;
     return `
-    <div class="exp-item" onclick="deleteExpense('${e.id}')">
+    <div class="exp-item" onclick="openExpenseModal('${e.id}')">
       <div class="exp-cat-icon" style="background:${cat.bg}; font-size:20px">${cat.emoji}</div>
       <div class="exp-info">
         <div class="exp-desc">${e.desc || e.category}</div>
         <div class="exp-meta">${fmtDate(e.date)} · ${acc?acc.name:'Unknown'} · ${e.mode}</div>
       </div>
-      <div>
+      <div style="text-align:right;">
         <div class="exp-amount">${fmt(e.amount)}</div>
         ${isLarge ? '<div style="text-align:right;font-size:9px;color:var(--red);margin-top:2px">🔴 Large</div>' : ''}
       </div>
@@ -2056,6 +2163,7 @@ function renderAccounts() {
 function renderSettings() {
   document.getElementById('set-rate').textContent = D.aedRate.toFixed(4);
   updatePinStatus();
+  updateBackupStatus();
 
   // Account list
   const allAccts = [
@@ -2100,22 +2208,65 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 
 // Expense Modal
 let selectedCategory = null;
-function openExpenseModal() {
-  selectedCategory = null;
-  document.getElementById('exp-desc').value = '';
-  document.getElementById('exp-amt').value = '';
-  document.getElementById('exp-date').value = today();
+let editingExpenseId = null;
+// PWA-safe confirm — window.confirm is blocked in some Android PWAs
+function safeConfirm(msg) {
+  try { return window.confirm(msg); } catch(e) { return true; }
+}
+function openExpenseModal(id) {
+  editingExpenseId = id || null;
+  const exp = id ? D.expenses.find(e=>e.id===id) : null;
+  selectedCategory = exp ? exp.category : null;
+  document.getElementById('exp-desc').value  = exp ? exp.desc   : '';
+  document.getElementById('exp-amt').value   = exp ? exp.amount : '';
+  document.getElementById('exp-date').value  = exp ? exp.date   : today();
+  // Update modal title
+  const title = document.getElementById('exp-modal-title');
+  if(title) title.textContent = exp ? '✏️ Edit Expense' : '➕ Add Expense';
   // Category grid
   const grid = document.getElementById('cat-grid');
   grid.innerHTML = CATEGORIES.map(c => `
-    <div class="cat-btn" onclick="selectCat('${c.name}')" id="catbtn-${c.name.replace(/[& ]/g,'_')}">
+    <div class="cat-btn ${exp&&c.name===exp.category?'selected':''}" onclick="selectCat('${c.name}')" id="catbtn-${c.name.replace(/[& ]/g,'_')}">
       <span class="emoji">${c.emoji}</span>
       <span class="name">${c.name}</span>
     </div>`).join('');
+  if(exp && exp.category) selectedCategory = exp.category;
   // Account select
   const sel = document.getElementById('exp-account');
-  sel.innerHTML = allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.innerHTML = allAccountOptions().map(o=>`<option value="${o.value}" ${exp&&o.value===exp.accountId?'selected':''}>${o.label}</option>`).join('');
+  if(document.getElementById('exp-mode')) document.getElementById('exp-mode').value = exp ? (exp.mode||'Cash') : 'Cash';
+  // Show delete button only when editing
+  const delWrap = document.getElementById('exp-delete-wrap');
+  if(delWrap) delWrap.style.display = id ? 'block' : 'none';
+  const delInner = document.getElementById('exp-delete-btn-inner');
+  if(delInner && id) delInner.dataset.expId = id;
   openModal('exp-modal');
+}
+
+function deleteExpenseFromModal() {
+  const id = editingExpenseId || document.getElementById('exp-delete-btn-inner')?.dataset?.expId;
+  if(!id) return;
+  const btn = document.getElementById('exp-delete-btn-inner');
+  // Two-tap confirm: first tap = warn, second tap = delete
+  if(btn && btn.dataset.confirmPending !== '1') {
+    btn.dataset.confirmPending = '1';
+    btn.textContent = '⚠️ Tap again to confirm delete';
+    btn.style.background = 'rgba(248,113,113,0.2)';
+    setTimeout(() => {
+      if(btn) { btn.dataset.confirmPending = '0'; btn.textContent = '🗑️ Delete Expense'; btn.style.background = ''; }
+    }, 3000);
+    return;
+  }
+  // Second tap — actually delete
+  if(btn) { btn.dataset.confirmPending = '0'; btn.textContent = '🗑️ Delete Expense'; btn.style.background = ''; }
+  const exp = D.expenses.find(e=>e.id===id);
+  if(exp) {
+    refundToAccount(exp.accountId, exp.amount);
+    D.expenses = D.expenses.filter(e=>e.id!==id);
+  }
+  editingExpenseId = null;
+  save(); closeModal('exp-modal'); renderPage(currentPage); renderDashboard();
+  showToast('Expense deleted — amount refunded');
 }
 
 function selectCat(name) {
@@ -2134,34 +2285,35 @@ function saveExpense() {
   const mode = document.getElementById('exp-mode').value;
   if(!amt || amt <= 0) { alert('Please enter a valid amount'); return; }
   if(!selectedCategory) { alert('Please select a category'); return; }
-  const expId = Date.now().toString();
-  D.expenses.push({
-    id: expId,
-    category: selectedCategory, desc, amount: amt, date, accountId, mode
-  });
-  // Auto-deduct from account
-  deductFromAccount(accountId, amt);
-  save(); closeModal('exp-modal');
-  if(currentPage === 'expenses') renderExpenses();
-  if(currentPage === 'dashboard') renderDashboard();
-  if(currentPage === 'accounts') renderAccounts();
-  // Show toast so user knows deduction happened
   const acctName = allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
-  showToast(`₹${amt.toLocaleString('en-IN')} deducted from ${acctName}`);
+  if(editingExpenseId) {
+    const idx = D.expenses.findIndex(e=>e.id===editingExpenseId);
+    if(idx>=0) {
+      const old = D.expenses[idx];
+      // Reverse old deduction
+      refundToAccount(old.accountId, old.amount);
+      // Apply new deduction
+      D.expenses[idx] = { ...old, category: selectedCategory, desc, amount: amt, date, accountId, mode };
+      deductFromAccount(accountId, amt);
+      showToast(`Expense updated · ${fmt(amt)} deducted from ${acctName}`);
+    }
+  } else {
+    D.expenses.push({ id: Date.now().toString(), category: selectedCategory, desc, amount: amt, date, accountId, mode });
+    deductFromAccount(accountId, amt);
+    showToast(`${fmt(amt)} deducted from ${acctName}`);
+  }
+  editingExpenseId = null;
+  save(); closeModal('exp-modal');
+  renderPage(currentPage); renderDashboard();
 }
 
 function deleteExpense(id) {
-  if(!confirm('Delete this expense?')) return;
   const exp = D.expenses.find(e=>e.id===id);
-  if(exp) {
-    refundToAccount(exp.accountId, exp.amount);
-    const acctName = allAccountOptions().find(o=>o.value===exp.accountId)?.label || 'account';
-    showToast(`₹${exp.amount.toLocaleString('en-IN')} refunded to ${acctName}`);
-  }
+  if(!exp) return;
+  refundToAccount(exp.accountId, exp.amount);
   D.expenses = D.expenses.filter(e=>e.id!==id);
-  save(); renderExpenses();
-  if(currentPage === 'dashboard') renderDashboard();
-  if(currentPage === 'accounts') renderAccounts();
+  save(); renderPage(currentPage); renderDashboard();
+  showToast('Expense deleted — amount refunded');
 }
 
 // Transfer Modal
@@ -2324,7 +2476,7 @@ function applyTransfer(fromId, toId, amt, trType, reverse) {
 }
 
 function deleteTransfer(id) {
-  if(!confirm('Delete this transfer?')) return;
+  if(!safeConfirm('Delete this transfer?')) return;
   const tr = D.transfers.find(t=>t.id===id);
   if(tr) {
     // Reverse the balance changes
@@ -2801,7 +2953,7 @@ function refreshUAEFields(id) {
 // DELETE ACCOUNT
 // ══════════════════════════════════════════════════════════
 function deleteAccount(id, type) {
-  if(!confirm('Delete this account? This cannot be undone.')) return;
+  if(!safeConfirm('Delete this account? This cannot be undone.')) return;
   D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
   save(); closeModal('acct-modal'); renderPage(currentPage);
 }
@@ -2946,6 +3098,11 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'fintrack-backup-' + today() + '.json';
   a.click();
+  localStorage.setItem('fintrack_last_backup', Date.now().toString());
+  updateBackupStatus();
+  const banner = document.getElementById('backup-banner');
+  if(banner) banner.remove();
+  showToast('✅ Backup downloaded — save it to Google Drive!');
 }
 
 function importData(event) {
@@ -2956,7 +3113,7 @@ function importData(event) {
     try {
       const parsed = JSON.parse(e.target.result);
       if(!parsed.accounts || !parsed.expenses) { alert('Invalid backup file.'); return; }
-      if(confirm('This will replace ALL current data with the backup. Continue?')) {
+      if(safeConfirm('This will replace ALL current data with the backup. Continue?')) {
         D = parsed; save();
         renderPage(currentPage);
         alert('✅ Data restored successfully!');
@@ -2968,7 +3125,7 @@ function importData(event) {
 }
 
 function clearData() {
-  if(confirm('Clear ALL data? This cannot be undone.')) {
+  if(safeConfirm('Clear ALL data? This cannot be undone.')) {
     localStorage.removeItem('fintrack_data');
     D = JSON.parse(JSON.stringify(defaultData));
     renderDashboard();
@@ -3212,7 +3369,7 @@ function saveLent() {
 }
 
 function deleteLent(id) {
-  if(!confirm('Delete this entry?')) return;
+  if(!safeConfirm('Delete this entry?')) return;
   const entry = D.lent.find(l=>l.id===id);
   if(entry) {
     // Reverse the original deduction (money comes back)
@@ -3276,7 +3433,7 @@ function saveRepayment() {
 function markSettled() {
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
-  if(!confirm(`Mark ${entry.friend}'s ₹${entry.amount.toLocaleString()} as fully settled?`)) return;
+  if(!safeConfirm(`Mark ${entry.friend}'s ₹${entry.amount.toLocaleString()} as fully settled?`)) return;
   const remaining = entry.amount - entry.recovered; // calculate BEFORE updating
   entry.recovered = entry.amount;
   entry.status = 'settled';
@@ -3460,7 +3617,7 @@ function saveIncome(){
 }
 
 function deleteIncome(id){
-  if(!confirm('Delete this income entry?'))return;
+  if(!safeConfirm('Delete this income entry?'))return;
   const e=(D.income||[]).find(i=>i.id===id);
   if(e)deductFromAccount(e.accountId,e.amount);
   D.income=(D.income||[]).filter(i=>i.id!==id);
@@ -3598,7 +3755,7 @@ function pinPress(val){
       const forgot=document.getElementById('pin-forgot');if(forgot&&pinAttempts>=3)forgot.style.display='block';
       setTimeout(()=>{pinBuffer='';updatePinDots();},600);}},100);}
 }
-function forgotPin(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');showPinScreen(false);updatePinStatus();showToast('PIN removed');}}
+function forgotPin(){if(safeConfirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');showPinScreen(false);updatePinStatus();showToast('PIN removed');}}
 function updateSetupDots(){for(let i=0;i<4;i++){const d=document.getElementById('sdot-'+i);if(d)d.className='pin-dot'+(i<pinSetupBuffer.length?' filled':'');}}
 function pinSetupPress(val){
   if(val==='⌫'){pinSetupBuffer=pinSetupBuffer.slice(0,-1);updateSetupDots();return;}
@@ -3624,7 +3781,7 @@ function openPinSetup(){
   if(btn)btn.style.display=localStorage.getItem('fintrack_pin')?'block':'none';
   updateSetupDots();openModal('pin-setup-modal');
 }
-function disablePIN(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');closeModal('pin-setup-modal');updatePinStatus();showToast('PIN removed');}}
+function disablePIN(){if(safeConfirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');closeModal('pin-setup-modal');updatePinStatus();showToast('PIN removed');}}
 function updatePinStatus(){const el=document.getElementById('pin-status');if(el)el.textContent=localStorage.getItem('fintrack_pin')?'✅ Enabled — tap to change':'Not enabled';}
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){localStorage.setItem('fintrack_last_active',Date.now().toString());}
@@ -3880,7 +4037,7 @@ function saveBorrowing() {
 }
 
 function deleteBorrowing(id) {
-  if(!confirm('Delete this borrowing?')) return;
+  if(!safeConfirm('Delete this borrowing?')) return;
   const b = (D.borrowings||[]).find(x=>x.id===id);
   if(b) {
     // Reverse the credit (money was received, remove from account)
@@ -3941,7 +4098,7 @@ function saveBorrowRepayment() {
 function markBorrowSettled() {
   const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
   if(!b) return;
-  if(!confirm(`Mark borrowing from ${b.lender} as fully settled?`)) return;
+  if(!safeConfirm(`Mark borrowing from ${b.lender} as fully settled?`)) return;
   b.status = 'settled';
   b.repaid = b.amount;
   save(); closeModal('brepay-modal'); renderBorrowings(); renderDashboard();
