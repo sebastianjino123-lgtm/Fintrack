@@ -590,7 +590,10 @@ body {
   <div class="topbar">
     <div class="topbar-row">
       <h1>Expenses</h1>
-      <button onclick="openExpenseModal()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="openSMSModal()" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:7px 12px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;">📱 SMS</button>
+        <button onclick="openExpenseModal()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
+      </div>
     </div>
   </div>
 
