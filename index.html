@@ -1179,11 +1179,15 @@ body {
       </select></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group">
+        <label class="form-label" id="inc-amt-label">Amount (₹)</label>
+        <input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal" oninput="updateIncCurrency()">
+        <div id="inc-currency-hint" style="font-size:11px;color:var(--teal);margin-top:4px;display:none;"></div>
+      </div>
       <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="inc-date"></div>
     </div>
     <div class="form-group"><label class="form-label">Credited To Account</label>
-      <div class="select-wrap"><select class="form-select" id="inc-account"></select></div>
+      <div class="select-wrap"><select class="form-select" id="inc-account" onchange="updateIncCurrency()"></select></div>
     </div>
     <div class="form-group"><label class="form-label">Note (optional)</label><input type="text" class="form-input" id="inc-note" placeholder="e.g. April salary"></div>
     <button class="btn-primary" onclick="saveIncome()">Save Income</button>
@@ -1602,7 +1606,7 @@ function renderDashboard() {
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
     <div class="chip" onclick="switchPage('lent')"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">Lent Out</div><div class="cval" style="color:#60A5FA">${fmt(lentOutstanding)}</div></div></div>
     <div class="chip" onclick="switchPage('borrow')"><div class="dot" style="background:#F87171"></div><div><div class="clbl">Borrowed</div><div class="cval" style="color:#F87171">${fmt((D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0))}</div></div></div>
-    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+i.amount,0))}</div></div></div>
+    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0))}</div></div></div>
   `;
 
   // Due soon
@@ -3670,48 +3674,79 @@ function openIncomeModal(id){
   const e=id?(D.income||[]).find(i=>i.id===id):null;
   document.getElementById('income-modal-title').textContent=id?'✏️ Edit Income':'💰 Add Income';
   document.getElementById('inc-desc').value=e?e.desc:'';
-  document.getElementById('inc-amount').value=e?e.amount:'';
+  // If UAE income, show stored AED amount; else show INR amount
+  document.getElementById('inc-amount').value=e?(e.amountAED||e.amount):'';
   document.getElementById('inc-date').value=e?e.date:today();
   document.getElementById('inc-note').value=e?(e.note||''):'';
   document.getElementById('inc-category').value=e?e.category:'Salary';
   const opts=allAccountOptions().map(o=>`<option value="${o.value}" ${e&&e.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
   document.getElementById('inc-account').innerHTML=opts;
   openModal('income-modal');
+  setTimeout(updateIncCurrency, 50);
+}
+
+function updateIncCurrency() {
+  const accountId = document.getElementById('inc-account')?.value;
+  const amt = parseFloat(document.getElementById('inc-amount')?.value)||0;
+  const hint = document.getElementById('inc-currency-hint');
+  const lbl  = document.getElementById('inc-amt-label');
+  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  if(u) {
+    if(lbl) lbl.textContent = 'Amount (AED)';
+    if(hint) { hint.style.display='block'; hint.textContent = amt>0 ? `= ₹${(amt*D.aedRate).toLocaleString('en-IN',{maximumFractionDigits:0})} at rate ${D.aedRate}` : 'Enter amount in AED'; }
+  } else {
+    if(lbl) lbl.textContent = 'Amount (₹)';
+    if(hint) { hint.style.display='none'; }
+  }
 }
 
 function saveIncome(){
   const desc=document.getElementById('inc-desc').value.trim();
-  const amount=parseFloat(document.getElementById('inc-amount').value);
+  const rawAmount=parseFloat(document.getElementById('inc-amount').value);
   const date=document.getElementById('inc-date').value;
   const cat=document.getElementById('inc-category').value;
   const accountId=document.getElementById('inc-account').value;
   const note=document.getElementById('inc-note').value.trim();
   if(!desc){alert('Enter a description');return;}
-  if(!amount||amount<=0){alert('Enter a valid amount');return;}
+  if(!rawAmount||rawAmount<=0){alert('Enter a valid amount');return;}
   if(!D.income)D.income=[];
+  // For UAE accounts, store AED natively; for others store INR
+  const isUAEInc = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
+  const amount = rawAmount;           // store as-is (AED for UAE, INR for others)
+  const amountAED = isUAEInc ? rawAmount : null;
+
   if(editingIncId){
     const old=(D.income||[]).find(i=>i.id===editingIncId);
     if(old){
-      // Reverse old credit fully before applying new
-      deductFromAccount(old.accountId, old.amount);
+      // Reverse old credit using original stored value
+      const oldAmt = old.amountAED || old.amount;
+      deductFromAccount(old.accountId, oldAmt);
     }
     const idx=(D.income||[]).findIndex(i=>i.id===editingIncId);
-    if(idx>=0)D.income[idx]={id:editingIncId,desc,amount,date,category:cat,accountId,note};
+    if(idx>=0){
+      const updated={id:editingIncId,desc,amount,date,category:cat,accountId,note};
+      if(amountAED!==null) updated.amountAED=amountAED;
+      D.income[idx]=updated;
+    }
   }else{
-    D.income.push({id:Date.now().toString(),desc,amount,date,category:cat,accountId,note});
+    const entry={id:Date.now().toString(),desc,amount,date,category:cat,accountId,note};
+    if(amountAED!==null) entry.amountAED=amountAED;
+    D.income.push(entry);
   }
-  // Credit new amount to new account
-  creditToAccount(accountId,amount);
+  // Credit account — pass raw amount (AED for UAE, INR for others)
+  creditToAccount(accountId, amount);
   save();closeModal('income-modal');renderIncome();renderDashboard();
   showToast(`+${fmt(amount)} credited to ${getAcctName(accountId)}`);
 }
 
 function deleteIncome(id){
-  if(!safeConfirm('Delete this income entry?'))return;
   const e=(D.income||[]).find(i=>i.id===id);
-  if(e)deductFromAccount(e.accountId,e.amount);
+  if(!e)return;
+  const refundAmt = e.amountAED || e.amount;
+  deductFromAccount(e.accountId, refundAmt);
   D.income=(D.income||[]).filter(i=>i.id!==id);
   save();renderIncome();renderDashboard();
+  showToast('Income deleted — account balance reversed');
 }
 
 function changeIncomeMonth(dir){
@@ -3744,7 +3779,11 @@ function creditToAccount(accountId,amount){
   const c=D.accounts.indCards.find(a=>a.id===accountId);
   if(c){c.outstanding=Math.max(0,(c.outstanding||0)-amount);c.totalDue=Math.max(0,(c.totalDue||0)-amount);return;}
   const u=D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  if(u){if(u.type!=='Credit Card')u.balanceAED=(u.balanceAED||0)+(amount/D.aedRate);else{u.outstandingAED=Math.max(0,(u.outstandingAED||0)-(amount/D.aedRate));u.balanceAED=u.outstandingAED;}}
+  if(u){
+    // amount is AED when called from income/expense with UAE account (stored natively)
+    if(u.type!=='Credit Card') u.balanceAED=(u.balanceAED||0)+amount;
+    else{u.outstandingAED=Math.max(0,(u.outstandingAED||0)-amount);u.balanceAED=u.outstandingAED;}
+  }
 }
 
 function getAcctName(id){return allAccountOptions().find(o=>o.value===id)?.label||'account';}
@@ -3756,8 +3795,8 @@ function renderDashIncome(){
   const incomes=monthIncome(now.getMonth(),now.getFullYear());
   if(incomes.length===0){el.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="icon" style="font-size:28px">💰</div>No income this month</div>';return;}
   const catTotals={};
-  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
-  const total=incomes.reduce((s,i)=>s+i.amount,0);
+  incomes.forEach(i=>{const v=i.amountAED?i.amountAED*D.aedRate:i.amount;catTotals[i.category]=(catTotals[i.category]||0)+v;});
+  const total=incomes.reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0);
   el.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
     const c=getIncCat(cat);
     return `<div class="acct-item" onclick="switchPage('income')">
@@ -3773,7 +3812,7 @@ function renderIncome(){
   document.getElementById('income-month-label').textContent=MONTHS[incViewMonth]+' '+incViewYear;
   const incomes=monthIncome(incViewMonth,incViewYear);
   const exps=monthExpenses(incViewMonth,incViewYear);
-  const totalInc=incomes.reduce((s,i)=>s+i.amount,0);
+  const totalInc=incomes.reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0);
   const totalExp=exps.reduce((s,e)=>s+e.amount,0);
   const saved=totalInc-totalExp;
   const savRate=totalInc>0?Math.max(0,saved/totalInc):0;
@@ -3788,7 +3827,7 @@ function renderIncome(){
   document.getElementById('income-sub').textContent=`${MONTHS_SHORT[incViewMonth]} ${incViewYear} · ${incomes.length} entries · Savings ${(savRate*100).toFixed(0)}%`;
 
   const catTotals={};
-  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
+  incomes.forEach(i=>{const v=i.amountAED?i.amountAED*D.aedRate:i.amount;catTotals[i.category]=(catTotals[i.category]||0)+v;});
   const breakdown=document.getElementById('income-breakdown');
   if(Object.keys(catTotals).length===0){breakdown.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0;">No income this month</div>';
   }else{breakdown.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
@@ -3811,7 +3850,8 @@ function renderIncome(){
       <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.desc}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(i.date)} · ${acc?acc.name:'Unknown'}${i.note?' · '+i.note:''}</div></div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">+${fmt(i.amount)}</div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">${i.amountAED ? 'AED '+i.amountAED : '+'+fmt(i.amount)}</div>
+        ${i.amountAED ? `<div style="font-size:9px;color:var(--text3);">≈${fmt(i.amountAED*D.aedRate)}</div>` : ''}
         <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end;">
           <button onclick="openIncomeModal('${i.id}')" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:3px 8px;color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;">✏️</button>
           <button onclick="twoTapDelete(this,()=>deleteIncome('${i.id}'))" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
