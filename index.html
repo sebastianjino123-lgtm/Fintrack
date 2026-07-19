@@ -584,6 +584,12 @@ body {
     <div id="dash-nw-history" style="overflow-x:auto;"></div>
   </div>
 
+  <!-- Net Worth Predictor -->
+  <div class="sec-hdr"><h2>🔮 Net Worth Predictor</h2></div>
+  <div class="card" style="padding:14px 16px;">
+    <div id="dash-nw-predictor"></div>
+  </div>
+
   <!-- Borrowings -->
   <div class="sec-hdr"><h2>💸 Borrowings</h2><a href="#" onclick="switchPage('borrow');return false">See all</a></div>
   <div class="card"><div id="dash-borrow"></div></div>
@@ -884,8 +890,13 @@ body {
   </div>
   <div style="padding:0 16px 8px;font-size:11px;color:var(--text3);" id="debt-strategy-desc">Avalanche: Pay highest interest first — saves the most money</div>
 
-  <!-- Debt list -->
+  <!-- Tabs: Debt list vs Payoff predictor -->
+  <div style="display:flex;gap:8px;padding:0 16px 12px;">
+    <button onclick="switchDebtTab('list')" id="dtab-list" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--gold);background:rgba(212,168,67,0.1);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">📋 Debts</button>
+    <button onclick="switchDebtTab('payoff')" id="dtab-payoff" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:12px;cursor:pointer;">📅 Payoff</button>
+  </div>
   <div id="debt-list" style="padding:0 16px;"></div>
+  <div id="debt-payoff" style="padding:0 16px;display:none;"></div>
 </div>
 
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
@@ -1854,6 +1865,7 @@ function renderDashboard() {
   try { renderDashBorrow(); } catch(e) {}
   renderDashLent();
   try { renderNetWorthHistory(); } catch(e) {}
+  try { renderNWPredictor(); } catch(e) {}
   setTimeout(showBackupBanner, 1000);
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
@@ -2372,9 +2384,23 @@ function openExpenseModal(id) {
       <span class="name">${c.name}</span>
     </div>`).join('');
   if(exp && exp.category) selectedCategory = exp.category;
-  // Account select
+  // Account select — show available balance next to each account
   const sel = document.getElementById('exp-account');
-  sel.innerHTML = allAccountOptions().map(o=>`<option value="${o.value}" ${exp&&o.value===exp.accountId?'selected':''}>${o.label}</option>`).join('');
+  sel.innerHTML = allAccountOptions().map(o => {
+    const a = findAnyAccount(o.value);
+    let bal = '';
+    if(a) {
+      if(D.accounts.indBanks.find(x=>x.id===o.value))
+        bal = ` [₹${(a.balance||0).toLocaleString('en-IN',{maximumFractionDigits:0})}]`;
+      else if(D.accounts.indCards.find(x=>x.id===o.value) && a.limit>0)
+        bal = ` [Avl ₹${Math.max(0,(a.limit||0)-(a.outstanding||0)).toLocaleString('en-IN',{maximumFractionDigits:0})}]`;
+      else if(D.accounts.uaeAccounts.find(x=>x.id===o.value))
+        bal = a.type==='Credit Card' && a.limitAED>0
+          ? ` [Avl AED ${Math.max(0,(a.limitAED||0)-(a.outstandingAED||0)).toFixed(0)}]`
+          : ` [AED ${(a.balanceAED||0).toFixed(0)}]`;
+    }
+    return `<option value="${o.value}" ${exp&&o.value===exp.accountId?'selected':''}>${o.label}${bal}</option>`;
+  }).join('');
   if(document.getElementById('exp-mode')) document.getElementById('exp-mode').value = exp ? (exp.mode||'Cash') : 'Cash';
   // Show delete button only when editing
   const delWrap = document.getElementById('exp-delete-wrap');
@@ -2448,6 +2474,47 @@ function saveExpense() {
     {val:desc,            label:'Description', type:'maxlength', max:100},
   ])) return;
   if(!selectedCategory) { showToast('⚠️ Please select a category'); return; }
+
+  // ── Balance check ────────────────────────────────────────────────────────
+  const expAcct = findAnyAccount(accountId);
+  if(expAcct) {
+    const isBank   = !!D.accounts.indBanks.find(a=>a.id===accountId);
+    const isUAEAcc = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
+    const isCC     = !!D.accounts.indCards.find(a=>a.id===accountId);
+    const isUAECC  = isUAEAcc && expAcct.type==='Credit Card';
+    const isUAESav = isUAEAcc && expAcct.type!=='Credit Card';
+
+    if(isBank) {
+      const bal = expAcct.balance || 0;
+      const spend = amt; // INR
+      if(spend > bal) {
+        showToast(`❌ Insufficient balance! ${expAcct.name} has ${fmt(bal)} but expense is ${fmt(spend)}`);
+        return;
+      }
+    } else if(isUAESav) {
+      const balINR = (expAcct.balanceAED||0) * D.aedRate;
+      const spend  = amtAED ? amtAED * D.aedRate : amt;
+      if(spend > balINR) {
+        showToast(`❌ Insufficient balance! ${expAcct.name} has AED ${expAcct.balanceAED||0} but expense is AED ${amtAED||'?'}`);
+        return;
+      }
+    } else if(isCC) {
+      // Credit card — check available credit (limit - outstanding)
+      const avail = (expAcct.limit||0) - (expAcct.outstanding||0);
+      if(expAcct.limit > 0 && amt > avail) {
+        showToast(`❌ Credit limit exceeded! ${expAcct.name} has ₹${avail.toLocaleString('en-IN')} available but expense is ${fmt(amt)}`);
+        return;
+      }
+    } else if(isUAECC) {
+      const availAED = (expAcct.limitAED||0) - (expAcct.outstandingAED||0);
+      const spendAED = amtAED || (amt/D.aedRate);
+      if(expAcct.limitAED > 0 && spendAED > availAED) {
+        showToast(`❌ Credit limit exceeded! ${expAcct.name} has AED ${availAED.toFixed(2)} available`);
+        return;
+      }
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
   // If UAE account, store AED directly. Convert to INR only for display using current rate.
   const isUAEAcct = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
   const amt    = rawAmt;                        // store original value (AED for UAE, INR for others)
@@ -4662,6 +4729,315 @@ function renderDebtOverview() {
       </div>
     </div>`;
   }).join('');
+}
+
+
+// ══════════════════════════════════════════════════════════
+// LOAN PAYOFF + NET WORTH PREDICTOR
+// ══════════════════════════════════════════════════════════
+
+function getAvgMonthlySurplus(months) {
+  // Average over last N months of actual data
+  const now = new Date();
+  let totalInc = 0, totalExp = 0, count = 0;
+  for(let i = 0; i < months; i++) {
+    let m = now.getMonth() - i;
+    let y = now.getFullYear();
+    while(m < 0) { m += 12; y--; }
+    const inc = monthIncome(m, y).reduce((s,x)=>s+(x.amountAED?x.amountAED*D.aedRate:x.amount), 0);
+    const exp = monthExpenses(m, y).reduce((s,x)=>s+(x.amountAED?x.amountAED*D.aedRate:x.amount), 0);
+    if(inc > 0 || exp > 0) { totalInc+=inc; totalExp+=exp; count++; }
+  }
+  if(count === 0) return { avgInc:0, avgExp:0, surplus:0 };
+  const avgInc = totalInc/count;
+  const avgExp = totalExp/count;
+  return { avgInc, avgExp, surplus: avgInc - avgExp };
+}
+
+function calcLoanPayoff(outstanding, rate, emi) {
+  // Returns months to payoff and total interest
+  if(emi <= 0 || outstanding <= 0) return null;
+  const monthlyRate = rate / 100 / 12;
+  let bal = outstanding, months = 0, totalPaid = 0;
+  if(monthlyRate === 0) {
+    months = Math.ceil(bal / emi);
+    return { months, totalInterest: 0, payoffDate: addMonths(new Date(), months) };
+  }
+  while(bal > 0 && months < 600) {
+    const interest = bal * monthlyRate;
+    const principal = Math.min(emi - interest, bal);
+    if(principal <= 0) return null; // EMI too low to cover interest
+    bal -= principal;
+    totalPaid += emi;
+    months++;
+  }
+  return {
+    months,
+    totalInterest: Math.max(0, totalPaid - outstanding),
+    payoffDate: addMonths(new Date(), months)
+  };
+}
+
+function addMonths(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function fmtMonthYear(date) {
+  return date.toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+}
+
+function switchDebtTab(tab) {
+  const listEl   = document.getElementById('debt-list');
+  const payoffEl = document.getElementById('debt-payoff');
+  const listBtn  = document.getElementById('dtab-list');
+  const payoffBtn= document.getElementById('dtab-payoff');
+  if(tab === 'list') {
+    if(listEl) listEl.style.display='block';
+    if(payoffEl) payoffEl.style.display='none';
+    if(listBtn) { listBtn.style.background='rgba(212,168,67,0.1)'; listBtn.style.borderColor='var(--gold)'; listBtn.style.color='var(--gold)'; listBtn.style.fontWeight='700'; }
+    if(payoffBtn) { payoffBtn.style.background='var(--surface2)'; payoffBtn.style.borderColor='var(--border)'; payoffBtn.style.color='var(--text3)'; payoffBtn.style.fontWeight='400'; }
+  } else {
+    if(listEl) listEl.style.display='none';
+    if(payoffEl) payoffEl.style.display='block';
+    if(listBtn) { listBtn.style.background='var(--surface2)'; listBtn.style.borderColor='var(--border)'; listBtn.style.color='var(--text3)'; listBtn.style.fontWeight='400'; }
+    if(payoffBtn) { payoffBtn.style.background='rgba(52,211,153,0.1)'; payoffBtn.style.borderColor='var(--green)'; payoffBtn.style.color='var(--green)'; payoffBtn.style.fontWeight='700'; }
+    renderPayoffPredictor();
+  }
+}
+
+function renderPayoffPredictor() {
+  const el = document.getElementById('debt-payoff');
+  if(!el) return;
+
+  const { avgInc, avgExp, surplus } = getAvgMonthlySurplus(3);
+  const totalEMI = D.accounts.loans.filter(l=>(l.outstanding||0)>0)
+    .reduce((s,l)=>s+(l.emi||0), 0);
+  const freeCash = Math.max(0, surplus); // after expenses (EMIs already in expenses usually)
+
+  // Gather EMI loans only (have rate + emi)
+  const loans = D.accounts.loans.filter(l =>
+    (l.outstanding||0) > 0 && (l.emi||0) > 0 && (l.loanType==='emi'||!l.loanType)
+  );
+
+  let html = '';
+
+  // ── Cash flow summary ──────────────────────────────────────────────────────
+  html += `<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Avg Monthly Cash Flow (Last 3 months)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div><div style="font-size:10px;color:var(--text3)">Income</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--green)">${fmt(avgInc)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3)">Expenses</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--red)">${fmt(avgExp)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3)">Surplus</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${surplus>=0?'var(--gold)':'var(--red)'}">${surplus>=0?'+':''}${fmt(surplus)}</div></div>
+    </div>
+  </div>`;
+
+  if(loans.length === 0) {
+    html += '<div class="empty-state"><div class="icon">🎉</div>No active EMI loans to predict!</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  // ── Per-loan payoff cards ──────────────────────────────────────────────────
+  html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Loan Payoff Predictions</div>`;
+
+  loans.forEach(loan => {
+    const base = calcLoanPayoff(loan.outstanding, loan.rate||0, loan.emi||0);
+    if(!base) {
+      html += `<div style="background:var(--surface);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${loan.name}</div>
+        <div style="font-size:12px;color:var(--orange)">⚠️ EMI too low to cover interest — loan will never pay off at current rate</div>
+      </div>`;
+      return;
+    }
+
+    // Extra payment scenario — use 30% of surplus
+    const extraPayment = Math.max(0, Math.round(freeCash * 0.3 / 1000) * 1000);
+    const accel = extraPayment > 0
+      ? calcLoanPayoff(loan.outstanding, loan.rate||0, (loan.emi||0) + extraPayment)
+      : null;
+
+    const monthsSaved = accel ? base.months - accel.months : 0;
+    const interestSaved = accel ? Math.max(0, base.totalInterest - accel.totalInterest) : 0;
+
+    html += `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
+      <div style="padding:12px 14px 10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:600">${loan.name}</div>
+            <div style="font-size:11px;color:var(--text3)">${loan.lender||''} · ${loan.rate||0}% p.a. · EMI ${fmt(loan.emi||0)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--red)">${fmt(loan.outstanding)}</div>
+            <div style="font-size:10px;color:var(--text3)">outstanding</div>
+          </div>
+        </div>
+
+        <!-- Base scenario -->
+        <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">📅 At Current EMI</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text3)">Payoff Date</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text)">${fmtMonthYear(base.payoffDate)}</div>
+              <div style="font-size:10px;color:var(--text3)">${base.months} months</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3)">Total Interest</div>
+              <div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(base.totalInterest)}</div>
+            </div>
+          </div>
+        </div>
+
+        ${accel && monthsSaved > 0 ? `
+        <!-- Accelerated scenario -->
+        <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">🚀 With Extra ${fmt(extraPayment)}/month</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div style="font-size:10px;color:var(--text3)">New Payoff Date</div>
+              <div style="font-size:14px;font-weight:700;color:var(--green)">${fmtMonthYear(accel.payoffDate)}</div>
+              <div style="font-size:10px;color:var(--green)">${monthsSaved} months earlier! 🎉</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3)">Interest Saved</div>
+              <div style="font-size:14px;font-weight:700;color:var(--green)">${fmt(interestSaved)}</div>
+            </div>
+          </div>
+        </div>` : surplus <= 0 ? `<div style="font-size:11px;color:var(--orange);padding:4px 0;">⚠️ No surplus to accelerate — reduce expenses to pay off sooner</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  // ── CC payoff info ─────────────────────────────────────────────────────────
+  const ccDebts = D.accounts.indCards.filter(c=>(c.outstanding||0)>0 && (c.minDue||0)>0);
+  if(ccDebts.length > 0) {
+    html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 10px;">Credit Card Payoff</div>`;
+    ccDebts.forEach(c => {
+      // CC typically 36% p.a. if not set
+      const rate = c.rate || 36;
+      const base = calcLoanPayoff(c.outstanding, rate, c.minDue);
+      if(!base) return;
+      html += `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <div><div style="font-size:14px;font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--orange)">⚠️ ${rate}% interest — pay off ASAP</div></div>
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--red)">${fmt(c.outstanding)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><div style="font-size:10px;color:var(--text3)">Paying Min Due</div><div style="font-size:13px;font-weight:700">${fmtMonthYear(base.payoffDate)} (${base.months}mo)</div></div>
+          <div><div style="font-size:10px;color:var(--text3)">Interest Cost</div><div style="font-size:13px;font-weight:700;color:var(--red)">${fmt(base.totalInterest)}</div></div>
+        </div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Net Worth Predictor ────────────────────────────────────────────────────
+function renderNWPredictor() {
+  const el = document.getElementById('dash-nw-predictor');
+  if(!el) return;
+
+  const history = D.netWorthHistory || [];
+  const { avgInc, avgExp, surplus } = getAvgMonthlySurplus(3);
+
+  // Current net worth
+  const bankTotal  = D.accounts.indBanks.reduce((s,b)=>s+(b.balance||0), 0);
+  const uaeSavings = D.accounts.uaeAccounts.filter(u=>u.type!=='Credit Card').reduce((s,u)=>s+(u.balanceAED||0)*D.aedRate, 0);
+  const ccDebt     = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0), 0);
+  const loanDebt   = D.accounts.loans.reduce((s,l)=>s+(l.outstanding||0), 0);
+  const uaeCCDebt  = D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate, 0);
+  const borrowDebt = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid), 0);
+  const lentOut    = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered), 0);
+  const currentNW  = bankTotal + uaeSavings - ccDebt - loanDebt - uaeCCDebt - borrowDebt + lentOut;
+
+  if(avgInc === 0 && surplus === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">Add income and expense data to see predictions</div>';
+    return;
+  }
+
+  // Project 12, 24, 60 months
+  const scenarios = [
+    { label:'Conservative', savingsPct:0.10, color:'#94A3B8' },
+    { label:'Moderate',     savingsPct:0.20, color:'#34D399' },
+    { label:'Aggressive',   savingsPct:0.35, color:'#D4A843' },
+  ];
+
+  // CAGR from history if available
+  let cagr = null;
+  if(history.length >= 2) {
+    const first = history[0];
+    const last  = history[history.length-1];
+    const months = history.length;
+    if(first.netWorth > 0 && last.netWorth > first.netWorth) {
+      cagr = (Math.pow(last.netWorth/first.netWorth, 12/months) - 1) * 100;
+    }
+  }
+
+  const milestones = [1000000, 2500000, 5000000, 10000000];
+  const monthlySurplusActual = surplus;
+
+  let html = '';
+
+  // Current NW
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div>
+      <div style="font-size:11px;color:var(--text3)">Current Net Worth</div>
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${currentNW>=0?'var(--green)':'var(--red)'}">${fmt(currentNW)}</div>
+    </div>
+    ${cagr ? `<div style="text-align:right;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:8px 12px;">
+      <div style="font-size:10px;color:var(--text3)">Monthly Growth</div>
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--green)">+${cagr.toFixed(1)}%</div>
+    </div>` : ''}
+  </div>`;
+
+  // Projections
+  html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Projection (based on avg monthly surplus ${fmt(monthlySurplusActual)})</div>`;
+
+  const periods = [{months:12,label:'1 Year'},{months:24,label:'2 Years'},{months:60,label:'5 Years'}];
+  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr>
+      <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);">Scenario</th>
+      ${periods.map(p=>`<th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);">${p.label}</th>`).join('')}
+    </tr></thead>
+    <tbody>
+      ${scenarios.map(s => {
+        const mSavings = avgInc * s.savingsPct;
+        return `<tr>
+          <td style="padding:8px;border-bottom:1px solid var(--border);">
+            <div style="font-weight:600;color:${s.color}">${s.label}</div>
+            <div style="font-size:10px;color:var(--text3)">Save ${(s.savingsPct*100).toFixed(0)}% of income (${fmt(mSavings)}/mo)</div>
+          </td>
+          ${periods.map(p => {
+            const proj = currentNW + (mSavings * p.months);
+            return `<td style="text-align:right;padding:8px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-weight:700;color:${proj>=0?s.color:'var(--red)'};">${fmt(proj)}</td>`;
+          }).join('')}
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+
+  // Milestones
+  const reachableMilestones = milestones.filter(m => m > currentNW);
+  if(reachableMilestones.length > 0 && monthlySurplusActual > 0) {
+    html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Milestones (at current surplus ${fmt(monthlySurplusActual)}/mo)</div>`;
+    html += reachableMilestones.slice(0,3).map(m => {
+      const monthsNeeded = Math.ceil((m - currentNW) / monthlySurplusActual);
+      const date = addMonths(new Date(), monthsNeeded);
+      const label = m >= 10000000 ? '₹1 Cr' : m >= 5000000 ? '₹50L' : m >= 2500000 ? '₹25L' : '₹10L';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:600">${label} 🎯</div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">${fmtMonthYear(date)}</div>
+          <div style="font-size:10px;color:var(--text3)">${monthsNeeded} months away</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════════
