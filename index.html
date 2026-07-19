@@ -665,7 +665,12 @@ body {
 
 <!-- ══════════════════════ ACCOUNTS PAGE ══════════════════════ -->
 <div class="page" id="page-accounts">
-  <div class="topbar"><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
+      <button onclick="switchPage('debt')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:6px 10px;color:var(--red);font-size:11px;font-weight:700;cursor:pointer;">💳 Debts</button>
+    </div>
+  </div>
 
   <div onclick="toggleAcctSection('acct-banks')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
     <div style="display:flex;align-items:center;gap:6px;">
@@ -838,6 +843,49 @@ body {
   </div>
 
   <div id="borrow-list" style="padding:0 16px"></div>
+</div>
+
+<!-- ══════════════════════ DEBT OVERVIEW PAGE ══════════════════════ -->
+<div class="page" id="page-debt">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div><h1>💳 Debt Overview</h1><div class="sub" id="debt-sub">All your debts ranked by priority</div></div>
+      <button onclick="switchPage('accounts')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text2);font-size:12px;cursor:pointer;">← Back</button>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="exp-summary" style="padding-top:14px">
+    <div class="exp-stat"><div class="lbl">Total Debt</div><div class="val" id="debt-total" style="color:var(--red)">₹0</div></div>
+    <div class="exp-stat"><div class="lbl">Monthly EMI</div><div class="val" id="debt-emi" style="color:var(--orange)">₹0</div></div>
+    <div class="exp-stat"><div class="lbl">Debt/Income</div><div class="val" id="debt-ratio" style="color:var(--gold)">—</div></div>
+  </div>
+
+  <!-- Debt metrics -->
+  <div class="card" style="margin:0 16px 14px;padding:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <div style="font-size:11px;color:var(--text3)">CC Utilization</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="debt-cc-util">—</div>
+        <div class="prog-bar" style="margin-top:4px;"><div class="prog-fill" id="debt-cc-util-bar" style="width:0%"></div></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3)">EMI % of Income</div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="debt-emi-pct">—</div>
+        <div class="prog-bar" style="margin-top:4px;"><div class="prog-fill" id="debt-emi-pct-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy tabs -->
+  <div style="display:flex;gap:8px;padding:0 16px 14px;">
+    <button class="borrow-tab active" onclick="switchDebtStrategy('avalanche')" id="dstrat-avalanche" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--gold);background:rgba(212,168,67,0.1);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">🔥 Avalanche</button>
+    <button class="borrow-tab" onclick="switchDebtStrategy('snowball')" id="dstrat-snowball" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:12px;cursor:pointer;">❄️ Snowball</button>
+  </div>
+  <div style="padding:0 16px 8px;font-size:11px;color:var(--text3);" id="debt-strategy-desc">Avalanche: Pay highest interest first — saves the most money</div>
+
+  <!-- Debt list -->
+  <div id="debt-list" style="padding:0 16px;"></div>
 </div>
 
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
@@ -1556,6 +1604,7 @@ function renderPage(page) {
   else if (page === 'accounts') renderAccounts();
   else if (page === 'lent') renderLent();
   else if (page === 'borrow') renderBorrowings();
+  else if (page === 'debt') renderDebtOverview();
   else if (page === 'income') renderIncome();
   else if (page === 'settings') renderSettings();
 }
@@ -1993,6 +2042,27 @@ function renderAccounts() {
   const ccDebt = D.accounts.indCards.reduce((s,c)=>s+c.outstanding,0);
   document.getElementById('acct-summary').textContent = `Banks: ${fmt(bankTotal)} · CC Debt: ${fmt(ccDebt)}`;
 
+  // Reconcile reminder — flag bank accounts not reconciled in 30+ days
+  const now30 = new Date(); now30.setDate(now30.getDate()-30);
+  const staleAccts = D.accounts.indBanks.filter(b => {
+    if(!b.lastReconciled) return true;
+    const[ry,rm,rd]=b.lastReconciled.split('-').map(Number);
+    return new Date(ry,rm-1,rd) < now30;
+  });
+  const oldBar = document.getElementById('reconcile-reminder-bar');
+  if(oldBar) oldBar.remove();
+  if(staleAccts.length > 0) {
+    const bar = document.createElement('div');
+    bar.id = 'reconcile-reminder-bar';
+    bar.style.cssText = 'background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.3);border-radius:10px;margin:0 16px 12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;';
+    bar.innerHTML = `<div><div style="font-size:12px;font-weight:700;color:var(--gold)">🔄 ${staleAccts.length} account${staleAccts.length>1?'s':''} need reconciling</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${staleAccts.map(b=>b.name).join(', ')}</div></div><button onclick="openMonthlyReconcile()" style="background:rgba(212,168,67,0.15);border:1px solid rgba(212,168,67,0.4);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">Reconcile</button>`;
+    const acctPage = document.getElementById('page-accounts');
+    if(acctPage) {
+      const topbar = acctPage.querySelector('.topbar');
+      if(topbar) topbar.insertAdjacentElement('afterend', bar);
+    }
+  }
+
   // Banks
   document.getElementById('acct-banks').innerHTML = D.accounts.indBanks.map(b => `
     <div class="acct-detail">
@@ -2237,6 +2307,26 @@ function safeConfirm(msg) {
   try { return window.confirm(msg); } catch(e) { return true; }
 }
 
+// ── Central validation helper ──────────────────────────────────────────────
+function validateFields(fields) {
+  // fields: [{val, label, type}] type: 'required'|'amount'|'date'
+  for(const f of fields) {
+    if(f.type === 'required' && (!f.val || !f.val.toString().trim())) {
+      showToast(`⚠️ ${f.label} is required`); return false;
+    }
+    if(f.type === 'amount' && (!f.val || isNaN(f.val) || parseFloat(f.val) <= 0)) {
+      showToast(`⚠️ ${f.label} must be a positive number`); return false;
+    }
+    if(f.type === 'date' && !f.val) {
+      showToast(`⚠️ ${f.label} is required`); return false;
+    }
+    if(f.type === 'maxlength' && f.val && f.val.length > (f.max||100)) {
+      showToast(`⚠️ ${f.label} is too long (max ${f.max||100} chars)`); return false;
+    }
+  }
+  return true;
+}
+
 // Two-tap delete for any button — no confirm dialog needed
 // Usage: onclick="twoTapDelete(this, () => actualDeleteFn())"
 function twoTapDelete(btn, deleteFn) {
@@ -2352,8 +2442,12 @@ function saveExpense() {
   const date = document.getElementById('exp-date').value;
   const accountId = document.getElementById('exp-account').value;
   const mode = document.getElementById('exp-mode').value;
-  if(!rawAmt || rawAmt <= 0) { alert('Please enter a valid amount'); return; }
-  if(!selectedCategory) { alert('Please select a category'); return; }
+  if(!validateFields([
+    {val:rawAmt,          label:'Amount',   type:'amount'},
+    {val:date,            label:'Date',     type:'date'},
+    {val:desc,            label:'Description', type:'maxlength', max:100},
+  ])) return;
+  if(!selectedCategory) { showToast('⚠️ Please select a category'); return; }
   // If UAE account, store AED directly. Convert to INR only for display using current rate.
   const isUAEAcct = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
   const amt    = rawAmt;                        // store original value (AED for UAE, INR for others)
@@ -2446,6 +2540,24 @@ function updateTransferHint() {
   }
 }
 
+function findAnyAccount(id) {
+  return D.accounts.indBanks.find(a=>a.id===id)
+      || D.accounts.indCards.find(a=>a.id===id)
+      || D.accounts.uaeAccounts.find(a=>a.id===id)
+      || D.accounts.loans.find(a=>a.id===id)
+      || D.accounts.chits.find(a=>a.id===id);
+}
+
+function getAccountBalance(acct, id) {
+  if(!acct) return null;
+  if(D.accounts.indBanks.find(a=>a.id===id))     return acct.balance || 0;
+  if(D.accounts.uaeAccounts.find(a=>a.id===id))  return (acct.balanceAED || 0) * D.aedRate;
+  if(D.accounts.indCards.find(a=>a.id===id))     return null; // CC — no balance floor check
+  if(D.accounts.loans.find(a=>a.id===id))        return null; // loans — no floor check
+  if(D.accounts.chits.find(a=>a.id===id))        return null;
+  return null;
+}
+
 function saveTransfer() {
   const rawAmt   = parseFloat(document.getElementById('tr-amt').value);
   const currency = document.getElementById('tr-currency')?.value || 'INR';
@@ -2455,7 +2567,31 @@ function saveTransfer() {
   const fromId = document.getElementById('tr-from').value;
   const toId   = document.getElementById('tr-to').value;
   const trType = document.getElementById('tr-type').value;
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  // 1. Same account check
   if(fromId === toId) { alert('From and To accounts cannot be the same'); return; }
+
+  // 2. Source account must exist
+  const fromAcct = findAnyAccount(fromId);
+  if(!fromAcct) { alert('Source account not found. It may have been deleted.'); return; }
+
+  // 3. Destination account must exist
+  const toAcct = findAnyAccount(toId);
+  if(!toAcct) { alert('Destination account not found. It may have been deleted.'); return; }
+
+  // 4. Sufficient balance check (only for bank accounts — cards/loans can go negative)
+  const fromBal = getAccountBalance(fromAcct, fromId);
+  if(fromBal !== null && amt > fromBal + 0.01) {
+    const acctName = allTransferOptions().find(o=>o.value===fromId)?.label || 'source account';
+    const proceed = safeConfirm(`⚠️ Insufficient balance!
+
+${acctName} has ${fmt(fromBal)} but transfer is ${fmt(amt)}.
+
+Proceed anyway?`);
+    if(!proceed) return;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const tId = Date.now().toString();
   D.transfers.push({
@@ -2472,18 +2608,12 @@ function saveTransfer() {
   renderDashboard();
   renderPage(currentPage);
 
-  // Show exact balances after transfer for confirmation
-  const fromAcctAfter = D.accounts.indBanks.find(a=>a.id===fromId) ||
-                        D.accounts.indCards.find(a=>a.id===fromId) ||
-                        D.accounts.uaeAccounts.find(a=>a.id===fromId);
-  const toAcctAfter   = D.accounts.indBanks.find(a=>a.id===toId) ||
-                        D.accounts.indCards.find(a=>a.id===toId) ||
-                        D.accounts.uaeAccounts.find(a=>a.id===toId);
+  // Show balances after transfer — reuse fromAcct/toAcct already found in validation
   const fromName = allTransferOptions().find(o=>o.value===fromId)?.label?.split(' (')[0] || 'Source';
   const toName   = allTransferOptions().find(o=>o.value===toId)?.label?.split(' (')[0]   || 'Dest';
-  const fromBal  = fromAcctAfter ? (fromAcctAfter.balance !== undefined ? fmt(fromAcctAfter.balance) : fmtAED(fromAcctAfter.balanceAED||0)+' AED') : '—';
-  const toBal    = toAcctAfter   ? (toAcctAfter.balance   !== undefined ? fmt(toAcctAfter.balance)   : fmtAED(toAcctAfter.balanceAED||0)+' AED')   : '—';
-  showToast(`✅ ${fmt(amt)} transferred · ${fromName}: ${fromBal} · ${toName}: ${toBal}`);
+  const fromBalDisp = fromAcct.balance !== undefined ? fmt(fromAcct.balance) : (fromAcct.balanceAED !== undefined ? fmtAED(fromAcct.balanceAED)+' AED' : '—');
+  const toBalDisp   = toAcct.balance   !== undefined ? fmt(toAcct.balance)   : (toAcct.balanceAED   !== undefined ? fmtAED(toAcct.balanceAED)+' AED'   : '—');
+  showToast(`✅ ${fmt(amt)} transferred · ${fromName}: ${fromBalDisp} · ${toName}: ${toBalDisp}`);
 }
 
 function applyTransfer(fromId, toId, amt, trType, reverse) {
@@ -3395,11 +3525,7 @@ function removeBackupReminder() {
 
 // Track backup date when export happens
 const _origExport = exportData;
-function exportData() {
-  _origExport();
-  localStorage.setItem('fintrack_last_backup', Date.now().toString());
-  removeBackupReminder();
-}
+
 
 // ══════════════════════════════════════════════════════════
 // LENT MODULE
@@ -3425,8 +3551,12 @@ function saveLent() {
   const friend = document.getElementById('lent-friend').value.trim();
   const amount = parseFloat(document.getElementById('lent-amount').value);
   const date   = document.getElementById('lent-date').value;
-  if(!friend) { alert('Enter friend name'); return; }
-  if(!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+  if(!validateFields([
+    {val:friend, label:'Friend name', type:'required'},
+    {val:friend, label:'Friend name', type:'maxlength', max:50},
+    {val:amount, label:'Amount', type:'amount'},
+    {val:date,   label:'Date',   type:'date'},
+  ])) return;
 
   const accountId = document.getElementById('lent-account').value;
   if(editingLentId) {
@@ -3502,7 +3632,7 @@ function openRepayModal(id) {
 
 function saveRepayment() {
   const amt = parseFloat(document.getElementById('repay-amount').value);
-  if(!amt || amt <= 0) { alert('Enter valid amount'); return; }
+  if(!validateFields([{val:amt, label:'Amount', type:'amount'}])) return;
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
   const repayAccountId = document.getElementById('repay-account').value;
@@ -3707,8 +3837,12 @@ function saveIncome(){
   const cat=document.getElementById('inc-category').value;
   const accountId=document.getElementById('inc-account').value;
   const note=document.getElementById('inc-note').value.trim();
-  if(!desc){alert('Enter a description');return;}
-  if(!rawAmount||rawAmount<=0){alert('Enter a valid amount');return;}
+  if(!validateFields([
+    {val:desc,      label:'Description', type:'required'},
+    {val:desc,      label:'Description', type:'maxlength', max:100},
+    {val:rawAmount, label:'Amount',      type:'amount'},
+    {val:date,      label:'Date',        type:'date'},
+  ])) return;
   if(!D.income)D.income=[];
   // For UAE accounts, store AED natively; for others store INR
   const isUAEInc = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
@@ -4140,8 +4274,12 @@ function saveBorrowing() {
   const returnDate= document.getElementById('borrow-return-date').value;
   const rate      = parseFloat(document.getElementById('borrow-rate').value)||0;
   const note      = document.getElementById('borrow-note').value.trim();
-  if(!lender)             { alert('Enter lender name'); return; }
-  if(!amount || amount<=0){ alert('Enter a valid amount'); return; }
+  if(!validateFields([
+    {val:lender, label:'Lender name', type:'required'},
+    {val:lender, label:'Lender name', type:'maxlength', max:50},
+    {val:amount, label:'Amount', type:'amount'},
+    {val:date,   label:'Date',   type:'date'},
+  ])) return;
   if(!D.borrowings) D.borrowings = [];
   if(currentBorrowId) {
     const idx = D.borrowings.findIndex(b=>b.id===currentBorrowId);
@@ -4209,7 +4347,10 @@ function saveBorrowRepayment() {
   const date      = document.getElementById('brepay-date').value;
   const accountId = document.getElementById('brepay-account').value;
   const note      = document.getElementById('brepay-note').value.trim();
-  if(!amount || amount<=0){ alert('Enter a valid amount'); return; }
+  if(!validateFields([
+    {val:amount, label:'Amount', type:'amount'},
+    {val:date,   label:'Date',   type:'date'},
+  ])) return;
   const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
   if(!b) return;
   const outstanding = b.amount - b.repaid;
@@ -4337,6 +4478,187 @@ function renderBorrowings() {
         <button onclick="openBorrowModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button>
         ${b.status!=='settled'?`<button onclick="openBrepayModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;">💰 Repay</button>`:''}
         <button onclick="twoTapDelete(this,()=>deleteBorrowing('${b.id}'))" style="flex:1;padding:10px;background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// DEBT OVERVIEW
+// ══════════════════════════════════════════════════════════
+let debtStrategy = 'avalanche';
+
+function switchDebtStrategy(s) {
+  debtStrategy = s;
+  ['avalanche','snowball'].forEach(t => {
+    const btn = document.getElementById('dstrat-'+t);
+    if(!btn) return;
+    const isActive = t===s;
+    btn.style.background    = isActive ? 'rgba(212,168,67,0.1)'  : 'var(--surface2)';
+    btn.style.borderColor   = isActive ? 'rgba(212,168,67,0.4)'  : 'var(--border)';
+    btn.style.color         = isActive ? 'var(--gold)' : 'var(--text3)';
+    btn.style.fontWeight    = isActive ? '700' : '400';
+  });
+  const desc = document.getElementById('debt-strategy-desc');
+  if(desc) desc.textContent = s==='avalanche'
+    ? 'Avalanche: Pay highest interest first — saves the most money'
+    : 'Snowball: Pay smallest balance first — builds momentum';
+  renderDebtOverview();
+}
+
+function renderDebtOverview() {
+  // ── Gather all debts ─────────────────────────────────────────────────────
+  const debts = [];
+
+  // EMI Loans
+  D.accounts.loans.filter(l=>(l.outstanding||0)>0).forEach(l => {
+    debts.push({
+      name: l.name, type: l.loanType||'emi', lender: l.lender||'',
+      outstanding: l.outstanding||0,
+      rate: l.rate||0,
+      monthlyPayment: l.emi||0,
+      dueDay: l.dueDay||1,
+      color: '#F87171', icon: '🏠'
+    });
+  });
+
+  // Indian Credit Cards
+  D.accounts.indCards.filter(c=>(c.outstanding||0)>0).forEach(c => {
+    // Estimate monthly minimum
+    debts.push({
+      name: c.name, type: 'credit_card', lender: '',
+      outstanding: c.outstanding||0,
+      rate: c.rate||36, // typical CC rate if not set
+      monthlyPayment: c.minDue||0,
+      totalDue: c.totalDue||0,
+      limit: c.limit||0,
+      dueDay: c.dueDate||1,
+      color: '#FB923C', icon: '💳'
+    });
+  });
+
+  // UAE CC
+  D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card'&&(u.outstandingAED||0)>0).forEach(u => {
+    debts.push({
+      name: u.name, type: 'credit_card', lender: 'UAE',
+      outstanding: (u.outstandingAED||0)*D.aedRate,
+      rate: u.rate||36,
+      monthlyPayment: (u.minDueAED||0)*D.aedRate,
+      limit: (u.limitAED||0)*D.aedRate,
+      color: '#FB923C', icon: '💳🇦🇪'
+    });
+  });
+
+  // Borrowings
+  (D.borrowings||[]).filter(b=>b.status!=='settled'&&(b.amount-b.repaid)>0).forEach(b => {
+    debts.push({
+      name: b.lender, type: 'informal', lender: b.lender,
+      outstanding: b.amount - b.repaid,
+      rate: b.rate||0,
+      monthlyPayment: 0,
+      color: '#60A5FA', icon: '🤝'
+    });
+  });
+
+  if(debts.length===0) {
+    document.getElementById('debt-list').innerHTML = '<div class="empty-state"><div class="icon">🎉</div>No active debts!<br>Debt free!</div>';
+    document.getElementById('debt-total').textContent = '₹0';
+    document.getElementById('debt-emi').textContent   = '₹0';
+    document.getElementById('debt-ratio').textContent = '0%';
+    return;
+  }
+
+  // ── Totals ────────────────────────────────────────────────────────────────
+  const totalDebt = debts.reduce((s,d)=>s+d.outstanding, 0);
+  const totalEMI  = debts.reduce((s,d)=>s+d.monthlyPayment, 0);
+
+  // Monthly income for ratio
+  const now = new Date();
+  const monthInc = monthIncome(now.getMonth(), now.getFullYear())
+    .reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount), 0);
+  const debtRatio = monthInc > 0 ? (totalEMI/monthInc*100).toFixed(0)+'%' : '—';
+  const debtRatioNum = monthInc > 0 ? totalEMI/monthInc : 0;
+
+  document.getElementById('debt-total').textContent = fmt(totalDebt);
+  document.getElementById('debt-emi').textContent   = fmt(totalEMI);
+  document.getElementById('debt-ratio').textContent = debtRatio;
+  document.getElementById('debt-sub').textContent   = `${debts.length} active debt${debts.length!==1?'s':''} · Total ${fmt(totalDebt)}`;
+
+  // CC Utilization
+  const totalCCOutstanding = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0),0)
+    + D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate,0);
+  const totalCCLimit = D.accounts.indCards.reduce((s,c)=>s+(c.limit||0),0)
+    + D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.limitAED||0)*D.aedRate,0);
+  const ccUtil = totalCCLimit>0 ? totalCCOutstanding/totalCCLimit : 0;
+  const ccUtilColor = ccUtil<0.3?'var(--green)':ccUtil<0.6?'var(--orange)':'var(--red)';
+
+  const ccUtilEl = document.getElementById('debt-cc-util');
+  const ccBarEl  = document.getElementById('debt-cc-util-bar');
+  if(ccUtilEl) { ccUtilEl.textContent=(ccUtil*100).toFixed(1)+'%'; ccUtilEl.style.color=ccUtilColor; }
+  if(ccBarEl)  { ccBarEl.style.width=Math.min(ccUtil*100,100)+'%'; ccBarEl.style.background=ccUtilColor; }
+
+  // EMI % of income
+  const emiPctEl  = document.getElementById('debt-emi-pct');
+  const emiBarEl  = document.getElementById('debt-emi-pct-bar');
+  const emiColor  = debtRatioNum<0.3?'var(--green)':debtRatioNum<0.5?'var(--orange)':'var(--red)';
+  if(emiPctEl) { emiPctEl.textContent=debtRatio; emiPctEl.style.color=emiColor; }
+  if(emiBarEl) { emiBarEl.style.width=Math.min(debtRatioNum*100,100)+'%'; emiBarEl.style.background=emiColor; }
+
+  // ── Sort by strategy ──────────────────────────────────────────────────────
+  const sorted = [...debts].sort((a,b) =>
+    debtStrategy==='avalanche' ? b.rate-a.rate : a.outstanding-b.outstanding
+  );
+
+  // ── Render debt cards ─────────────────────────────────────────────────────
+  const el = document.getElementById('debt-list');
+  el.innerHTML = sorted.map((d,i) => {
+    const interestPerMonth = d.outstanding * (d.rate/100/12);
+    const monthsToPayoff = d.monthlyPayment > interestPerMonth
+      ? Math.ceil(d.outstanding / (d.monthlyPayment - interestPerMonth))
+      : null;
+    const totalInterest = monthsToPayoff
+      ? Math.max(0, (d.monthlyPayment * monthsToPayoff) - d.outstanding)
+      : null;
+    const pctOfTotal = totalDebt>0 ? d.outstanding/totalDebt : 0;
+    const priority = i===0 ? '🎯 Pay First' : i===1 ? '2nd' : `${i+1}th`;
+
+    return `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);overflow:hidden;">
+      <div style="padding:12px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px">${d.icon}</span>
+            <div>
+              <div style="font-size:14px;font-weight:600">${d.name}</div>
+              <div style="font-size:10px;color:var(--text3)">${d.type==='credit_card'?'Credit Card':d.type==='informal'?'Informal Loan':'EMI Loan'}${d.lender?' · '+d.lender:''}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:${d.color}">${fmt(d.outstanding)}</div>
+            <div style="font-size:10px;color:${i===0?'var(--gold)':'var(--text3)'};font-weight:${i===0?'700':'400'}">${priority}</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
+            <div style="font-size:9px;color:var(--text3)">INTEREST</div>
+            <div style="font-size:13px;font-weight:700;color:var(--red)">${d.rate}% p.a.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
+            <div style="font-size:9px;color:var(--text3)">MONTHLY</div>
+            <div style="font-size:13px;font-weight:700">${d.monthlyPayment>0?fmt(d.monthlyPayment):'—'}</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
+            <div style="font-size:9px;color:var(--text3)">PAYOFF</div>
+            <div style="font-size:13px;font-weight:700;color:${monthsToPayoff&&monthsToPayoff<12?'var(--green)':'var(--text)'}">${monthsToPayoff?monthsToPayoff+' mo':'—'}</div>
+          </div>
+        </div>
+
+        ${totalInterest !== null ? `<div style="font-size:11px;color:var(--text3);">Total interest to pay: <span style="color:var(--red);font-weight:600">${fmt(totalInterest)}</span></div>` : ''}
+
+        <div class="prog-bar" style="margin-top:8px;">
+          <div class="prog-fill" style="width:${pctOfTotal*100}%;background:${d.color}"></div>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${(pctOfTotal*100).toFixed(0)}% of total debt</div>
       </div>
     </div>`;
   }).join('');
