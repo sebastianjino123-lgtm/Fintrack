@@ -54,6 +54,7 @@ body {
   padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px);
   display: none;
   scroll-behavior: smooth;
+  background: var(--bg);
 }
 .page.active { display: block; animation: fadeUp 0.3s ease; }
 
@@ -908,9 +909,6 @@ body {
       <div class="settings-info"><div class="k">PIN Lock</div><div class="v" id="pin-status">Not enabled</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
   </div>
 
   <div style="padding:0 16px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Alerts</div>
@@ -930,7 +928,7 @@ body {
       <div class="settings-info"><div class="k">Restore from Google Drive</div><div class="v">Load your last backup</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-        <div class="settings-item" onclick="manualSMSScan()">
+    <div class="settings-item" onclick="manualSMSScan()">
       <div class="settings-icon" style="background:rgba(45,212,191,0.1)">📱</div>
       <div class="settings-info"><div class="k">Scan Bank SMS</div><div class="v" id="sms-scan-status">Tap to scan SMS inbox</div></div>
     </div>
