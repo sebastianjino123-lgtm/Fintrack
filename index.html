@@ -3772,9 +3772,79 @@ function manualSMSScan() {
 
 
 // ══════════════════════════════════════════════════════════
+// AUTO UPDATE
+// ══════════════════════════════════════════════════════════
+const APP_VERSION = '2026.08.24.2';
+const UPDATE_URL  = 'https://sebastianjino123-lgtm.github.io/Fintrack/index.html';
+
+function checkForUpdate() {
+  const lastCheck = localStorage.getItem('ft_update_check');
+  const todayStr  = today();
+  if(lastCheck === todayStr) return; // only once per day
+  localStorage.setItem('ft_update_check', todayStr);
+
+  fetch(UPDATE_URL + '?nc=' + Date.now(), {cache:'no-store'})
+    .then(r => r.text())
+    .then(html => {
+      const m = html.match(/APP_VERSION = '([^']+)'/);
+      if(!m) return;
+      const remote = m[1];
+      // Compare versions — remote must be strictly greater
+      if(remote <= APP_VERSION) return;
+
+      // Store update
+      localStorage.setItem('ft_pending_html', html);
+      localStorage.setItem('ft_pending_version', remote);
+      showUpdateBanner(remote);
+    })
+    .catch(() => {}); // silent fail when offline
+}
+
+function showUpdateBanner(version) {
+  if(document.getElementById('update-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'update-banner';
+  banner.style.cssText = 'position:fixed;bottom:72px;left:12px;right:12px;z-index:9998;background:linear-gradient(135deg,#1a2e2a,#0d2420);border:1px solid rgba(45,212,191,0.4);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+  banner.innerHTML = `
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--teal)">🆕 Update available</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">v${version} — tap to install</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="applyUpdate()" style="background:var(--teal);border:none;border-radius:8px;padding:8px 14px;color:#0A0A0F;font-size:12px;font-weight:700;cursor:pointer;">Update</button>
+      <button onclick="document.getElementById('update-banner').remove()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text3);font-size:12px;cursor:pointer;">Later</button>
+    </div>`;
+  document.body.appendChild(banner);
+}
+
+function applyUpdate() {
+  const html = localStorage.getItem('ft_pending_html');
+  if(!html) { checkForUpdate(); return; }
+  // Backup data before update
+  const data   = localStorage.getItem('fintrack_data');
+  const backup = localStorage.getItem('fintrack_last_backup');
+  if(data)   sessionStorage.setItem('ft_mig_data', data);
+  if(backup) sessionStorage.setItem('ft_mig_backup', backup);
+  // Write new HTML and navigate to it
+  const blob = new Blob([html], {type:'text/html'});
+  window.location.href = URL.createObjectURL(blob);
+}
+
+// Restore data after update
+(function restoreAfterUpdate() {
+  const d = sessionStorage.getItem('ft_mig_data');
+  const b = sessionStorage.getItem('ft_mig_backup');
+  if(d) { localStorage.setItem('fintrack_data', d); sessionStorage.removeItem('ft_mig_data'); }
+  if(b) { localStorage.setItem('fintrack_last_backup', b); sessionStorage.removeItem('ft_mig_backup'); }
+})();
+
+// ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
 renderDashboard();
+// Check for updates after 4 seconds (non-blocking)
+setTimeout(checkForUpdate, 4000);
+
 // PIN init
 (function(){const pin=localStorage.getItem('fintrack_pin');if(pin)showPinScreen(true);updatePinStatus();})();
 
