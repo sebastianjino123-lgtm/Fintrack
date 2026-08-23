@@ -885,7 +885,7 @@ body {
 
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
 <div class="page" id="page-settings">
-  <div class="topbar"><h1>Settings</h1></div>
+  <div class="topbar"><h1>Settings</h1><div class="sub">FinTrack v2026.08.24.9</div></div>
 
   <div style="padding:0 16px 10px;font-family:'Syne',sans-serif;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Currency</div>
   <div class="settings-group">
@@ -930,7 +930,17 @@ body {
     </div>
     <div class="settings-item" onclick="manualSMSScan()">
       <div class="settings-icon" style="background:rgba(45,212,191,0.1)">📱</div>
-      <div class="settings-info"><div class="k">Scan Bank SMS</div><div class="v" id="sms-scan-status">Tap to scan SMS inbox</div></div>
+      <div class="settings-info">
+        <div class="k">Scan Bank SMS Now</div>
+        <div class="v" id="sms-scan-status">Tap to scan inbox</div>
+      </div>
+    </div>
+    <div class="settings-item" onclick="resetSMSMapping()">
+      <div class="settings-icon" style="background:rgba(251,146,60,0.1)">🔁</div>
+      <div class="settings-info">
+        <div class="k">Re-do SMS Setup</div>
+        <div class="v">Review account mapping again</div>
+      </div>
     </div>
     <div class="settings-item" style="cursor:default;">
       <div class="settings-icon" style="background:rgba(167,139,250,0.1)">🔄</div>
@@ -5129,7 +5139,7 @@ function hideFAB() {
 // ══════════════════════════════════════════════════════════
 // AUTO UPDATE
 // ══════════════════════════════════════════════════════════
-const APP_VERSION = '2026.08.24.3';
+const APP_VERSION = '2026.08.24.9';
 const UPDATE_URL  = 'https://sebastianjino123-lgtm.github.io/Fintrack/index.html';
 
 function checkForUpdate(force) {
@@ -5196,7 +5206,15 @@ function toggleAutoSMSScan(enabled) {
   localStorage.setItem('ft_auto_sms', enabled ? '1' : '0');
   const knob = document.getElementById('auto-sms-knob');
   if(knob) { knob.style.transform = enabled ? 'translateX(20px)' : ''; knob.style.background = enabled ? 'var(--teal)' : 'var(--text3)'; }
-  showToast(enabled ? '✅ Auto SMS scan enabled' : 'Auto SMS scan disabled');
+  if(enabled) {
+    showToast('✅ Auto scan enabled — scanning now...');
+    // Immediately scan when turned on
+    if(window.Android && typeof window.Android.scanSMS === 'function') {
+      setTimeout(function(){ window.Android.scanSMS(); }, 500);
+    }
+  } else {
+    showToast('Auto SMS scan disabled');
+  }
 }
 
 function initAutoSMSToggle() {
@@ -5208,24 +5226,119 @@ function initAutoSMSToggle() {
 }
 
 function parseSMSText(s) {
-  const isFinancial = /debited|credited|Rs\.?\s*[\d,]+|INR|AED|UPI|NEFT|IMPS|transfer|withdrawn|deposited|transaction|payment|bill|due/i.test(s);
-  if(!isFinancial) return null;
-  let amount = 0, txType = 'debit', acctHint = '', merchant = '', date = today();
-  const amtPats = [/(?:of|for|rs\.?)\s*\.?\s*([\d,]+(?:\.\d{1,2})?)/i, /(?:Rs\.?|INR|₹)[:\s]*\.?\s*([\d,]+(?:\.\d{1,2})?)/i];
-  for(const p of amtPats) { const m = s.match(p); if(m) { amount = parseFloat(m[1].replace(/,/g,'')); break; } }
+  if(!s || s.length < 20) return null;
+
+  const text = s.toLowerCase();
+
+  // ── REJECT spam/promotional patterns ─────────────────────────────────────
+  const spamPatterns = [
+    /congratulations|you('ve| have) won|prize|lottery|lucky|winner/i,
+    /click here|visit|www\.|http/i,
+    /offer|discount|cashback offer|get \d+%/i,
+    /otp|one.?time.?password|verification code|is your/i,
+    /credit limit|limit enhanced|limit increased|your limit/i,
+    /pre.?approved|pre.?qualify|eligible for/i,
+    /dear customer|dear user|hi,|hello,/i,
+    /apply now|register now|download now/i,
+    /\d{4,6} is your.*code/i,
+  ];
+  if(spamPatterns.some(p => p.test(s))) return null;
+
+  // ── REQUIRE actual transaction keywords ───────────────────────────────────
+  const isDebit  = /debited|debit|withdrawn|paid|spent|purchase|pos |atm |upi.*dr|dr\./i.test(s);
+  const isCredit = /credited|credit|received|deposited|refund|cashback|salary|neft.*cr|imps.*cr|upi.*cr|cr\./i.test(s);
+
+  if(!isDebit && !isCredit) return null;
+
+  // ── REQUIRE amount pattern ────────────────────────────────────────────────
+  let amount = 0;
+  const amtPats = [
+    /(?:rs\.?|inr|₹)\s*([0-9,]+(?:\.[0-9]{1,2})?)/i,
+    /([0-9,]+(?:\.[0-9]{1,2})?)\s*(?:rs\.?|inr|₹)/i,
+    /(?:amount|amt|for)\s+(?:of\s+)?(?:rs\.?|inr|₹)?\s*([0-9,]+(?:\.[0-9]{1,2})?)/i,
+  ];
+  for(const p of amtPats) {
+    const m = s.match(p);
+    if(m) {
+      const val = parseFloat(m[1].replace(/,/g, ''));
+      if(val > 0 && val < 100000000) { // reject amounts > 10 crore (likely fake/limit)
+        amount = val;
+        break;
+      }
+    }
+  }
   if(!amount || amount <= 0) return null;
-  if(/total\s*(?:amt\s*)?due|min\s*(?:amt\s*)?due|bill\s+generated/i.test(s)) txType = 'bill';
-  else if(/credit|credited|received|refund|cashback|deposited/i.test(s)) txType = 'credit';
-  const acctPats = [/[Aa]\/[Cc]\s*X{0,2}(\d{4})/, /ending\s+(?:in\s+)?X{0,2}(\d{4})/i, /\bX{1,2}(\d{4})\b/];
-  for(const p of acctPats) { const m = s.match(p); if(m) { acctHint = m[1]; break; } }
-  const dm = s.match(/(\d{2})[\-\/](\d{2})[\-\/](\d{2,4})/);
-  if(dm) { try { let[,d,mo,y]=dm; if(y.length===2)y='20'+y; date=y+'-'+mo.padStart(2,'0')+'-'+d.padStart(2,'0'); } catch(e){} }
-  const mPats = [/(?:at|to)\s+([A-Za-z][A-Za-z0-9 &\-.]{2,25})(?:\s+on|\s+via|\.)/i];
-  for(const p of mPats) { const m = s.match(p); if(m&&m[1].trim().length>2){merchant=m[1].trim();break;} }
-  let matchedAccount = null;
-  if(acctHint) matchedAccount = D.accounts.indBanks.find(b=>b.accountNo&&b.accountNo.endsWith(acctHint)) || D.accounts.indCards.find(c=>c.last4&&c.last4===acctHint);
-  return { amount, txType, acctHint, merchant, date, accountId: matchedAccount?.id||null, accountName: matchedAccount?.name||(acctHint?'A/c ...'+acctHint:'Unknown'), valid: txType !== 'bill' };
+
+  // ── REJECT suspiciously large amounts (credit limits, etc) ────────────────
+  if(amount > 5000000) return null; // reject > 50 lakh as likely not a real txn
+
+  // ── Determine transaction type ────────────────────────────────────────────
+  let txType = 'debit';
+  if(/total\s*(?:amt\s*)?due|min\s*(?:amt\s*)?due|bill\s+(?:has\s+been\s+)?generated|payment\s+due/i.test(s)) {
+    txType = 'bill';
+  } else if(isCredit && !isDebit) {
+    txType = 'credit';
+  } else if(isDebit) {
+    txType = 'debit';
+  }
+
+  // ── Extract account hint (last 4 digits) ──────────────────────────────────
+  let acctHint = '';
+  const acctPats = [
+    /a\/c\s*(?:no\.?\s*)?x*(\d{4})/i,
+    /acct?\s*(?:no\.?\s*)?x*(\d{4})/i,
+    /ending\s+(?:in\s+)?x*(\d{4})/i,
+    /\*+(\d{4})/,
+    /x{2,}(\d{4})/i,
+  ];
+  for(const p of acctPats) {
+    const m = s.match(p);
+    if(m) { acctHint = m[1]; break; }
+  }
+
+  // ── Extract date ──────────────────────────────────────────────────────────
+  let date = today();
+  const datePats = [
+    /(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})/,
+    /(\d{2})\s*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s*(\d{2,4})/i,
+  ];
+  const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  for(const p of datePats) {
+    const m = s.match(p);
+    if(m) {
+      try {
+        let d = m[1], mo = m[2], y = m[3];
+        if(isNaN(Number(mo))) mo = months[mo.toLowerCase()];
+        if(y.length === 2) y = '20' + y;
+        // Validate reasonable date
+        const parsed = new Date(y+'-'+mo+'-'+d);
+        if(!isNaN(parsed.getTime())) {
+          date = y + '-' + String(mo).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        }
+      } catch(e) {}
+      break;
+    }
+  }
+
+  // ── Extract merchant ──────────────────────────────────────────────────────
+  let merchant = '';
+  const merchantPats = [
+    /(?:at|to|from|towards)\s+([A-Z][A-Za-z0-9 &\-\.]{2,30})(?:\s+on|\s+via|\s+ref|\.|\s*$)/i,
+    /(?:trf\s+to|transfer\s+to|paid\s+to)\s+([A-Z][A-Za-z0-9 &\-\.]{2,30})/i,
+  ];
+  for(const p of merchantPats) {
+    const m = s.match(p);
+    if(m && m[1].trim().length > 2) {
+      merchant = m[1].trim();
+      // Clean up: remove common suffixes
+      merchant = merchant.replace(/\s+(on|via|ref|upi|neft|imps).*$/i, '').trim();
+      break;
+    }
+  }
+
+  return { amount, txType, acctHint, merchant, date, valid: txType !== 'bill' };
 }
+
 
 function receiveSMSFromAndroid(body, sender) {
   if(!body) return;
@@ -5247,7 +5360,7 @@ function showSMSReviewPopup(parsed, sender) {
   hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
   const title = document.createElement('div');
   title.style.cssText = 'font-size:14px;font-weight:700;';
-  title.textContent = (parsed.txType==='credit' ? 'Credit' : 'Debit') + ' - ' + fmt(parsed.amount);
+  title.textContent = (parsed.txType==='credit' ? 'Credit' : 'Debit') + ' - ' + fmt(parsed.amount) + (parsed._queueInfo ? ' ('+parsed._queueInfo+')' : '');
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'x';
   closeBtn.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text3);cursor:pointer;';
@@ -5285,7 +5398,10 @@ function showSMSReviewPopup(parsed, sender) {
   const skipBtn = document.createElement('button');
   skipBtn.textContent = 'Skip';
   skipBtn.style.cssText = 'flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--text2);font-size:13px;cursor:pointer;';
-  skipBtn.onclick = function(){ popup.remove(); };
+  skipBtn.onclick = function(){
+    popup.remove();
+    if(parsed._onSkip) parsed._onSkip();
+  };
   btnRow.appendChild(saveBtn); btnRow.appendChild(skipBtn);
 
   popup.appendChild(hdr); popup.appendChild(sub);
@@ -5304,28 +5420,352 @@ function saveSMSFromPopup() {
     if(!D.income) D.income = [];
     D.income.push({ id:Date.now().toString(), desc:parsed.merchant||'SMS Credit', amount:parsed.amount, date:parsed.date, category:category||'Other', accountId, note:'Auto SMS' });
     creditToAccount(accountId, parsed.amount);
-    showToast('💰 Income saved — '+fmt(parsed.amount));
+    showToast('💰 Saved — '+fmt(parsed.amount));
   } else {
     if(!D.expenses) D.expenses = [];
     D.expenses.push({ id:Date.now().toString(), desc:parsed.merchant||'SMS Debit', amount:parsed.amount, date:parsed.date, category:category||'Others', accountId, mode:'UPI', note:'Auto SMS' });
     deductFromAccount(accountId, parsed.amount);
-    showToast('💸 Expense saved — '+fmt(parsed.amount));
+    showToast('💸 Saved — '+fmt(parsed.amount));
   }
-  save(); renderDashboard(); popup.remove();
+  // Save account mapping so future auto-imports use same account
+  const key = parsed.acctHint || parsed._sender;
+  if(key && accountId) {
+    const mapping = JSON.parse(localStorage.getItem('ft_sms_account_map') || '{}');
+    mapping[key] = accountId;
+    localStorage.setItem('ft_sms_account_map', JSON.stringify(mapping));
+  }
+
+  save(); renderDashboard();
+  const onSave = parsed._onSave;
+  popup.remove();
+  if(onSave) onSave();
+}
+
+function resetSMSMapping() {
+  localStorage.removeItem('ft_sms_first_done');
+  localStorage.removeItem('ft_sms_account_map');
+  // Clear all auto-imported SMS transactions
+  if(D.expenses) D.expenses = D.expenses.filter(e => e.note !== 'Auto SMS');
+  if(D.income)   D.income   = D.income.filter(i => i.note !== 'Auto SMS');
+  // Reset account balances back (credit back what was deducted)
+  save();
+  renderDashboard();
+  showToast('✅ All auto SMS imports cleared — rescan to reimport');
 }
 
 function manualSMSScan() {
   const s = document.getElementById('sms-scan-status');
-  if(s) s.textContent = 'Available in Android app only';
-  showToast('📱 SMS scan works in the Android app');
+  if(window.Android && typeof window.Android.scanSMS === 'function') {
+    if(s) s.textContent = 'Scanning...';
+    showToast('📱 Scanning SMS inbox...');
+    window.Android.scanSMS();
+  } else {
+    if(s) s.textContent = 'Available in Android app only';
+    showToast('📱 SMS scan works in the Android app');
+  }
+}
+
+// Called by Android after scanning SMS inbox — fully automatic, no popups
+function processBulkSMSFromAndroid(messages) {
+  const s = document.getElementById('sms-scan-status');
+
+  if(!messages || messages.length === 0) {
+    if(s) s.textContent = 'No new SMS found';
+    return;
+  }
+
+  const queue = [];
+  for(let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    const parsed = parseSMSText(msg.body);
+    if(parsed && parsed.valid) {
+      parsed._sender = msg.sender;
+      parsed._date   = msg.date;
+      queue.push(parsed);
+    }
+  }
+
+  if(queue.length === 0) {
+    if(s) s.textContent = 'No financial SMS found';
+    return;
+  }
+
+  if(s) s.textContent = 'Importing ' + queue.length + ' transactions...';
+  autoImportSMS(queue);
 }
 
 
-// ══════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════
-renderDashboard();
-setTimeout(function(){checkForUpdate();}, 4000);
+// Auto-import without popups — records transactions, does NOT touch balance
+// Balance is managed via Reconcile or manual entry
+function autoImportSMS(queue) {
+  let imported = 0, skipped = 0;
+  const unmatched = [];
+
+  queue.forEach(parsed => {
+    const accountId = findBestAccount(parsed);
+
+    if(!accountId) {
+      unmatched.push(parsed);
+      return;
+    }
+
+    if(parsed.txType === 'credit') {
+      if(!D.income) D.income = [];
+      // Duplicate check: same amount + same date + Auto SMS note
+      const exists = D.income.some(i =>
+        Math.abs(i.amount - parsed.amount) < 1 &&
+        i.date === parsed.date &&
+        i.note === 'Auto SMS' &&
+        i.accountId === accountId
+      );
+      if(exists) { skipped++; return; }
+      // Skip if it looks like an internal transfer (same bank credit)
+      D.income.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        desc: parsed.merchant || 'Credit',
+        amount: parsed.amount,
+        date: parsed.date,
+        category: guessIncomeCategory(parsed),
+        accountId,
+        note: 'Auto SMS'
+      });
+      // Update running balance
+      creditToAccount(accountId, parsed.amount);
+    } else {
+      if(!D.expenses) D.expenses = [];
+      const exists = D.expenses.some(e =>
+        Math.abs(e.amount - parsed.amount) < 1 &&
+        e.date === parsed.date &&
+        e.note === 'Auto SMS' &&
+        e.accountId === accountId
+      );
+      if(exists) { skipped++; return; }
+      D.expenses.push({
+        id: Date.now().toString() + Math.random().toString(36).slice(2),
+        desc: parsed.merchant || 'Debit',
+        amount: parsed.amount,
+        date: parsed.date,
+        category: guessExpenseCategory(parsed),
+        accountId,
+        mode: 'UPI',
+        note: 'Auto SMS'
+      });
+      // Update running balance
+      deductFromAccount(accountId, parsed.amount);
+    }
+    imported++;
+  });
+
+  if(imported > 0) {
+    save();
+    renderDashboard();
+    renderPage(currentPage);
+    const s = document.getElementById('sms-scan-status');
+    if(s) s.textContent = 'Last scan: ' + imported + ' imported';
+  } else {
+    const s = document.getElementById('sms-scan-status');
+    if(s) s.textContent = 'All up to date';
+  }
+
+  if(unmatched.length > 0) {
+    showUnmatchedSMSNotification(unmatched);
+  } else if(imported > 0) {
+    showToast('✅ ' + imported + ' transactions imported');
+  }
+}
+
+
+// Show notification banner for unmatched SMS
+function showUnmatchedSMSNotification(list) {
+  const existing = document.getElementById('sms-unmatched-banner');
+  if(existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'sms-unmatched-banner';
+  banner.style.cssText = 'position:fixed;bottom:72px;left:12px;right:12px;z-index:9998;background:var(--surface);border:1px solid rgba(251,146,60,0.4);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+
+  const total = list.reduce((s,p) => s + p.amount, 0);
+
+  // Build banner with DOM to avoid quote conflicts
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;';
+  const unmatchedTotal = list.reduce((s,p) => s + p.amount, 0);
+  const hdrLeft = document.createElement('div');
+  hdrLeft.innerHTML = '<div style="font-size:13px;font-weight:700;color:var(--orange)">⚠️ ' + list.length + ' SMS need account</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Total: ' + fmt(total) + '</div>';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.style.cssText = 'background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;';
+  closeBtn.onclick = function(){ banner.remove(); };
+  hdr.appendChild(hdrLeft); hdr.appendChild(closeBtn);
+
+  const listDiv = document.createElement('div');
+  listDiv.style.cssText = 'max-height:90px;overflow-y:auto;margin-bottom:10px;';
+  list.slice(0,5).forEach(p => {
+    const row = document.createElement('div');
+    row.style.cssText = 'font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);';
+    row.textContent = (p.txType==='credit'?'↗':'↙') + ' ' + fmt(p.amount) + ' · ' + (p._sender||'Unknown') + ' · ' + p.date;
+    listDiv.appendChild(row);
+  });
+  if(list.length > 5) {
+    const more = document.createElement('div');
+    more.style.cssText = 'font-size:10px;color:var(--text3);padding-top:4px;';
+    more.textContent = '+' + (list.length-5) + ' more';
+    listDiv.appendChild(more);
+  }
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:8px;';
+  const assignBtn = document.createElement('button');
+  assignBtn.textContent = 'Assign Accounts';
+  assignBtn.style.cssText = 'flex:1;background:var(--orange);border:none;border-radius:8px;padding:9px;color:white;font-size:12px;font-weight:700;cursor:pointer;';
+  assignBtn.onclick = function(){ showUnmatchedQueue(window._unmatchedSMS, 0); banner.remove(); };
+  const laterBtn = document.createElement('button');
+  laterBtn.textContent = 'Later';
+  laterBtn.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text3);font-size:12px;cursor:pointer;';
+  laterBtn.onclick = function(){ banner.remove(); };
+  btnRow.appendChild(assignBtn); btnRow.appendChild(laterBtn);
+
+  banner.appendChild(hdr); banner.appendChild(listDiv); banner.appendChild(btnRow);
+
+    window._unmatchedSMS = list;
+  document.body.appendChild(banner);
+}
+
+// Show review popup for unmatched SMS (with account selector)
+function showUnmatchedQueue(queue, index) {
+  if(!queue || index >= queue.length) {
+    showToast('✅ All assigned!');
+    renderDashboard();
+    return;
+  }
+  const parsed = queue[index];
+  parsed._queueInfo = (index+1) + ' of ' + queue.length;
+  parsed._onSave = function() { showUnmatchedQueue(queue, index+1); };
+  parsed._onSkip = function() { showUnmatchedQueue(queue, index+1); };
+  showSMSReviewPopup(parsed, parsed._sender);
+}
+
+
+// Smart account finder — matches SMS to best account
+function findBestAccount(parsed) {
+  const hint   = parsed.acctHint; // last 4 digits from SMS
+  const sender = (parsed._sender || '').toUpperCase();
+
+  // Helper: search all account lists
+  const allBanks = D.accounts.indBanks || [];
+  const allCards = D.accounts.indCards || [];
+  const allUAE   = D.accounts.uaeAccounts || [];
+  const allAccts = [...allBanks, ...allCards, ...allUAE];
+
+  // ── 1. Exact last-4 digit match (most reliable) ────────────────────────────
+  if(hint) {
+    const byDigits = allAccts.find(a =>
+      (a.accountNo && a.accountNo.slice(-4) === hint) ||
+      (a.last4 && a.last4 === hint)
+    );
+    if(byDigits) return byDigits.id;
+  }
+
+  // ── 2. Sender → account name keyword map ──────────────────────────────────
+  // Map of sender keywords → what to look for in the user's account names
+  const senderMap = [
+    // South Indian Bank — sender is SIBSMS, SOUTHB, VK-SIBSMS etc
+    { senderKeys: ['SIB','SIBSMS','SOUTHB','SOUTH IND'], nameKeys: ['SOUTH INDIAN','SOUTH IND','SIB'] },
+    // Federal Bank — sender is FEDBK, FEDERAL
+    { senderKeys: ['FEDBK','FEDERAL'], nameKeys: ['FEDERAL'] },
+    // HDFC
+    { senderKeys: ['HDFC','HDFCBK','HDFCCR'], nameKeys: ['HDFC'] },
+    // ICICI
+    { senderKeys: ['ICICI','ICICIB','ICICRD'], nameKeys: ['ICICI'] },
+    // Axis
+    { senderKeys: ['AXIS','AXISBK','AXISCR'], nameKeys: ['AXIS'] },
+    // Kotak
+    { senderKeys: ['KOTAK','KOTAKB','KOTAKC'], nameKeys: ['KOTAK','MAHINDRA'] },
+    // SBI — only match if user actually has SBI account
+    { senderKeys: ['SBIINB','SBICRD','SBI'], nameKeys: ['SBI','STATE BANK'] },
+    // PNB
+    { senderKeys: ['PNB','PNBSMS'], nameKeys: ['PNB','PUNJAB NAT'] },
+    // Bank of India
+    { senderKeys: ['BOIIND','BOI'], nameKeys: ['BANK OF INDIA','BOI'] },
+    // Canara
+    { senderKeys: ['CANBNK','CANARA'], nameKeys: ['CANARA'] },
+    // IndusInd
+    { senderKeys: ['INDUSB','INDUS'], nameKeys: ['INDUS','INDUSIND'] },
+    // Yes Bank
+    { senderKeys: ['YESBNK','YES'], nameKeys: ['YES BANK','YES BNK'] },
+    // RBL
+    { senderKeys: ['RBLBNK','RBL'], nameKeys: ['RBL'] },
+    // KVB
+    { senderKeys: ['KVBSMS','KVB'], nameKeys: ['KVB','KARUR'] },
+    // Karnataka Bank
+    { senderKeys: ['KARBK','KARNBK'], nameKeys: ['KARNATAKA'] },
+    // DCB
+    { senderKeys: ['DCBBNK','DCB'], nameKeys: ['DCB'] },
+    // UAE banks
+    { senderKeys: ['ADCB'], nameKeys: ['ADCB'] },
+    { senderKeys: ['FAB','NBAD'], nameKeys: ['FAB','FIRST ABU'] },
+    { senderKeys: ['ENBD'], nameKeys: ['ENBD','EMIRATES'] },
+    { senderKeys: ['DIB'], nameKeys: ['DIB','DUBAI ISLAMIC'] },
+    { senderKeys: ['ADIB'], nameKeys: ['ADIB'] },
+    { senderKeys: ['MASHREQ'], nameKeys: ['MASHREQ'] },
+    { senderKeys: ['RAKBANK'], nameKeys: ['RAK','RAKBANK'] },
+    // UPI/Payments — try to match by transaction type
+    { senderKeys: ['GPAY','PHONEPE','PAYTM','BHIM','UPI'], nameKeys: [] },
+  ];
+
+  for(const rule of senderMap) {
+    const senderMatches = rule.senderKeys.some(k => sender.includes(k));
+    if(!senderMatches) continue;
+
+    if(rule.nameKeys.length === 0) continue; // UPI — no name match possible
+
+    // Search user's accounts for matching name
+    const match = allAccts.find(a => {
+      const name = (a.name || a.bankName || '').toUpperCase();
+      return rule.nameKeys.some(k => name.includes(k));
+    });
+    if(match) return match.id;
+
+    // Sender matched a bank but user has no account for it → return null (unmatched)
+    return null;
+  }
+
+  // ── 3. No match found — return null so it goes to unmatched list ──────────
+  // NEVER fall back to first account — wrong account is worse than unmatched
+  return null;
+}
+
+function guessIncomeCategory(parsed) {
+  const body = (parsed._sender + ' ' + (parsed.merchant||'')).toLowerCase();
+  if(/salary|sal |payroll|wages/i.test(body)) return 'Salary';
+  if(/refund|cashback|reversal/i.test(body)) return 'Other';
+  if(/interest|fd |fixed deposit/i.test(body)) return 'Investment';
+  if(/rent|rental/i.test(body)) return 'Rental';
+  return 'Other';
+}
+
+function guessExpenseCategory(parsed) {
+  const body = ((parsed.merchant||'') + ' ' + (parsed._sender||'')).toLowerCase();
+  if(/swiggy|zomato|food|restaurant|cafe|hotel|pizza|burger|kfc|mcdon/i.test(body)) return 'Food & Dining';
+  if(/uber|ola|rapido|taxi|auto|metro|bus|train|fuel|petrol|diesel/i.test(body)) return 'Transport';
+  if(/amazon|flipkart|myntra|shop|store|mall|market/i.test(body)) return 'Shopping';
+  if(/electricity|water|gas|bill|recharge|airtel|jio|vi |vodafone/i.test(body)) return 'Bills & Utilities';
+  if(/netflix|spotify|hotstar|prime|subscription/i.test(body)) return 'Entertainment';
+  if(/hospital|pharmacy|medicine|doctor|clinic|health/i.test(body)) return 'Healthcare';
+  if(/school|college|tuition|education|course/i.test(body)) return 'Education';
+  if(/emi|loan|mortgage/i.test(body)) return 'EMI & Loans';
+  return 'Others';
+}
+
+// Auto SMS scan on open
+// Auto SMS scan on open (if enabled and running in Android app)
+setTimeout(function(){
+  if(localStorage.getItem('ft_auto_sms') === '1') {
+    if(window.Android && typeof window.Android.scanSMS === 'function') {
+      window.Android.scanSMS();
+    }
+  }
+}, 2000); // 2 second delay so app loads first
 
 // PIN init
 (function(){const pin=localStorage.getItem('fintrack_pin');if(pin)showPinScreen(true);updatePinStatus();})();
