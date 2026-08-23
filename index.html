@@ -485,32 +485,7 @@ body {
   </div>
 </div>
 
-<!-- SMS Parser Modal -->
-<div class="modal-overlay" id="sms-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">📱 SMS Parser</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">Paste any bank SMS — expense, income, bill, or CC payment</div>
-    <div class="form-group">
-      <label class="form-label">Paste SMS</label>
-      <textarea class="form-input" id="sms-input" rows="4" placeholder="Paste your bank SMS here..." style="resize:none;height:90px;font-size:13px;"></textarea>
-    </div>
-    <button class="btn-primary" onclick="parseSMS()" style="margin-bottom:12px;">🔍 Parse SMS</button>
-    <div id="sms-parsed" style="display:none;">
-      <div id="sms-parsed-rows" style="background:var(--surface2);border-radius:10px;padding:10px 14px;margin-bottom:14px;"></div>
-      <div class="form-group">
-        <label class="form-label" id="sms-cat-label">Category</label>
-        <div class="cat-grid" id="sms-cat-grid" style="margin-bottom:0;"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Account</label>
-        <div class="select-wrap"><select class="form-select" id="sms-account"></select></div>
-      </div>
-      <button class="btn-primary" onclick="saveSMSExpense()">✅ Save</button>
-    </div>
-    <button class="btn-outline" onclick="closeModal('sms-modal')">Cancel</button>
-  </div>
-</div>
+
 
 <!-- ══════════════════════ DASHBOARD PAGE ══════════════════════ -->
 <div class="page active" id="page-dashboard">
@@ -578,22 +553,6 @@ body {
   <div class="sec-hdr"><h2>💰 Income This Month</h2><a href="#" onclick="switchPage('income');return false">See all</a></div>
   <div class="card"><div id="dash-income"></div></div>
 
-  <!-- Net Worth History -->
-  <div class="sec-hdr"><h2>📈 Net Worth History</h2></div>
-  <div class="card" style="padding:14px 16px;">
-    <div id="dash-nw-history" style="overflow-x:auto;"></div>
-  </div>
-
-  <!-- Net Worth Predictor -->
-  <div class="sec-hdr"><h2>🔮 Net Worth Predictor</h2></div>
-  <div class="card" style="padding:14px 16px;">
-    <div id="dash-nw-predictor"></div>
-  </div>
-
-  <!-- Borrowings -->
-  <div class="sec-hdr"><h2>💸 Borrowings</h2><a href="#" onclick="switchPage('borrow');return false">See all</a></div>
-  <div class="card"><div id="dash-borrow"></div></div>
-
   <!-- Money Lent -->
   <div class="sec-hdr"><h2>🤝 Money Lent</h2><a href="#" onclick="switchPage('lent');return false">See all</a></div>
   <div class="card">
@@ -607,13 +566,9 @@ body {
     <div class="topbar-row">
       <h1>Expenses</h1>
       <div style="display:flex;gap:8px;">
-        <button onclick="openSMSModal()" style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:7px 12px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;">📱 SMS</button>
+        
         <button onclick="openExpenseModal()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
       </div>
-    </div>
-    <div style="padding:8px 0 4px;">
-      <input type="text" id="exp-search" placeholder="🔍 Search expenses..." oninput="renderExpenses()"
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text);font-size:13px;box-sizing:border-box;">
     </div>
   </div>
 
@@ -671,70 +626,38 @@ body {
 
 <!-- ══════════════════════ ACCOUNTS PAGE ══════════════════════ -->
 <div class="page" id="page-accounts">
-  <div class="topbar">
-    <div class="topbar-row">
-      <div><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
-      <button onclick="switchPage('debt')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:6px 10px;color:var(--red);font-size:11px;font-weight:700;cursor:pointer;">💳 Debts</button>
-    </div>
-  </div>
+  <div class="topbar"><h1>Accounts</h1><div class="sub" id="acct-summary"></div></div>
 
-  <div onclick="toggleAcctSection('acct-banks')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🏦 Indian Bank Accounts</span>
-      <span id="acct-banks-arrow" style="font-size:10px;color:var(--text3);">▼</span>
-    </div>
-    <div style="display:flex;gap:6px;">
-      <button onclick="event.stopPropagation();openMonthlyReconcile()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">🔄</button>
-      <button onclick="event.stopPropagation();openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🏦 Indian Bank Accounts</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="openMonthlyReconcile()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">🔄 Reconcile</button>
+      <button onclick="openAddModal('bank')" style="background:rgba(45,212,191,0.1);border:1px solid rgba(45,212,191,0.3);border-radius:7px;padding:5px 10px;color:#2DD4BF;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
     </div>
   </div>
   <div id="acct-banks"></div>
 
-  <div onclick="toggleAcctSection('acct-cards')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">💳 Credit Cards</span>
-      <span id="acct-cards-arrow" style="font-size:10px;color:var(--text3);">▼</span>
-    </div>
-    <div style="display:flex;gap:6px;">
-      
-      <button onclick="event.stopPropagation();openAddModal('card')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:7px;padding:5px 10px;color:#F87171;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>💳 Credit Cards</span>
+    <button onclick="openAddModal('card')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:7px;padding:5px 10px;color:#F87171;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
   </div>
   <div id="acct-cards"></div>
 
-  <div onclick="toggleAcctSection('acct-uae')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🇦🇪 UAE Accounts</span>
-      <span id="acct-uae-arrow" style="font-size:10px;color:var(--text3);">▼</span>
-    </div>
-    <div style="display:flex;gap:6px;">
-      
-      <button onclick="event.stopPropagation();openAddModal('uae')" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:5px 10px;color:#34D399;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🇦🇪 UAE Accounts</span>
+    <button onclick="openAddModal('uae')" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:7px;padding:5px 10px;color:#34D399;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
   </div>
   <div id="acct-uae"></div>
 
-  <div onclick="toggleAcctSection('acct-loans')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🏠 Loans</span>
-      <span id="acct-loans-arrow" style="font-size:10px;color:var(--text3);">▼</span>
-    </div>
-    <div style="display:flex;gap:6px;">
-      
-      <button onclick="event.stopPropagation();openAddModal('loan')" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:7px;padding:5px 10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🏠 Loans</span>
+    <button onclick="openAddModal('loan')" style="background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.3);border-radius:7px;padding:5px 10px;color:#FB923C;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
   </div>
   <div id="acct-loans"></div>
 
-  <div onclick="toggleAcctSection('acct-chits')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;cursor:pointer;user-select:none;">
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);">🎰 Chit Funds</span>
-      <span id="acct-chits-arrow" style="font-size:10px;color:var(--text3);">▼</span>
-    </div>
-    <div style="display:flex;gap:6px;">
-      
-      <button onclick="event.stopPropagation();openAddModal('chit')" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:7px;padding:5px 10px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
+  <div class="acct-section-label" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+    <span>🎰 Chit Funds</span>
+    <button onclick="openAddModal('chit')" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:7px;padding:5px 10px;color:#A78BFA;font-size:11px;font-weight:700;cursor:pointer;">+ Add</button>
   </div>
   <div id="acct-chits"></div>
 </div>
@@ -747,10 +670,7 @@ body {
         <h1>🤝 Money Lent</h1>
         <div class="sub" id="lent-summary-sub">Track money given to friends</div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button onclick="switchPage('borrow')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:7px 10px;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;">💸 Borrowed</button>
-        <button onclick="openLentModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
-      </div>
+      <button onclick="openLentModal()" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:7px 12px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
     </div>
   </div>
 
@@ -812,93 +732,6 @@ body {
   <div id="income-list" style="padding:0 16px;"></div>
 </div>
 
-<!-- ══════════════════════ BORROWINGS PAGE ══════════════════════ -->
-<div class="page" id="page-borrow">
-  <div class="topbar">
-    <div class="topbar-row">
-      <div>
-        <h1>💸 Borrowings</h1>
-        <div class="sub" id="borrow-sub">Money you owe to others</div>
-      </div>
-      <button onclick="openBorrowModal()" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;padding:7px 12px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">+ Add</button>
-    </div>
-  </div>
-
-  <!-- Summary -->
-  <div class="exp-summary" style="padding-top:14px">
-    <div class="exp-stat">
-      <div class="lbl">Total Borrowed</div>
-      <div class="val" id="borrow-total" style="color:var(--red)">₹0</div>
-    </div>
-    <div class="exp-stat">
-      <div class="lbl">Repaid</div>
-      <div class="val" id="borrow-repaid" style="color:var(--green)">₹0</div>
-    </div>
-    <div class="exp-stat">
-      <div class="lbl">Outstanding</div>
-      <div class="val" id="borrow-outstanding" style="color:var(--orange)">₹0</div>
-    </div>
-  </div>
-
-  <!-- Filter tabs -->
-  <div style="display:flex;gap:8px;padding:0 16px 14px;">
-    <button class="borrow-tab active" onclick="switchBorrowTab('all')" id="btab-all" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;">All</button>
-    <button class="borrow-tab" onclick="switchBorrowTab('pending')" id="btab-pending" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Pending</button>
-    <button class="borrow-tab" onclick="switchBorrowTab('partial')" id="btab-partial" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Partial</button>
-    <button class="borrow-tab" onclick="switchBorrowTab('settled')" id="btab-settled" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;">Settled</button>
-  </div>
-
-  <div id="borrow-list" style="padding:0 16px"></div>
-</div>
-
-<!-- ══════════════════════ DEBT OVERVIEW PAGE ══════════════════════ -->
-<div class="page" id="page-debt">
-  <div class="topbar">
-    <div class="topbar-row">
-      <div><h1>💳 Debt Overview</h1><div class="sub" id="debt-sub">All your debts ranked by priority</div></div>
-      <button onclick="switchPage('accounts')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text2);font-size:12px;cursor:pointer;">← Back</button>
-    </div>
-  </div>
-
-  <!-- Summary cards -->
-  <div class="exp-summary" style="padding-top:14px">
-    <div class="exp-stat"><div class="lbl">Total Debt</div><div class="val" id="debt-total" style="color:var(--red)">₹0</div></div>
-    <div class="exp-stat"><div class="lbl">Monthly EMI</div><div class="val" id="debt-emi" style="color:var(--orange)">₹0</div></div>
-    <div class="exp-stat"><div class="lbl">Debt/Income</div><div class="val" id="debt-ratio" style="color:var(--gold)">—</div></div>
-  </div>
-
-  <!-- Debt metrics -->
-  <div class="card" style="margin:0 16px 14px;padding:14px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div>
-        <div style="font-size:11px;color:var(--text3)">CC Utilization</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="debt-cc-util">—</div>
-        <div class="prog-bar" style="margin-top:4px;"><div class="prog-fill" id="debt-cc-util-bar" style="width:0%"></div></div>
-      </div>
-      <div>
-        <div style="font-size:11px;color:var(--text3)">EMI % of Income</div>
-        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;" id="debt-emi-pct">—</div>
-        <div class="prog-bar" style="margin-top:4px;"><div class="prog-fill" id="debt-emi-pct-bar" style="width:0%"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Strategy tabs -->
-  <div style="display:flex;gap:8px;padding:0 16px 14px;">
-    <button class="borrow-tab active" onclick="switchDebtStrategy('avalanche')" id="dstrat-avalanche" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--gold);background:rgba(212,168,67,0.1);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">🔥 Avalanche</button>
-    <button class="borrow-tab" onclick="switchDebtStrategy('snowball')" id="dstrat-snowball" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:12px;cursor:pointer;">❄️ Snowball</button>
-  </div>
-  <div style="padding:0 16px 8px;font-size:11px;color:var(--text3);" id="debt-strategy-desc">Avalanche: Pay highest interest first — saves the most money</div>
-
-  <!-- Tabs: Debt list vs Payoff predictor -->
-  <div style="display:flex;gap:8px;padding:0 16px 12px;">
-    <button onclick="switchDebtTab('list')" id="dtab-list" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--gold);background:rgba(212,168,67,0.1);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">📋 Debts</button>
-    <button onclick="switchDebtTab('payoff')" id="dtab-payoff" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:12px;cursor:pointer;">📅 Payoff</button>
-  </div>
-  <div id="debt-list" style="padding:0 16px;"></div>
-  <div id="debt-payoff" style="padding:0 16px;display:none;"></div>
-</div>
-
 <!-- ══════════════════════ SETTINGS PAGE ══════════════════════ -->
 <div class="page" id="page-settings">
   <div class="topbar"><h1>Settings</h1></div>
@@ -925,9 +758,6 @@ body {
       <div class="settings-info"><div class="k">PIN Lock</div><div class="v" id="pin-status">Not enabled</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    <div class="settings-item" onclick="openSMSModal()">
-      <div class="settings-icon" style="background:rgba(96,165,250,0.1)">📱</div>
-      <div class="settings-info"><div class="k">SMS Parser</div><div class="v">Auto-detect expenses from SMS</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
   </div>
@@ -949,9 +779,29 @@ body {
       <div class="settings-info"><div class="k">Restore from Google Drive</div><div class="v">Load your last backup</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    <div class="settings-item">
+        <div class="settings-item" onclick="manualSMSScan()">
+      <div class="settings-icon" style="background:rgba(45,212,191,0.1)">📱</div>
+      <div class="settings-info">
+        <div class="k">Scan Bank SMS</div>
+        <div class="v" id="sms-scan-status">Tap to scan your SMS inbox</div>
+      </div>
+    </div>
+    <div class="settings-item" style="cursor:default;">
+      <div class="settings-icon" style="background:rgba(167,139,250,0.1)">🔄</div>
+      <div class="settings-info">
+        <div class="k">Auto Scan on Open</div>
+        <div class="v">Scan SMS when app opens</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-top:4px;">
+        <input type="checkbox" id="auto-sms-toggle" onchange="toggleAutoSMSScan(this.checked)" style="opacity:0;width:0;height:0;">
+        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--surface2);border-radius:24px;transition:0.3s;border:1px solid var(--border);">
+          <span id="auto-sms-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:2px;background:var(--text3);border-radius:50%;transition:0.3s;display:block;"></span>
+        </span>
+      </label>
+    </div>
+<div class="settings-item">
       <div class="settings-icon" style="background:rgba(212,168,67,0.1)">📤</div>
-      <div class="settings-info"><div class="k">Export as JSON File</div><div class="v" id="backup-status">Download backup to phone</div></div>
+      <div class="settings-info"><div class="k">Export as JSON File</div><div class="v">Download backup to phone</div></div>
       <button onclick="exportData()" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;">Export</button>
     </div>
     <div class="settings-item">
@@ -1010,7 +860,7 @@ body {
 <div class="modal-overlay" id="exp-modal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="exp-modal-title">➕ Add Expense</div>
+    <div class="modal-title">Add Expense</div>
 
     <div class="form-group">
       <label class="form-label">Category</label>
@@ -1051,9 +901,6 @@ body {
     </div>
 
     <button class="btn-primary" onclick="saveExpense()">Save Expense</button>
-    <div id="exp-delete-wrap" style="display:none;">
-      <button class="btn-outline" id="exp-delete-btn-inner" onclick="deleteExpenseFromModal()" style="color:var(--red);border-color:rgba(248,113,113,0.3);">🗑️ Delete Expense</button>
-    </div>
     <button class="btn-outline" onclick="closeModal('exp-modal')">Cancel</button>
   </div>
 </div>
@@ -1238,104 +1085,15 @@ body {
       </select></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label" id="inc-amt-label">Amount (₹)</label>
-        <input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal" oninput="updateIncCurrency()">
-        <div id="inc-currency-hint" style="font-size:11px;color:var(--teal);margin-top:4px;display:none;"></div>
-      </div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="inc-amount" placeholder="0" inputmode="decimal"></div>
       <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="inc-date"></div>
     </div>
     <div class="form-group"><label class="form-label">Credited To Account</label>
-      <div class="select-wrap"><select class="form-select" id="inc-account" onchange="updateIncCurrency()"></select></div>
+      <div class="select-wrap"><select class="form-select" id="inc-account"></select></div>
     </div>
     <div class="form-group"><label class="form-label">Note (optional)</label><input type="text" class="form-input" id="inc-note" placeholder="e.g. April salary"></div>
     <button class="btn-primary" onclick="saveIncome()">Save Income</button>
     <button class="btn-outline" onclick="closeModal('income-modal')">Cancel</button>
-  </div>
-</div>
-
-<!-- Add Borrowing Modal -->
-<div class="modal-overlay" id="borrow-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="borrow-modal-title">💸 Add Borrowing</div>
-
-    <div class="form-group">
-      <label class="form-label">Lender Name (who gave you money)</label>
-      <input type="text" class="form-input" id="borrow-lender" placeholder="e.g. John, Uncle Mathew" autocomplete="off">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Amount (₹)</label>
-        <input type="number" class="form-input" id="borrow-amount" placeholder="0" inputmode="decimal">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date Borrowed</label>
-        <input type="date" class="form-input" id="borrow-date">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Credited To Account</label>
-      <div class="select-wrap">
-        <select class="form-select" id="borrow-account"></select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Expected Return Date (optional)</label>
-      <input type="date" class="form-input" id="borrow-return-date">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Interest Rate (% p.a.) — 0 if none</label>
-      <input type="number" class="form-input" id="borrow-rate" placeholder="0" step="0.1" inputmode="decimal">
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Note (optional)</label>
-      <input type="text" class="form-input" id="borrow-note" placeholder="Reason or purpose">
-    </div>
-
-    <button class="btn-primary" onclick="saveBorrowing()">Save</button>
-    <button class="btn-outline" onclick="closeModal('borrow-modal')">Cancel</button>
-  </div>
-</div>
-
-<!-- Record Borrow Repayment Modal -->
-<div class="modal-overlay" id="brepay-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="brepay-modal-title">💰 Record Repayment</div>
-    <div id="brepay-summary" style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;"></div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Amount Repaid (₹)</label>
-        <input type="number" class="form-input" id="brepay-amount" placeholder="0" inputmode="decimal">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date</label>
-        <input type="date" class="form-input" id="brepay-date">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">From Account</label>
-      <div class="select-wrap">
-        <select class="form-select" id="brepay-account"></select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Note (optional)</label>
-      <input type="text" class="form-input" id="brepay-note" placeholder="e.g. UPI transfer">
-    </div>
-
-    <button class="btn-primary" onclick="saveBorrowRepayment()">Record Repayment</button>
-    <button class="btn-outline" style="color:var(--green);border-color:rgba(52,211,153,0.3);margin-top:8px" onclick="markBorrowSettled()">Mark as Fully Settled</button>
-    <button class="btn-outline" onclick="closeModal('brepay-modal')">Cancel</button>
   </div>
 </div>
 
@@ -1409,116 +1167,18 @@ const defaultData = {
   expenses: [],
   transfers: [],
   lent: [],
-  borrowings: [],
   income: [],
-  netWorthHistory: [],
   currentMonth: new Date().getMonth(),
   currentYear: new Date().getFullYear()
 };
 
-function save() {
-  snapshotNetWorth();
-  localStorage.setItem('fintrack_data', JSON.stringify(D));
-}
-
-function exportBackup() {
-  const data = JSON.stringify(D, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = `fintrack-backup-${today()}.json`; a.click();
-  localStorage.setItem('fintrack_last_backup', Date.now().toString());
-  updateBackupStatus();
-  showToast('✅ Backup downloaded — save to Google Drive!');
-}
-
-function snapshotNetWorth() {
-  if(!D.netWorthHistory) D.netWorthHistory = [];
-  // Calculate current net worth
-  const bankTotal    = D.accounts.indBanks.reduce((s,b)=>s+(b.balance||0), 0);
-  const uaeSavings   = D.accounts.uaeAccounts.filter(u=>u.type!=='Credit Card').reduce((s,u)=>s+(u.balanceAED||0)*D.aedRate, 0);
-  const ccDebt       = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0), 0);
-  const loanDebt     = D.accounts.loans.reduce((s,l)=>s+(l.outstanding||0), 0);
-  const uaeCCDebt    = D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate, 0);
-  const borrowDebt   = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0);
-  const lentOut      = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered),0);
-  const netWorth     = bankTotal + uaeSavings - ccDebt - loanDebt - uaeCCDebt - borrowDebt + lentOut;
-
-  // Store one snapshot per month — overwrite if same month
-  const monthKey = today().substring(0,7); // YYYY-MM
-  const existing = D.netWorthHistory.findIndex(h=>h.month===monthKey);
-  const snapshot = { month: monthKey, netWorth: Math.round(netWorth), date: today() };
-  if(existing >= 0) D.netWorthHistory[existing] = snapshot;
-  else D.netWorthHistory.push(snapshot);
-  // Keep last 24 months
-  if(D.netWorthHistory.length > 24) D.netWorthHistory = D.netWorthHistory.slice(-24);
-}
-
-function renderNetWorthHistory() {
-  const el = document.getElementById('dash-nw-history');
-  if(!el) return;
-  const history = (D.netWorthHistory||[]).slice(-12);
-  if(history.length < 2) {
-    el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">History builds up as you use the app 📈</div>';
-    return;
-  }
-  const maxVal = Math.max(...history.map(h=>Math.abs(h.netWorth)));
-  const last = history[history.length-1];
-  const change = last.netWorth - history[0].netWorth;
-  el.innerHTML = '<div style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:8px;">'
-    + history.map((h,i) => {
-        const pct = maxVal>0?Math.abs(h.netWorth)/maxVal:0;
-        const barH = Math.max(3, Math.round(pct*68));
-        const color = h.netWorth>=0?'#34D399':'#F87171';
-        const isLast = i===history.length-1;
-        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;background:'+color+(isLast?'':'99')+';border-radius:3px 3px 0 0;height:'+barH+'px;"></div><div style="font-size:7px;color:var(--text3);margin-top:2px;">'+h.month.substring(5)+'</div></div>';
-      }).join('')
-    + '</div>'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-    + '<div><div style="font-size:11px;color:var(--text3)">Current Net Worth</div>'
-    + '<div style="font-family:Syne,sans-serif;font-size:15px;font-weight:800;color:'+(last.netWorth>=0?'#34D399':'#F87171')+'">'+fmt(last.netWorth)+'</div></div>'
-    + '<div style="text-align:right;"><div style="font-size:11px;color:var(--text3)">'+history.length+' months</div>'
-    + '<div style="font-size:13px;font-weight:700;color:'+(change>=0?'#34D399':'#F87171')+'">'+(change>=0?'↗ +':'↘ ')+fmt(Math.abs(change))+'</div></div>'
-    + '</div>';
-}
-
-function updateBackupStatus() {
-  const el = document.getElementById('backup-status');
-  if(!el) return;
-  const last = parseInt(localStorage.getItem('fintrack_last_backup')||'0');
-  if(!last) { el.textContent='Never backed up ⚠️'; el.style.color='var(--red)'; return; }
-  const days = Math.floor((Date.now()-last)/(1000*60*60*24));
-  el.textContent = days===0?'Backed up today ✅':`Last backup: ${days} day${days!==1?'s':''} ago`;
-  el.style.color = days>7?'var(--red)':days>3?'var(--orange)':'var(--green)';
-}
-
-function showBackupBanner() {
-  if(document.getElementById('backup-banner')) return;
-  const last = parseInt(localStorage.getItem('fintrack_last_backup')||'0');
-  const days = last?Math.floor((Date.now()-last)/(1000*60*60*24)):999;
-  if(days < 7) return;
-  const banner = document.createElement('div');
-  banner.id = 'backup-banner';
-  banner.style.cssText = 'position:fixed;bottom:72px;left:16px;right:16px;z-index:999;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.35);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(8px);';
-  banner.innerHTML = `
-    <div>
-      <div style="font-size:13px;font-weight:700;color:var(--red)">⚠️ Backup your data!</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px">${days>=999?'Never backed up':'Last backup '+days+' days ago'}</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="exportBackup();document.getElementById('backup-banner').remove()" style="background:var(--red);border:none;border-radius:8px;padding:7px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer;">Backup Now</button>
-      <button onclick="document.getElementById('backup-banner').remove()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text3);font-size:12px;cursor:pointer;">Later</button>
-    </div>`;
-  document.body.appendChild(banner);
-}
+function save() { localStorage.setItem('fintrack_data', JSON.stringify(D)); }
 
 let D = JSON.parse(localStorage.getItem('fintrack_data') || 'null') || JSON.parse(JSON.stringify(defaultData));
 
 // Migrate old saved data to support new fields
 if (!D.lent) D.lent = [];
 if (!D.income) D.income = [];
-if (!D.borrowings) D.borrowings = [];
-if (!D.netWorthHistory) D.netWorthHistory = [];
 // Migrate chits to add dueDay and startDate if missing
 (D.accounts.chits||[]).forEach(c => { if(!c.dueDay) c.dueDay = 1; if(!c.startDate) c.startDate = ''; });
 if (D.accounts.uaeAccounts && !D.accounts.uaeAccounts[0].hasOwnProperty('outstandingAED')) {
@@ -1614,8 +1274,6 @@ function renderPage(page) {
   else if (page === 'transfers') renderTransfers();
   else if (page === 'accounts') renderAccounts();
   else if (page === 'lent') renderLent();
-  else if (page === 'borrow') renderBorrowings();
-  else if (page === 'debt') renderDebtOverview();
   else if (page === 'income') renderIncome();
   else if (page === 'settings') renderSettings();
 }
@@ -1642,14 +1300,13 @@ function renderDashboard() {
   const assets     = bankTotal + uaeSavings;
   const ccDebt     = D.accounts.indCards.reduce((s,c) => s+c.outstanding, 0);
   const loanDebt   = D.accounts.loans.reduce((s,l) => s+l.outstanding, 0);
-  const borrowOutstanding = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0);
-  const liabilities = ccDebt + loanDebt + uaeCCDebt + borrowOutstanding;
+  const liabilities = ccDebt + loanDebt + uaeCCDebt;
   const lentOutstanding = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered),0);
   const netWorth    = assets - liabilities + lentOutstanding;
 
   const now = new Date();
   const monthExps = monthExpenses(now.getMonth(), now.getFullYear());
-  const monthSpend = monthExps.reduce((s,e) => s+(e.amountAED ? e.amountAED*D.aedRate : e.amount), 0);
+  const monthSpend = monthExps.reduce((s,e) => s+e.amount, 0);
 
   document.getElementById('dash-networth').textContent = (netWorth<0?'- ':'')+fmt(Math.abs(netWorth));
   document.getElementById('dash-networth').style.color = netWorth < 0 ? 'var(--red)' : 'var(--text)';
@@ -1665,8 +1322,7 @@ function renderDashboard() {
     <div class="chip"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">UAE Assets</div><div class="cval" style="color:#60A5FA">${fmt(uaeSavings)}</div></div></div>
     <div class="chip"><div class="dot" style="background:#FB923C"></div><div><div class="clbl">Loans</div><div class="cval" style="color:#FB923C">${fmt(loanDebt)}</div></div></div>
     <div class="chip" onclick="switchPage('lent')"><div class="dot" style="background:#60A5FA"></div><div><div class="clbl">Lent Out</div><div class="cval" style="color:#60A5FA">${fmt(lentOutstanding)}</div></div></div>
-    <div class="chip" onclick="switchPage('borrow')"><div class="dot" style="background:#F87171"></div><div><div class="clbl">Borrowed</div><div class="cval" style="color:#F87171">${fmt((D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid),0))}</div></div></div>
-    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0))}</div></div></div>
+    <div class="chip" onclick="switchPage('income')"><div class="dot" style="background:#34D399"></div><div><div class="clbl">Income</div><div class="cval" style="color:#34D399">${fmt((D.income||[]).filter(i=>{const[iy,im]=i.date.split('-').map(Number);return(im-1)===now.getMonth()&&iy===now.getFullYear();}).reduce((s,i)=>s+i.amount,0))}</div></div></div>
   `;
 
   // Due soon
@@ -1862,11 +1518,7 @@ function renderDashboard() {
 
   // Render income + lent sections
   try { renderDashIncome(); } catch(e) {}
-  try { renderDashBorrow(); } catch(e) {}
   renderDashLent();
-  try { renderNetWorthHistory(); } catch(e) {}
-  try { renderNWPredictor(); } catch(e) {}
-  setTimeout(showBackupBanner, 1000);
 
   // Reconcile reminder — if any bank hasn't been reconciled this month
   const thisMonth = new Date().getMonth();
@@ -1916,7 +1568,7 @@ let expViewYear  = new Date().getFullYear();
 function renderExpenses() {
   document.getElementById('exp-month-label').textContent = MONTHS[expViewMonth] + ' ' + expViewYear;
   const exps = monthExpenses(expViewMonth, expViewYear);
-  const total = exps.reduce((s,e)=>s+(e.amountAED ? e.amountAED*D.aedRate : e.amount), 0);
+  const total = exps.reduce((s,e)=>s+e.amount,0);
   const largest = exps.reduce((m,e)=>Math.max(m,e.amount),0);
   document.getElementById('exp-total').textContent = fmt(total);
   document.getElementById('exp-count').textContent = exps.length;
@@ -1925,10 +1577,7 @@ function renderExpenses() {
   // Budget bars
   const bb = document.getElementById('budget-bars');
   const catTotals = {};
-  exps.forEach(e => {
-    const val = e.amountAED ? e.amountAED * D.aedRate : e.amount;
-    catTotals[e.category] = (catTotals[e.category]||0) + val;
-  });
+  exps.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0) + e.amount; });
   const cats = Object.keys(D.budgets).filter(c => D.budgets[c] > 0 || catTotals[c] > 0);
   bb.innerHTML = cats.map(cat => {
     const spent = catTotals[cat] || 0;
@@ -1946,38 +1595,26 @@ function renderExpenses() {
     </div>`;
   }).join('');
 
-  // Expense list — apply search filter
-  const expSearchQ = (document.getElementById('exp-search')?.value||'').toLowerCase().trim();
-  const filteredExps = expSearchQ
-    ? exps.filter(e =>
-        (e.desc||'').toLowerCase().includes(expSearchQ) ||
-        (e.category||'').toLowerCase().includes(expSearchQ) ||
-        (e.amount||'').toString().includes(expSearchQ) ||
-        (e.mode||'').toLowerCase().includes(expSearchQ)
-      )
-    : exps;
+  // Expense list
   const el = document.getElementById('exp-list');
-  if(filteredExps.length === 0) {
-    el.innerHTML = expSearchQ
-      ? '<div class="empty-state"><div class="icon">🔍</div>No expenses match "'+expSearchQ+'"</div>'
-      : '<div class="empty-state"><div class="icon">💸</div>No expenses in '+MONTHS[expViewMonth]+'.<br>Tap + to add one!</div>';
+  if(exps.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">💸</div>No expenses in '+MONTHS[expViewMonth]+'.<br>Tap + to add one!</div>';
     return;
   }
-  const sorted = [...filteredExps].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sorted = [...exps].sort((a,b)=>new Date(b.date)-new Date(a.date));
   el.innerHTML = sorted.map(e => {
     const cat = getCat(e.category);
     const acc = getAcctById(e.accountId);
     const isLarge = e.amount >= D.alertThreshold;
     return `
-    <div class="exp-item" onclick="openExpenseModal('${e.id}')">
+    <div class="exp-item" onclick="deleteExpense('${e.id}')">
       <div class="exp-cat-icon" style="background:${cat.bg}; font-size:20px">${cat.emoji}</div>
       <div class="exp-info">
         <div class="exp-desc">${e.desc || e.category}</div>
         <div class="exp-meta">${fmtDate(e.date)} · ${acc?acc.name:'Unknown'} · ${e.mode}</div>
       </div>
-      <div style="text-align:right;">
-        <div class="exp-amount">${e.amountAED ? 'AED '+e.amountAED : fmt(e.amount)}</div>
-        ${e.amountAED ? `<div style="font-size:9px;color:var(--text3);">≈${fmt(e.amountAED*D.aedRate)}</div>` : ''}
+      <div>
+        <div class="exp-amount">${fmt(e.amount)}</div>
         ${isLarge ? '<div style="text-align:right;font-size:9px;color:var(--red);margin-top:2px">🔴 Large</div>' : ''}
       </div>
     </div>`;
@@ -2022,7 +1659,7 @@ function renderTransfers() {
     const from = getAcctById(t.fromId);
     const to   = getAcctById(t.toId);
     return `
-    <div class="transfer-item" onclick="twoTapDelete(this,()=>deleteTransfer('${t.id}'))">
+    <div class="transfer-item" onclick="deleteTransfer('${t.id}')">
       <div class="transfer-flow">
         <div class="transfer-acc">${from?from.name:t.fromId}</div>
         <div class="transfer-arrow">→</div>
@@ -2040,40 +1677,10 @@ function renderTransfers() {
 // ACCOUNTS
 // ══════════════════════════════════════════════════════════
 
-const acctCollapsed = {};
-function toggleAcctSection(id) {
-  acctCollapsed[id] = !acctCollapsed[id];
-  const el = document.getElementById(id);
-  const arrow = document.getElementById(id+'-arrow');
-  if(el) el.style.display = acctCollapsed[id] ? 'none' : '';
-  if(arrow) arrow.textContent = acctCollapsed[id] ? '▶' : '▼';
-}
-
 function renderAccounts() {
   const bankTotal = D.accounts.indBanks.reduce((s,b)=>s+b.balance,0);
   const ccDebt = D.accounts.indCards.reduce((s,c)=>s+c.outstanding,0);
   document.getElementById('acct-summary').textContent = `Banks: ${fmt(bankTotal)} · CC Debt: ${fmt(ccDebt)}`;
-
-  // Reconcile reminder — flag bank accounts not reconciled in 30+ days
-  const now30 = new Date(); now30.setDate(now30.getDate()-30);
-  const staleAccts = D.accounts.indBanks.filter(b => {
-    if(!b.lastReconciled) return true;
-    const[ry,rm,rd]=b.lastReconciled.split('-').map(Number);
-    return new Date(ry,rm-1,rd) < now30;
-  });
-  const oldBar = document.getElementById('reconcile-reminder-bar');
-  if(oldBar) oldBar.remove();
-  if(staleAccts.length > 0) {
-    const bar = document.createElement('div');
-    bar.id = 'reconcile-reminder-bar';
-    bar.style.cssText = 'background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.3);border-radius:10px;margin:0 16px 12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;';
-    bar.innerHTML = `<div><div style="font-size:12px;font-weight:700;color:var(--gold)">🔄 ${staleAccts.length} account${staleAccts.length>1?'s':''} need reconciling</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${staleAccts.map(b=>b.name).join(', ')}</div></div><button onclick="openMonthlyReconcile()" style="background:rgba(212,168,67,0.15);border:1px solid rgba(212,168,67,0.4);border-radius:7px;padding:5px 10px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;">Reconcile</button>`;
-    const acctPage = document.getElementById('page-accounts');
-    if(acctPage) {
-      const topbar = acctPage.querySelector('.topbar');
-      if(topbar) topbar.insertAdjacentElement('afterend', bar);
-    }
-  }
 
   // Banks
   document.getElementById('acct-banks').innerHTML = D.accounts.indBanks.map(b => `
@@ -2254,21 +1861,16 @@ function renderAccounts() {
         ${(()=>{const{overdue,arrears}=chitOverdueMonths(c);return overdue>0?`<div class="acct-detail-row"><span class="k" style="color:var(--red)">⚠️ Overdue</span><span class="v red">${overdue} month${overdue>1?'s':''} · ${fmt(arrears)}</span></div>`:''})()}
       </div>
     </div>`}).join('');
-  // Restore collapsed state
-  Object.keys(acctCollapsed).forEach(id => {
-    const el=document.getElementById(id);
-    const arrow=document.getElementById(id+'-arrow');
-    if(el && acctCollapsed[id]) el.style.display='none';
-    if(arrow) arrow.textContent = acctCollapsed[id] ? '▶' : '▼';
-  });
 }
 
 // ══════════════════════════════════════════════════════════
 // SETTINGS
+// ══════════════════════════════════════════════════════════
+
 function renderSettings() {
+  initAutoSMSToggle();
   document.getElementById('set-rate').textContent = D.aedRate.toFixed(4);
   updatePinStatus();
-  updateBackupStatus();
 
   // Account list
   const allAccts = [
@@ -2313,130 +1915,22 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 
 // Expense Modal
 let selectedCategory = null;
-let editingExpenseId = null;
-// PWA-safe confirm — window.confirm is blocked in some Android PWAs
-function safeConfirm(msg) {
-  try { return window.confirm(msg); } catch(e) { return true; }
-}
-
-// ── Central validation helper ──────────────────────────────────────────────
-function validateFields(fields) {
-  // fields: [{val, label, type}] type: 'required'|'amount'|'date'
-  for(const f of fields) {
-    if(f.type === 'required' && (!f.val || !f.val.toString().trim())) {
-      showToast(`⚠️ ${f.label} is required`); return false;
-    }
-    if(f.type === 'amount' && (!f.val || isNaN(f.val) || parseFloat(f.val) <= 0)) {
-      showToast(`⚠️ ${f.label} must be a positive number`); return false;
-    }
-    if(f.type === 'date' && !f.val) {
-      showToast(`⚠️ ${f.label} is required`); return false;
-    }
-    if(f.type === 'maxlength' && f.val && f.val.length > (f.max||100)) {
-      showToast(`⚠️ ${f.label} is too long (max ${f.max||100} chars)`); return false;
-    }
-  }
-  return true;
-}
-
-// Two-tap delete for any button — no confirm dialog needed
-// Usage: onclick="twoTapDelete(this, () => actualDeleteFn())"
-function twoTapDelete(btn, deleteFn) {
-  if(btn.dataset.confirmPending !== '1') {
-    btn.dataset.confirmPending = '1';
-    const orig = btn.textContent;
-    btn.dataset.origText = orig;
-    btn.textContent = '⚠️ Tap again to delete';
-    btn.style.background = 'rgba(248,113,113,0.25)';
-    btn.style.borderColor = 'rgba(248,113,113,0.6)';
-    btn.style.color = 'var(--red)';
-    setTimeout(() => {
-      if(btn && btn.dataset.confirmPending === '1') {
-        btn.dataset.confirmPending = '0';
-        btn.textContent = btn.dataset.origText || orig;
-        btn.style.background = '';
-        btn.style.borderColor = '';
-        btn.style.color = '';
-      }
-    }, 3000);
-    return;
-  }
-  btn.dataset.confirmPending = '0';
-  btn.textContent = btn.dataset.origText || btn.textContent;
-  btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
-  deleteFn();
-}
-function openExpenseModal(id) {
-  editingExpenseId = id || null;
-  const exp = id ? D.expenses.find(e=>e.id===id) : null;
-  selectedCategory = exp ? exp.category : null;
-  document.getElementById('exp-desc').value  = exp ? exp.desc   : '';
-  document.getElementById('exp-amt').value   = exp ? exp.amount : '';
-  document.getElementById('exp-date').value  = exp ? exp.date   : today();
-  // Update modal title
-  const title = document.getElementById('exp-modal-title');
-  if(title) title.textContent = exp ? '✏️ Edit Expense' : '➕ Add Expense';
+function openExpenseModal() {
+  selectedCategory = null;
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-amt').value = '';
+  document.getElementById('exp-date').value = today();
   // Category grid
   const grid = document.getElementById('cat-grid');
   grid.innerHTML = CATEGORIES.map(c => `
-    <div class="cat-btn ${exp&&c.name===exp.category?'selected':''}" onclick="selectCat('${c.name}')" id="catbtn-${c.name.replace(/[& ]/g,'_')}">
+    <div class="cat-btn" onclick="selectCat('${c.name}')" id="catbtn-${c.name.replace(/[& ]/g,'_')}">
       <span class="emoji">${c.emoji}</span>
       <span class="name">${c.name}</span>
     </div>`).join('');
-  if(exp && exp.category) selectedCategory = exp.category;
-  // Account select — show available balance next to each account
+  // Account select
   const sel = document.getElementById('exp-account');
-  sel.innerHTML = allAccountOptions().map(o => {
-    const a = findAnyAccount(o.value);
-    let bal = '';
-    if(a) {
-      if(D.accounts.indBanks.find(x=>x.id===o.value))
-        bal = ` [₹${(a.balance||0).toLocaleString('en-IN',{maximumFractionDigits:0})}]`;
-      else if(D.accounts.indCards.find(x=>x.id===o.value) && a.limit>0)
-        bal = ` [Avl ₹${Math.max(0,(a.limit||0)-(a.outstanding||0)).toLocaleString('en-IN',{maximumFractionDigits:0})}]`;
-      else if(D.accounts.uaeAccounts.find(x=>x.id===o.value))
-        bal = a.type==='Credit Card' && a.limitAED>0
-          ? ` [Avl AED ${Math.max(0,(a.limitAED||0)-(a.outstandingAED||0)).toFixed(0)}]`
-          : ` [AED ${(a.balanceAED||0).toFixed(0)}]`;
-    }
-    return `<option value="${o.value}" ${exp&&o.value===exp.accountId?'selected':''}>${o.label}${bal}</option>`;
-  }).join('');
-  if(document.getElementById('exp-mode')) document.getElementById('exp-mode').value = exp ? (exp.mode||'Cash') : 'Cash';
-  // Show delete button only when editing
-  const delWrap = document.getElementById('exp-delete-wrap');
-  if(delWrap) delWrap.style.display = id ? 'block' : 'none';
-  const delInner = document.getElementById('exp-delete-btn-inner');
-  if(delInner && id) delInner.dataset.expId = id;
+  sel.innerHTML = allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
   openModal('exp-modal');
-  setTimeout(updateExpCurrency, 50);
-}
-
-function deleteExpenseFromModal() {
-  const id = editingExpenseId || document.getElementById('exp-delete-btn-inner')?.dataset?.expId;
-  if(!id) return;
-  const btn = document.getElementById('exp-delete-btn-inner');
-  // Two-tap confirm: first tap = warn, second tap = delete
-  if(btn && btn.dataset.confirmPending !== '1') {
-    btn.dataset.confirmPending = '1';
-    btn.textContent = '⚠️ Tap again to confirm delete';
-    btn.style.background = 'rgba(248,113,113,0.2)';
-    setTimeout(() => {
-      if(btn) { btn.dataset.confirmPending = '0'; btn.textContent = '🗑️ Delete Expense'; btn.style.background = ''; }
-    }, 3000);
-    return;
-  }
-  // Second tap — actually delete
-  if(btn) { btn.dataset.confirmPending = '0'; btn.textContent = '🗑️ Delete Expense'; btn.style.background = ''; }
-  const exp = D.expenses.find(e=>e.id===id);
-  if(exp) {
-    // For UAE expenses, amountAED is the native value; for others, amount is INR
-  const refundAmt = exp.amountAED || exp.amount;
-  refundToAccount(exp.accountId, refundAmt);
-    D.expenses = D.expenses.filter(e=>e.id!==id);
-  }
-  editingExpenseId = null;
-  save(); closeModal('exp-modal'); renderPage(currentPage); renderDashboard();
-  showToast('Expense deleted — amount refunded');
 }
 
 function selectCat(name) {
@@ -2447,116 +1941,42 @@ function selectCat(name) {
   if(el) el.classList.add('selected');
 }
 
-function updateExpCurrency() {
-  const accountId = document.getElementById('exp-account')?.value;
-  const amt = parseFloat(document.getElementById('exp-amt')?.value)||0;
-  const hint = document.getElementById('exp-currency-hint');
-  const lbl  = document.getElementById('exp-amt-label');
-  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  if(u) {
-    if(hint) { hint.style.display='block'; hint.textContent = amt>0 ? `= ₹${(amt*D.aedRate).toLocaleString('en-IN',{maximumFractionDigits:0})} at rate ${D.aedRate}` : 'Enter amount in AED'; }
-    if(lbl) lbl.textContent = 'Amount (AED)';
-  } else {
-    if(hint) { hint.style.display='none'; hint.textContent=''; }
-    if(lbl) lbl.textContent = 'Amount';
-  }
-}
-
 function saveExpense() {
-  const rawAmt = parseFloat(document.getElementById('exp-amt').value);
+  const amt = parseFloat(document.getElementById('exp-amt').value);
   const desc = document.getElementById('exp-desc').value.trim();
   const date = document.getElementById('exp-date').value;
   const accountId = document.getElementById('exp-account').value;
   const mode = document.getElementById('exp-mode').value;
-  if(!validateFields([
-    {val:rawAmt,          label:'Amount',   type:'amount'},
-    {val:date,            label:'Date',     type:'date'},
-    {val:desc,            label:'Description', type:'maxlength', max:100},
-  ])) return;
-  if(!selectedCategory) { showToast('⚠️ Please select a category'); return; }
-
-  // ── Balance check ────────────────────────────────────────────────────────
-  const expAcct = findAnyAccount(accountId);
-  if(expAcct) {
-    const isBank   = !!D.accounts.indBanks.find(a=>a.id===accountId);
-    const isUAEAcc = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
-    const isCC     = !!D.accounts.indCards.find(a=>a.id===accountId);
-    const isUAECC  = isUAEAcc && expAcct.type==='Credit Card';
-    const isUAESav = isUAEAcc && expAcct.type!=='Credit Card';
-
-    if(isBank) {
-      const bal = expAcct.balance || 0;
-      const spend = amt; // INR
-      if(spend > bal) {
-        showToast(`❌ Insufficient balance! ${expAcct.name} has ${fmt(bal)} but expense is ${fmt(spend)}`);
-        return;
-      }
-    } else if(isUAESav) {
-      const balINR = (expAcct.balanceAED||0) * D.aedRate;
-      const spend  = amtAED ? amtAED * D.aedRate : amt;
-      if(spend > balINR) {
-        showToast(`❌ Insufficient balance! ${expAcct.name} has AED ${expAcct.balanceAED||0} but expense is AED ${amtAED||'?'}`);
-        return;
-      }
-    } else if(isCC) {
-      // Credit card — check available credit (limit - outstanding)
-      const avail = (expAcct.limit||0) - (expAcct.outstanding||0);
-      if(expAcct.limit > 0 && amt > avail) {
-        showToast(`❌ Credit limit exceeded! ${expAcct.name} has ₹${avail.toLocaleString('en-IN')} available but expense is ${fmt(amt)}`);
-        return;
-      }
-    } else if(isUAECC) {
-      const availAED = (expAcct.limitAED||0) - (expAcct.outstandingAED||0);
-      const spendAED = amtAED || (amt/D.aedRate);
-      if(expAcct.limitAED > 0 && spendAED > availAED) {
-        showToast(`❌ Credit limit exceeded! ${expAcct.name} has AED ${availAED.toFixed(2)} available`);
-        return;
-      }
-    }
-  }
-  // ─────────────────────────────────────────────────────────────────────────
-  // If UAE account, store AED directly. Convert to INR only for display using current rate.
-  const isUAEAcct = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  const amt    = rawAmt;                        // store original value (AED for UAE, INR for others)
-  const amtAED = isUAEAcct ? rawAmt : null;     // null for non-UAE
-  const rateUsed = null;                        // no longer needed - use current rate for display
-  const acctName = allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
-  if(editingExpenseId) {
-    const idx = D.expenses.findIndex(e=>e.id===editingExpenseId);
-    if(idx>=0) {
-      const old = D.expenses[idx];
-      // Reverse old deduction
-      refundToAccount(old.accountId, old.amount);
-      // Apply new deduction
-      const updObj = { ...old, category: selectedCategory, desc, amount: amt, date, accountId, mode };
-      if(amtAED !== null) { updObj.amountAED = amtAED; updObj.aedRate = rateUsed; }
-      D.expenses[idx] = updObj;
-      deductFromAccount(accountId, amt);
-      const dispAmt = amtAED ? `AED ${amtAED} (≈${fmt(amtAED*D.aedRate)})` : fmt(amt);
-      showToast(`Expense updated · ${dispAmt} deducted from ${acctName}`);
-    }
-  } else {
-    const expObj = { id: Date.now().toString(), category: selectedCategory, desc, amount: amt, date, accountId, mode };
-    if(amtAED !== null) { expObj.amountAED = amtAED; expObj.aedRate = rateUsed; }
-    D.expenses.push(expObj);
-    deductFromAccount(accountId, amt);  // amt = AED for UAE, INR for others
-    const dispAmt2 = amtAED ? `AED ${amtAED} (≈${fmt(amtAED*D.aedRate)})` : fmt(amt);
-    showToast(`${dispAmt2} deducted from ${acctName}`);
-  }
-  editingExpenseId = null;
+  if(!amt || amt <= 0) { alert('Please enter a valid amount'); return; }
+  if(!selectedCategory) { alert('Please select a category'); return; }
+  const expId = Date.now().toString();
+  D.expenses.push({
+    id: expId,
+    category: selectedCategory, desc, amount: amt, date, accountId, mode
+  });
+  // Auto-deduct from account
+  deductFromAccount(accountId, amt);
   save(); closeModal('exp-modal');
-  renderPage(currentPage); renderDashboard();
+  if(currentPage === 'expenses') renderExpenses();
+  if(currentPage === 'dashboard') renderDashboard();
+  if(currentPage === 'accounts') renderAccounts();
+  // Show toast so user knows deduction happened
+  const acctName = allAccountOptions().find(o=>o.value===accountId)?.label || 'account';
+  showToast(`₹${amt.toLocaleString('en-IN')} deducted from ${acctName}`);
 }
 
 function deleteExpense(id) {
+  if(!confirm('Delete this expense?')) return;
   const exp = D.expenses.find(e=>e.id===id);
-  if(!exp) return;
-  // For UAE expenses, amountAED is the native value; for others, amount is INR
-  const refundAmt = exp.amountAED || exp.amount;
-  refundToAccount(exp.accountId, refundAmt);
+  if(exp) {
+    refundToAccount(exp.accountId, exp.amount);
+    const acctName = allAccountOptions().find(o=>o.value===exp.accountId)?.label || 'account';
+    showToast(`₹${exp.amount.toLocaleString('en-IN')} refunded to ${acctName}`);
+  }
   D.expenses = D.expenses.filter(e=>e.id!==id);
-  save(); renderPage(currentPage); renderDashboard();
-  showToast('Expense deleted — amount refunded');
+  save(); renderExpenses();
+  if(currentPage === 'dashboard') renderDashboard();
+  if(currentPage === 'accounts') renderAccounts();
 }
 
 // Transfer Modal
@@ -2607,24 +2027,6 @@ function updateTransferHint() {
   }
 }
 
-function findAnyAccount(id) {
-  return D.accounts.indBanks.find(a=>a.id===id)
-      || D.accounts.indCards.find(a=>a.id===id)
-      || D.accounts.uaeAccounts.find(a=>a.id===id)
-      || D.accounts.loans.find(a=>a.id===id)
-      || D.accounts.chits.find(a=>a.id===id);
-}
-
-function getAccountBalance(acct, id) {
-  if(!acct) return null;
-  if(D.accounts.indBanks.find(a=>a.id===id))     return acct.balance || 0;
-  if(D.accounts.uaeAccounts.find(a=>a.id===id))  return (acct.balanceAED || 0) * D.aedRate;
-  if(D.accounts.indCards.find(a=>a.id===id))     return null; // CC — no balance floor check
-  if(D.accounts.loans.find(a=>a.id===id))        return null; // loans — no floor check
-  if(D.accounts.chits.find(a=>a.id===id))        return null;
-  return null;
-}
-
 function saveTransfer() {
   const rawAmt   = parseFloat(document.getElementById('tr-amt').value);
   const currency = document.getElementById('tr-currency')?.value || 'INR';
@@ -2634,31 +2036,7 @@ function saveTransfer() {
   const fromId = document.getElementById('tr-from').value;
   const toId   = document.getElementById('tr-to').value;
   const trType = document.getElementById('tr-type').value;
-
-  // ── Validation ────────────────────────────────────────────────────────────
-  // 1. Same account check
   if(fromId === toId) { alert('From and To accounts cannot be the same'); return; }
-
-  // 2. Source account must exist
-  const fromAcct = findAnyAccount(fromId);
-  if(!fromAcct) { alert('Source account not found. It may have been deleted.'); return; }
-
-  // 3. Destination account must exist
-  const toAcct = findAnyAccount(toId);
-  if(!toAcct) { alert('Destination account not found. It may have been deleted.'); return; }
-
-  // 4. Sufficient balance check (only for bank accounts — cards/loans can go negative)
-  const fromBal = getAccountBalance(fromAcct, fromId);
-  if(fromBal !== null && amt > fromBal + 0.01) {
-    const acctName = allTransferOptions().find(o=>o.value===fromId)?.label || 'source account';
-    const proceed = safeConfirm(`⚠️ Insufficient balance!
-
-${acctName} has ${fmt(fromBal)} but transfer is ${fmt(amt)}.
-
-Proceed anyway?`);
-    if(!proceed) return;
-  }
-  // ─────────────────────────────────────────────────────────────────────────
 
   const tId = Date.now().toString();
   D.transfers.push({
@@ -2675,12 +2053,18 @@ Proceed anyway?`);
   renderDashboard();
   renderPage(currentPage);
 
-  // Show balances after transfer — reuse fromAcct/toAcct already found in validation
+  // Show exact balances after transfer for confirmation
+  const fromAcctAfter = D.accounts.indBanks.find(a=>a.id===fromId) ||
+                        D.accounts.indCards.find(a=>a.id===fromId) ||
+                        D.accounts.uaeAccounts.find(a=>a.id===fromId);
+  const toAcctAfter   = D.accounts.indBanks.find(a=>a.id===toId) ||
+                        D.accounts.indCards.find(a=>a.id===toId) ||
+                        D.accounts.uaeAccounts.find(a=>a.id===toId);
   const fromName = allTransferOptions().find(o=>o.value===fromId)?.label?.split(' (')[0] || 'Source';
   const toName   = allTransferOptions().find(o=>o.value===toId)?.label?.split(' (')[0]   || 'Dest';
-  const fromBalDisp = fromAcct.balance !== undefined ? fmt(fromAcct.balance) : (fromAcct.balanceAED !== undefined ? fmtAED(fromAcct.balanceAED)+' AED' : '—');
-  const toBalDisp   = toAcct.balance   !== undefined ? fmt(toAcct.balance)   : (toAcct.balanceAED   !== undefined ? fmtAED(toAcct.balanceAED)+' AED'   : '—');
-  showToast(`✅ ${fmt(amt)} transferred · ${fromName}: ${fromBalDisp} · ${toName}: ${toBalDisp}`);
+  const fromBal  = fromAcctAfter ? (fromAcctAfter.balance !== undefined ? fmt(fromAcctAfter.balance) : fmtAED(fromAcctAfter.balanceAED||0)+' AED') : '—';
+  const toBal    = toAcctAfter   ? (toAcctAfter.balance   !== undefined ? fmt(toAcctAfter.balance)   : fmtAED(toAcctAfter.balanceAED||0)+' AED')   : '—';
+  showToast(`✅ ${fmt(amt)} transferred · ${fromName}: ${fromBal} · ${toName}: ${toBal}`);
 }
 
 function applyTransfer(fromId, toId, amt, trType, reverse) {
@@ -2755,6 +2139,7 @@ function applyTransfer(fromId, toId, amt, trType, reverse) {
 }
 
 function deleteTransfer(id) {
+  if(!confirm('Delete this transfer?')) return;
   const tr = D.transfers.find(t=>t.id===id);
   if(tr) {
     // Reverse the balance changes
@@ -2990,20 +2375,20 @@ function deductFromAccount(accountId, amount) {
     c.totalDue    = (c.totalDue    || 0) + amount;
     return;
   }
-  // UAE accounts — amount IS already in AED (stored natively), no conversion needed
+  // UAE accounts
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
   if(u) {
     if(u.type !== 'Credit Card') {
-      u.balanceAED = (u.balanceAED || 0) - amount;
+      u.balanceAED = (u.balanceAED || 0) - (amount / D.aedRate);
     } else {
-      u.outstandingAED = (u.outstandingAED || 0) + amount;
+      u.outstandingAED = (u.outstandingAED || 0) + (amount / D.aedRate);
       u.balanceAED = u.outstandingAED;
     }
     return;
   }
 }
 
-function refundToAccount(accountId, amount, amtAED) {
+function refundToAccount(accountId, amount) {
   let b = D.accounts.indBanks.find(a => a.id === accountId);
   if(b) {
     b.balance = (b.balance || 0) + amount;
@@ -3018,11 +2403,10 @@ function refundToAccount(accountId, amount, amtAED) {
   }
   let u = D.accounts.uaeAccounts.find(a => a.id === accountId);
   if(u) {
-    // amount IS already in AED (stored natively), use directly
     if(u.type !== 'Credit Card') {
-      u.balanceAED = (u.balanceAED || 0) + amount;
+      u.balanceAED = (u.balanceAED || 0) + (amount / D.aedRate);
     } else {
-      u.outstandingAED = Math.max(0, (u.outstandingAED || 0) - amount);
+      u.outstandingAED = Math.max(0, (u.outstandingAED || 0) - (amount / D.aedRate));
       u.balanceAED = u.outstandingAED;
     }
     return;
@@ -3232,18 +2616,9 @@ function refreshUAEFields(id) {
 // DELETE ACCOUNT
 // ══════════════════════════════════════════════════════════
 function deleteAccount(id, type) {
-  // Find the delete button to use twoTapDelete
-  const btn = document.activeElement;
-  const doDelete = () => {
-    D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
-    save(); closeModal('acct-modal'); renderPage(currentPage);
-    showToast('Account deleted');
-  };
-  if(btn && btn.tagName === 'BUTTON') {
-    twoTapDelete(btn, doDelete);
-  } else {
-    doDelete(); // fallback
-  }
+  if(!confirm('Delete this account? This cannot be undone.')) return;
+  D.accounts[type] = D.accounts[type].filter(a => a.id !== id);
+  save(); closeModal('acct-modal'); renderPage(currentPage);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3386,11 +2761,6 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'fintrack-backup-' + today() + '.json';
   a.click();
-  localStorage.setItem('fintrack_last_backup', Date.now().toString());
-  updateBackupStatus();
-  const banner = document.getElementById('backup-banner');
-  if(banner) banner.remove();
-  showToast('✅ Backup downloaded — save it to Google Drive!');
 }
 
 function importData(event) {
@@ -3401,7 +2771,7 @@ function importData(event) {
     try {
       const parsed = JSON.parse(e.target.result);
       if(!parsed.accounts || !parsed.expenses) { alert('Invalid backup file.'); return; }
-      if(safeConfirm('This will replace ALL current data with the backup. Continue?')) {
+      if(confirm('This will replace ALL current data with the backup. Continue?')) {
         D = parsed; save();
         renderPage(currentPage);
         alert('✅ Data restored successfully!');
@@ -3413,7 +2783,7 @@ function importData(event) {
 }
 
 function clearData() {
-  if(safeConfirm('Clear ALL data? This cannot be undone.')) {
+  if(confirm('Clear ALL data? This cannot be undone.')) {
     localStorage.removeItem('fintrack_data');
     D = JSON.parse(JSON.stringify(defaultData));
     renderDashboard();
@@ -3592,7 +2962,11 @@ function removeBackupReminder() {
 
 // Track backup date when export happens
 const _origExport = exportData;
-
+function exportData() {
+  _origExport();
+  localStorage.setItem('fintrack_last_backup', Date.now().toString());
+  removeBackupReminder();
+}
 
 // ══════════════════════════════════════════════════════════
 // LENT MODULE
@@ -3618,57 +2992,39 @@ function saveLent() {
   const friend = document.getElementById('lent-friend').value.trim();
   const amount = parseFloat(document.getElementById('lent-amount').value);
   const date   = document.getElementById('lent-date').value;
-  if(!validateFields([
-    {val:friend, label:'Friend name', type:'required'},
-    {val:friend, label:'Friend name', type:'maxlength', max:50},
-    {val:amount, label:'Amount', type:'amount'},
-    {val:date,   label:'Date',   type:'date'},
-  ])) return;
+  if(!friend) { alert('Enter friend name'); return; }
+  if(!amount || amount <= 0) { alert('Enter a valid amount'); return; }
 
-  const accountId = document.getElementById('lent-account').value;
   if(editingLentId) {
     const idx = D.lent.findIndex(l => l.id === editingLentId);
     if(idx >= 0) {
-      // Reverse old deduction, apply new
-      const old = D.lent[idx];
-      creditToAccount(old.accountId, old.amount);
-      D.lent[idx] = { ...old, friend, amount, date, accountId,
-        returnDate: document.getElementById('lent-return-date').value,
-        note: document.getElementById('lent-note').value
-      };
-      deductFromAccount(accountId, amount);
+      D.lent[idx].friend = friend;
+      D.lent[idx].amount = amount;
+      D.lent[idx].date = date;
+      D.lent[idx].returnDate = document.getElementById('lent-return-date').value;
+      D.lent[idx].note = document.getElementById('lent-note').value;
+      D.lent[idx].accountId = document.getElementById('lent-account').value;
     }
   } else {
     D.lent.push({
       id: Date.now().toString(),
-      friend, amount, date, accountId,
+      friend, amount, date,
+      accountId: document.getElementById('lent-account').value,
       returnDate: document.getElementById('lent-return-date').value,
       note: document.getElementById('lent-note').value,
       recovered: 0,
-      status: 'pending',
+      status: 'pending', // pending | partial | settled
       repayments: []
     });
-    // Deduct from account when money is lent out
-    deductFromAccount(accountId, amount);
-    showToast(`${fmt(amount)} lent to ${friend} — deducted from account`);
   }
   save(); closeModal('lent-modal');
-  renderLent(); renderDashLent(); renderDashboard();
+  renderLent(); renderDashLent();
 }
 
 function deleteLent(id) {
-  const entry = D.lent.find(l=>l.id===id);
-  if(entry) {
-    // Reverse the original deduction (money comes back)
-    creditToAccount(entry.accountId, entry.amount);
-    // Reverse any repayments already received (they were credited back)
-    (entry.repayments||[]).forEach(r => {
-      if(r.accountId) deductFromAccount(r.accountId, r.amount);
-    });
-    showToast('Lent entry deleted — account balances reversed');
-  }
+  if(!confirm('Delete this entry?')) return;
   D.lent = D.lent.filter(l => l.id !== id);
-  save(); renderLent(); renderDashLent(); renderDashboard();
+  save(); renderLent(); renderDashLent();
 }
 
 let repayingLentId = null;
@@ -3699,39 +3055,31 @@ function openRepayModal(id) {
 
 function saveRepayment() {
   const amt = parseFloat(document.getElementById('repay-amount').value);
-  if(!validateFields([{val:amt, label:'Amount', type:'amount'}])) return;
+  if(!amt || amt <= 0) { alert('Enter valid amount'); return; }
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
-  const repayAccountId = document.getElementById('repay-account').value;
   entry.recovered = Math.min(entry.recovered + amt, entry.amount);
   entry.repayments.push({
     date: document.getElementById('repay-date').value,
     amount: amt,
-    accountId: repayAccountId,
+    accountId: document.getElementById('repay-account').value,
     note: document.getElementById('repay-note').value
   });
   entry.status = entry.recovered >= entry.amount ? 'settled' : 'partial';
-  // Credit repayment back to the account
-  creditToAccount(repayAccountId, amt);
-  save(); closeModal('repay-modal'); renderLent(); renderDashLent(); renderDashboard();
-  showToast(`+${fmt(amt)} received from ${entry.friend} — credited to account`);
+  save(); closeModal('repay-modal'); renderLent(); renderDashLent();
 }
 
 function markSettled() {
   const entry = D.lent.find(l => l.id === repayingLentId);
   if(!entry) return;
-  if(!safeConfirm(`Mark ${entry.friend}'s ₹${entry.amount.toLocaleString()} as fully settled?`)) return;
+  if(!confirm(`Mark ${entry.friend}'s ₹${entry.amount.toLocaleString()} as fully settled?`)) return;
   const remaining = entry.amount - entry.recovered; // calculate BEFORE updating
   entry.recovered = entry.amount;
   entry.status = 'settled';
   if(remaining > 0) {
-    const settleAcct = document.getElementById('repay-account')?.value || entry.accountId;
-    entry.repayments.push({ date: today(), amount: remaining, note: 'Marked settled', accountId: settleAcct });
-    // Credit remaining to account
-    if(settleAcct) creditToAccount(settleAcct, remaining);
+    entry.repayments.push({ date: today(), amount: remaining, note: 'Marked settled', accountId: '' });
   }
-  save(); closeModal('repay-modal'); renderLent(); renderDashLent(); renderDashboard();
-  showToast(`✅ Settled with ${entry.friend}`);
+  save(); closeModal('repay-modal'); renderLent(); renderDashLent();
 }
 
 function switchLentTab(tab) {
@@ -3811,7 +3159,7 @@ function renderLent() {
       <div style="display:flex;gap:8px">
         ${entry.status !== 'settled' ? `<button onclick="openRepayModal('${entry.id}')" style="flex:1;padding:9px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:8px;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;">💰 Repayment</button>` : ''}
         <button onclick="openLentModal('${entry.id}')" style="flex:1;padding:9px;background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:8px;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;">✏️ Edit</button>
-        <button onclick="twoTapDelete(this,()=>deleteLent('${entry.id}'))" style="padding:9px 12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
+        <button onclick="deleteLent('${entry.id}')" style="padding:9px 12px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
       </div>
     </div>`;
   }).join('');
@@ -3871,83 +3219,44 @@ function openIncomeModal(id){
   const e=id?(D.income||[]).find(i=>i.id===id):null;
   document.getElementById('income-modal-title').textContent=id?'✏️ Edit Income':'💰 Add Income';
   document.getElementById('inc-desc').value=e?e.desc:'';
-  // If UAE income, show stored AED amount; else show INR amount
-  document.getElementById('inc-amount').value=e?(e.amountAED||e.amount):'';
+  document.getElementById('inc-amount').value=e?e.amount:'';
   document.getElementById('inc-date').value=e?e.date:today();
   document.getElementById('inc-note').value=e?(e.note||''):'';
   document.getElementById('inc-category').value=e?e.category:'Salary';
   const opts=allAccountOptions().map(o=>`<option value="${o.value}" ${e&&e.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
   document.getElementById('inc-account').innerHTML=opts;
   openModal('income-modal');
-  setTimeout(updateIncCurrency, 50);
-}
-
-function updateIncCurrency() {
-  const accountId = document.getElementById('inc-account')?.value;
-  const amt = parseFloat(document.getElementById('inc-amount')?.value)||0;
-  const hint = document.getElementById('inc-currency-hint');
-  const lbl  = document.getElementById('inc-amt-label');
-  const u = D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  if(u) {
-    if(lbl) lbl.textContent = 'Amount (AED)';
-    if(hint) { hint.style.display='block'; hint.textContent = amt>0 ? `= ₹${(amt*D.aedRate).toLocaleString('en-IN',{maximumFractionDigits:0})} at rate ${D.aedRate}` : 'Enter amount in AED'; }
-  } else {
-    if(lbl) lbl.textContent = 'Amount (₹)';
-    if(hint) { hint.style.display='none'; }
-  }
 }
 
 function saveIncome(){
   const desc=document.getElementById('inc-desc').value.trim();
-  const rawAmount=parseFloat(document.getElementById('inc-amount').value);
+  const amount=parseFloat(document.getElementById('inc-amount').value);
   const date=document.getElementById('inc-date').value;
   const cat=document.getElementById('inc-category').value;
   const accountId=document.getElementById('inc-account').value;
   const note=document.getElementById('inc-note').value.trim();
-  if(!validateFields([
-    {val:desc,      label:'Description', type:'required'},
-    {val:desc,      label:'Description', type:'maxlength', max:100},
-    {val:rawAmount, label:'Amount',      type:'amount'},
-    {val:date,      label:'Date',        type:'date'},
-  ])) return;
+  if(!desc){alert('Enter a description');return;}
+  if(!amount||amount<=0){alert('Enter a valid amount');return;}
   if(!D.income)D.income=[];
-  // For UAE accounts, store AED natively; for others store INR
-  const isUAEInc = !!D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  const amount = rawAmount;           // store as-is (AED for UAE, INR for others)
-  const amountAED = isUAEInc ? rawAmount : null;
-
   if(editingIncId){
     const old=(D.income||[]).find(i=>i.id===editingIncId);
-    if(old){
-      // Reverse old credit using original stored value
-      const oldAmt = old.amountAED || old.amount;
-      deductFromAccount(old.accountId, oldAmt);
-    }
+    if(old)deductFromAccount(old.accountId,old.amount);
     const idx=(D.income||[]).findIndex(i=>i.id===editingIncId);
-    if(idx>=0){
-      const updated={id:editingIncId,desc,amount,date,category:cat,accountId,note};
-      if(amountAED!==null) updated.amountAED=amountAED;
-      D.income[idx]=updated;
-    }
+    if(idx>=0)D.income[idx]={id:editingIncId,desc,amount,date,category:cat,accountId,note};
   }else{
-    const entry={id:Date.now().toString(),desc,amount,date,category:cat,accountId,note};
-    if(amountAED!==null) entry.amountAED=amountAED;
-    D.income.push(entry);
+    D.income.push({id:Date.now().toString(),desc,amount,date,category:cat,accountId,note});
   }
-  // Credit account — pass raw amount (AED for UAE, INR for others)
-  creditToAccount(accountId, amount);
+  creditToAccount(accountId,amount);
   save();closeModal('income-modal');renderIncome();renderDashboard();
   showToast(`+${fmt(amount)} credited to ${getAcctName(accountId)}`);
 }
 
 function deleteIncome(id){
+  if(!confirm('Delete this income entry?'))return;
   const e=(D.income||[]).find(i=>i.id===id);
-  if(!e)return;
-  const refundAmt = e.amountAED || e.amount;
-  deductFromAccount(e.accountId, refundAmt);
+  if(e)deductFromAccount(e.accountId,e.amount);
   D.income=(D.income||[]).filter(i=>i.id!==id);
   save();renderIncome();renderDashboard();
-  showToast('Income deleted — account balance reversed');
 }
 
 function changeIncomeMonth(dir){
@@ -3980,11 +3289,7 @@ function creditToAccount(accountId,amount){
   const c=D.accounts.indCards.find(a=>a.id===accountId);
   if(c){c.outstanding=Math.max(0,(c.outstanding||0)-amount);c.totalDue=Math.max(0,(c.totalDue||0)-amount);return;}
   const u=D.accounts.uaeAccounts.find(a=>a.id===accountId);
-  if(u){
-    // amount is AED when called from income/expense with UAE account (stored natively)
-    if(u.type!=='Credit Card') u.balanceAED=(u.balanceAED||0)+amount;
-    else{u.outstandingAED=Math.max(0,(u.outstandingAED||0)-amount);u.balanceAED=u.outstandingAED;}
-  }
+  if(u){if(u.type!=='Credit Card')u.balanceAED=(u.balanceAED||0)+(amount/D.aedRate);else{u.outstandingAED=Math.max(0,(u.outstandingAED||0)-(amount/D.aedRate));u.balanceAED=u.outstandingAED;}}
 }
 
 function getAcctName(id){return allAccountOptions().find(o=>o.value===id)?.label||'account';}
@@ -3996,8 +3301,8 @@ function renderDashIncome(){
   const incomes=monthIncome(now.getMonth(),now.getFullYear());
   if(incomes.length===0){el.innerHTML='<div class="empty-state" style="padding:16px 0"><div class="icon" style="font-size:28px">💰</div>No income this month</div>';return;}
   const catTotals={};
-  incomes.forEach(i=>{const v=i.amountAED?i.amountAED*D.aedRate:i.amount;catTotals[i.category]=(catTotals[i.category]||0)+v;});
-  const total=incomes.reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0);
+  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
+  const total=incomes.reduce((s,i)=>s+i.amount,0);
   el.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
     const c=getIncCat(cat);
     return `<div class="acct-item" onclick="switchPage('income')">
@@ -4013,7 +3318,7 @@ function renderIncome(){
   document.getElementById('income-month-label').textContent=MONTHS[incViewMonth]+' '+incViewYear;
   const incomes=monthIncome(incViewMonth,incViewYear);
   const exps=monthExpenses(incViewMonth,incViewYear);
-  const totalInc=incomes.reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount),0);
+  const totalInc=incomes.reduce((s,i)=>s+i.amount,0);
   const totalExp=exps.reduce((s,e)=>s+e.amount,0);
   const saved=totalInc-totalExp;
   const savRate=totalInc>0?Math.max(0,saved/totalInc):0;
@@ -4028,7 +3333,7 @@ function renderIncome(){
   document.getElementById('income-sub').textContent=`${MONTHS_SHORT[incViewMonth]} ${incViewYear} · ${incomes.length} entries · Savings ${(savRate*100).toFixed(0)}%`;
 
   const catTotals={};
-  incomes.forEach(i=>{const v=i.amountAED?i.amountAED*D.aedRate:i.amount;catTotals[i.category]=(catTotals[i.category]||0)+v;});
+  incomes.forEach(i=>{catTotals[i.category]=(catTotals[i.category]||0)+i.amount;});
   const breakdown=document.getElementById('income-breakdown');
   if(Object.keys(catTotals).length===0){breakdown.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px 0;">No income this month</div>';
   }else{breakdown.innerHTML=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
@@ -4051,11 +3356,10 @@ function renderIncome(){
       <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.desc}</div>
         <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(i.date)} · ${acc?acc.name:'Unknown'}${i.note?' · '+i.note:''}</div></div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">${i.amountAED ? 'AED '+i.amountAED : '+'+fmt(i.amount)}</div>
-        ${i.amountAED ? `<div style="font-size:9px;color:var(--text3);">≈${fmt(i.amountAED*D.aedRate)}</div>` : ''}
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--green)">+${fmt(i.amount)}</div>
         <div style="display:flex;gap:6px;margin-top:4px;justify-content:flex-end;">
           <button onclick="openIncomeModal('${i.id}')" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);border-radius:6px;padding:3px 8px;color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;">✏️</button>
-          <button onclick="twoTapDelete(this,()=>deleteIncome('${i.id}'))" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
+          <button onclick="deleteIncome('${i.id}')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:6px;padding:3px 8px;color:var(--red);font-size:10px;cursor:pointer;">🗑️</button>
         </div>
       </div>
     </div>`;}).join('');
@@ -4086,7 +3390,7 @@ function pinPress(val){
       const forgot=document.getElementById('pin-forgot');if(forgot&&pinAttempts>=3)forgot.style.display='block';
       setTimeout(()=>{pinBuffer='';updatePinDots();},600);}},100);}
 }
-function forgotPin(){if(safeConfirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');showPinScreen(false);updatePinStatus();showToast('PIN removed');}}
+function forgotPin(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');showPinScreen(false);updatePinStatus();showToast('PIN removed');}}
 function updateSetupDots(){for(let i=0;i<4;i++){const d=document.getElementById('sdot-'+i);if(d)d.className='pin-dot'+(i<pinSetupBuffer.length?' filled':'');}}
 function pinSetupPress(val){
   if(val==='⌫'){pinSetupBuffer=pinSetupBuffer.slice(0,-1);updateSetupDots();return;}
@@ -4112,7 +3416,7 @@ function openPinSetup(){
   if(btn)btn.style.display=localStorage.getItem('fintrack_pin')?'block':'none';
   updateSetupDots();openModal('pin-setup-modal');
 }
-function disablePIN(){if(safeConfirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');closeModal('pin-setup-modal');updatePinStatus();showToast('PIN removed');}}
+function disablePIN(){if(confirm('Remove PIN lock?')){localStorage.removeItem('fintrack_pin');closeModal('pin-setup-modal');updatePinStatus();showToast('PIN removed');}}
 function updatePinStatus(){const el=document.getElementById('pin-status');if(el)el.textContent=localStorage.getItem('fintrack_pin')?'✅ Enabled — tap to change':'Not enabled';}
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){localStorage.setItem('fintrack_last_active',Date.now().toString());}
@@ -4312,733 +3616,160 @@ function saveSMSExpense(){
   smsParsed=null;
 }
 
-// ══════════════════════════════════════════════════════════
-// BORROWINGS
-// ══════════════════════════════════════════════════════════
-let currentBorrowId = null;
-let borrowTab = 'all';
-
-function openBorrowModal(id) {
-  currentBorrowId = id || null;
-  const b = id ? (D.borrowings||[]).find(x=>x.id===id) : null;
-  document.getElementById('borrow-modal-title').textContent = id ? '✏️ Edit Borrowing' : '💸 Add Borrowing';
-  document.getElementById('borrow-lender').value      = b ? b.lender      : '';
-  document.getElementById('borrow-amount').value      = b ? b.amount      : '';
-  document.getElementById('borrow-date').value        = b ? b.date        : today();
-  document.getElementById('borrow-return-date').value = b ? (b.returnDate||'') : '';
-  document.getElementById('borrow-rate').value        = b ? (b.rate||0)   : 0;
-  document.getElementById('borrow-note').value        = b ? (b.note||'')  : '';
-  const opts = allAccountOptions().map(o=>`<option value="${o.value}" ${b&&b.accountId===o.value?'selected':''}>${o.label}</option>`).join('');
-  document.getElementById('borrow-account').innerHTML = opts;
-  openModal('borrow-modal');
-}
-
-function saveBorrowing() {
-  const lender    = document.getElementById('borrow-lender').value.trim();
-  const amount    = parseFloat(document.getElementById('borrow-amount').value);
-  const date      = document.getElementById('borrow-date').value;
-  const accountId = document.getElementById('borrow-account').value;
-  const returnDate= document.getElementById('borrow-return-date').value;
-  const rate      = parseFloat(document.getElementById('borrow-rate').value)||0;
-  const note      = document.getElementById('borrow-note').value.trim();
-  if(!validateFields([
-    {val:lender, label:'Lender name', type:'required'},
-    {val:lender, label:'Lender name', type:'maxlength', max:50},
-    {val:amount, label:'Amount', type:'amount'},
-    {val:date,   label:'Date',   type:'date'},
-  ])) return;
-  if(!D.borrowings) D.borrowings = [];
-  if(currentBorrowId) {
-    const idx = D.borrowings.findIndex(b=>b.id===currentBorrowId);
-    if(idx>=0) {
-      const old = D.borrowings[idx];
-      // Reverse old credit
-      deductFromAccount(old.accountId, old.amount);
-      D.borrowings[idx] = { ...old, lender, amount, date, accountId, returnDate, rate, note };
-    }
-  } else {
-    D.borrowings.push({
-      id: Date.now().toString(),
-      lender, amount, date, accountId, returnDate, rate, note,
-      status: 'pending',
-      repaid: 0,
-      repayments: []
-    });
-  }
-  // Credit the account (money received)
-  creditToAccount(accountId, amount);
-  save(); closeModal('borrow-modal'); renderBorrowings(); renderDashboard();
-  showToast(`💸 ${fmt(amount)} borrowed from ${lender}`);
-}
-
-function deleteBorrowing(id) {
-  if(!safeConfirm('Delete this borrowing?')) return;
-  const b = (D.borrowings||[]).find(x=>x.id===id);
-  if(b) {
-    // Reverse the credit (money was received, remove from account)
-    deductFromAccount(b.accountId, b.amount);
-    // Also reverse any repayments
-    (b.repayments||[]).forEach(r => creditToAccount(r.accountId, r.amount));
-    showToast('Borrowing deleted and balances reversed');
-  }
-  D.borrowings = (D.borrowings||[]).filter(x=>x.id!==id);
-  save(); renderBorrowings(); renderDashboard();
-}
-
-function openBrepayModal(id) {
-  currentBorrowId = id;
-  const b = (D.borrowings||[]).find(x=>x.id===id);
-  if(!b) return;
-  const outstanding = b.amount - b.repaid;
-  document.getElementById('brepay-modal-title').textContent = `💰 Repay to ${b.lender}`;
-  document.getElementById('brepay-summary').innerHTML = `
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="color:var(--text3)">Total Borrowed</span><span style="font-weight:700">${fmt(b.amount)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="color:var(--text3)">Already Repaid</span><span style="color:var(--green);font-weight:700">${fmt(b.repaid)}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;">
-      <span style="color:var(--text3)">Outstanding</span><span style="color:var(--red);font-weight:700;font-size:16px">${fmt(outstanding)}</span>
-    </div>`;
-  document.getElementById('brepay-amount').value = outstanding;
-  document.getElementById('brepay-date').value   = today();
-  document.getElementById('brepay-note').value   = '';
-  const opts = allAccountOptions().map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-  document.getElementById('brepay-account').innerHTML = opts;
-  openModal('brepay-modal');
-}
-
-function saveBorrowRepayment() {
-  const amount    = parseFloat(document.getElementById('brepay-amount').value);
-  const date      = document.getElementById('brepay-date').value;
-  const accountId = document.getElementById('brepay-account').value;
-  const note      = document.getElementById('brepay-note').value.trim();
-  if(!validateFields([
-    {val:amount, label:'Amount', type:'amount'},
-    {val:date,   label:'Date',   type:'date'},
-  ])) return;
-  const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
-  if(!b) return;
-  const outstanding = b.amount - b.repaid;
-  if(amount > outstanding + 0.01) { alert(`Max repayment is ${fmt(outstanding)}`); return; }
-  if(!b.repayments) b.repayments = [];
-  b.repayments.push({ id: Date.now().toString(), amount, date, accountId, note });
-  b.repaid = (b.repaid||0) + amount;
-  if(b.repaid >= b.amount - 0.01) b.status = 'settled';
-  else b.status = 'partial';
-  // Deduct repayment from account
-  deductFromAccount(accountId, amount);
-  save(); closeModal('brepay-modal'); renderBorrowings(); renderDashboard();
-  showToast(`✅ ${fmt(amount)} repaid to ${b.lender}${b.status==='settled'?' — Fully Settled!':''}`);
-}
-
-function markBorrowSettled() {
-  const b = (D.borrowings||[]).find(x=>x.id===currentBorrowId);
-  if(!b) return;
-  if(!safeConfirm(`Mark borrowing from ${b.lender} as fully settled?`)) return;
-  b.status = 'settled';
-  b.repaid = b.amount;
-  save(); closeModal('brepay-modal'); renderBorrowings(); renderDashboard();
-  showToast(`✅ Borrowing from ${b.lender} marked as settled`);
-}
-
-function switchBorrowTab(tab) {
-  borrowTab = tab;
-  ['all','pending','partial','settled'].forEach(t => {
-    const el = document.getElementById('btab-'+t);
-    if(!el) return;
-    el.style.background   = t===tab ? 'var(--surface)'  : 'var(--surface2)';
-    el.style.color        = t===tab ? 'var(--text)'     : 'var(--text3)';
-    el.style.borderColor  = t===tab ? 'var(--border)'   : 'transparent';
-    el.style.fontWeight   = t===tab ? '700'             : '400';
-  });
-  renderBorrowings();
-}
-
-function renderDashBorrow() {
-  const el = document.getElementById('dash-borrow');
-  if(!el) return;
-  const active = (D.borrowings||[]).filter(b=>b.status!=='settled').slice(0,3);
-  if(active.length===0) {
-    el.innerHTML='<div class="empty-state" style="padding:12px 0"><div class="icon" style="font-size:24px">💸</div>No active borrowings</div>';
-    return;
-  }
-  el.innerHTML = active.map(b => {
-    const outstanding = b.amount - b.repaid;
-    const pct = b.amount > 0 ? Math.min(b.repaid/b.amount,1) : 0;
-    const overdue = b.returnDate && new Date(b.returnDate) < new Date();
-    return `<div class="acct-item" onclick="switchPage('borrow')">
-      <div class="acct-icon" style="background:rgba(248,113,113,0.1)">💸</div>
-      <div class="acct-info">
-        <div class="acct-name">${b.lender}</div>
-        <div class="acct-type">${overdue?'⚠️ Overdue · ':''} Repaid ${fmt(b.repaid)} of ${fmt(b.amount)}</div>
-      </div>
-      <div class="acct-bal"><div class="amount" style="color:var(--red)">₹${outstanding.toLocaleString('en-IN',{maximumFractionDigits:0})}</div></div>
-    </div>`;
-  }).join('');
-}
-
-function renderBorrowings() {
-  if(!D.borrowings) D.borrowings = [];
-  const total     = D.borrowings.reduce((s,b)=>s+b.amount, 0);
-  const repaid    = D.borrowings.reduce((s,b)=>s+b.repaid, 0);
-  const outstanding = total - repaid;
-  document.getElementById('borrow-total').textContent       = fmt(total);
-  document.getElementById('borrow-repaid').textContent      = fmt(repaid);
-  document.getElementById('borrow-outstanding').textContent = fmt(outstanding);
-  const count = D.borrowings.length;
-  const active = D.borrowings.filter(b=>b.status!=='settled').length;
-  document.getElementById('borrow-sub').textContent = `${count} borrowing${count!==1?'s':''} · ${active} active`;
-
-  const filtered = borrowTab === 'all' ? D.borrowings :
-                   D.borrowings.filter(b => b.status === borrowTab);
-
-  const el = document.getElementById('borrow-list');
-  if(!el) return;
-  if(filtered.length===0) {
-    el.innerHTML=`<div class="empty-state"><div class="icon">💸</div>No ${borrowTab==='all'?'':''+borrowTab+' '}borrowings yet.<br>Tap + to add one!</div>`;
-    return;
-  }
-
-  el.innerHTML = [...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(b => {
-    const outstanding = b.amount - b.repaid;
-    const pct = b.amount>0 ? Math.min(b.repaid/b.amount,1) : 0;
-    const overdue = b.returnDate && new Date(b.returnDate)<new Date() && b.status!=='settled';
-    const statusColor = b.status==='settled'?'var(--green)':overdue?'var(--red)':b.status==='partial'?'var(--orange)':'var(--text3)';
-    const statusLabel = b.status==='settled'?'✅ Settled':overdue?'⚠️ Overdue':b.status==='partial'?'Partial':'Pending';
-    return `
-    <div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:14px 14px 10px;display:flex;align-items:flex-start;gap:12px;">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">💸</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <div style="font-size:14px;font-weight:600">${b.lender}</div>
-            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--red)">₹${outstanding.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="font-size:11px;color:var(--text3);">${fmtDate(b.date)}${b.returnDate?' · Due: '+fmtDate(b.returnDate):''}${b.rate?` · ${b.rate}% p.a.`:''}</div>
-            <div style="font-size:10px;font-weight:600;color:${statusColor}">${statusLabel}</div>
-          </div>
-        </div>
-      </div>
-
-      ${b.status!=='settled'?`
-      <div style="padding:0 14px 8px;">
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct*100}%;background:var(--green)"></div></div>
-        <div class="prog-labels"><span>Repaid ${fmt(b.repaid)}</span><span>Of ${fmt(b.amount)}</span></div>
-      </div>`:''}
-
-      ${b.note?`<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);">📝 ${b.note}</div>`:''}
-
-      ${(b.repayments||[]).length>0?`
-      <div style="border-top:1px solid var(--border);padding:8px 14px;">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Repayments</div>
-        ${[...(b.repayments||[])].reverse().map(r=>`
-          <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
-            <span style="color:var(--text3)">${fmtDate(r.date)}${r.note?' · '+r.note:''}</span>
-            <span style="color:var(--green);font-weight:600">+${fmt(r.amount)}</span>
-          </div>`).join('')}
-      </div>`:''}
-
-      <div style="border-top:1px solid var(--border);display:flex;">
-        <button onclick="openBorrowModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;">✏️ Edit</button>
-        ${b.status!=='settled'?`<button onclick="openBrepayModal('${b.id}')" style="flex:1;padding:10px;background:none;border:none;border-right:1px solid var(--border);color:var(--green);font-size:12px;font-weight:600;cursor:pointer;">💰 Repay</button>`:''}
-        <button onclick="twoTapDelete(this,()=>deleteBorrowing('${b.id}'))" style="flex:1;padding:10px;background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-}
 
 // ══════════════════════════════════════════════════════════
-// DEBT OVERVIEW
-// ══════════════════════════════════════════════════════════
-let debtStrategy = 'avalanche';
-
-function switchDebtStrategy(s) {
-  debtStrategy = s;
-  ['avalanche','snowball'].forEach(t => {
-    const btn = document.getElementById('dstrat-'+t);
-    if(!btn) return;
-    const isActive = t===s;
-    btn.style.background    = isActive ? 'rgba(212,168,67,0.1)'  : 'var(--surface2)';
-    btn.style.borderColor   = isActive ? 'rgba(212,168,67,0.4)'  : 'var(--border)';
-    btn.style.color         = isActive ? 'var(--gold)' : 'var(--text3)';
-    btn.style.fontWeight    = isActive ? '700' : '400';
-  });
-  const desc = document.getElementById('debt-strategy-desc');
-  if(desc) desc.textContent = s==='avalanche'
-    ? 'Avalanche: Pay highest interest first — saves the most money'
-    : 'Snowball: Pay smallest balance first — builds momentum';
-  renderDebtOverview();
-}
-
-function renderDebtOverview() {
-  // ── Gather all debts ─────────────────────────────────────────────────────
-  const debts = [];
-
-  // EMI Loans
-  D.accounts.loans.filter(l=>(l.outstanding||0)>0).forEach(l => {
-    debts.push({
-      name: l.name, type: l.loanType||'emi', lender: l.lender||'',
-      outstanding: l.outstanding||0,
-      rate: l.rate||0,
-      monthlyPayment: l.emi||0,
-      dueDay: l.dueDay||1,
-      color: '#F87171', icon: '🏠'
-    });
-  });
-
-  // Indian Credit Cards
-  D.accounts.indCards.filter(c=>(c.outstanding||0)>0).forEach(c => {
-    // Estimate monthly minimum
-    debts.push({
-      name: c.name, type: 'credit_card', lender: '',
-      outstanding: c.outstanding||0,
-      rate: c.rate||36, // typical CC rate if not set
-      monthlyPayment: c.minDue||0,
-      totalDue: c.totalDue||0,
-      limit: c.limit||0,
-      dueDay: c.dueDate||1,
-      color: '#FB923C', icon: '💳'
-    });
-  });
-
-  // UAE CC
-  D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card'&&(u.outstandingAED||0)>0).forEach(u => {
-    debts.push({
-      name: u.name, type: 'credit_card', lender: 'UAE',
-      outstanding: (u.outstandingAED||0)*D.aedRate,
-      rate: u.rate||36,
-      monthlyPayment: (u.minDueAED||0)*D.aedRate,
-      limit: (u.limitAED||0)*D.aedRate,
-      color: '#FB923C', icon: '💳🇦🇪'
-    });
-  });
-
-  // Borrowings
-  (D.borrowings||[]).filter(b=>b.status!=='settled'&&(b.amount-b.repaid)>0).forEach(b => {
-    debts.push({
-      name: b.lender, type: 'informal', lender: b.lender,
-      outstanding: b.amount - b.repaid,
-      rate: b.rate||0,
-      monthlyPayment: 0,
-      color: '#60A5FA', icon: '🤝'
-    });
-  });
-
-  if(debts.length===0) {
-    document.getElementById('debt-list').innerHTML = '<div class="empty-state"><div class="icon">🎉</div>No active debts!<br>Debt free!</div>';
-    document.getElementById('debt-total').textContent = '₹0';
-    document.getElementById('debt-emi').textContent   = '₹0';
-    document.getElementById('debt-ratio').textContent = '0%';
-    return;
-  }
-
-  // ── Totals ────────────────────────────────────────────────────────────────
-  const totalDebt = debts.reduce((s,d)=>s+d.outstanding, 0);
-  const totalEMI  = debts.reduce((s,d)=>s+d.monthlyPayment, 0);
-
-  // Monthly income for ratio
-  const now = new Date();
-  const monthInc = monthIncome(now.getMonth(), now.getFullYear())
-    .reduce((s,i)=>s+(i.amountAED?i.amountAED*D.aedRate:i.amount), 0);
-  const debtRatio = monthInc > 0 ? (totalEMI/monthInc*100).toFixed(0)+'%' : '—';
-  const debtRatioNum = monthInc > 0 ? totalEMI/monthInc : 0;
-
-  document.getElementById('debt-total').textContent = fmt(totalDebt);
-  document.getElementById('debt-emi').textContent   = fmt(totalEMI);
-  document.getElementById('debt-ratio').textContent = debtRatio;
-  document.getElementById('debt-sub').textContent   = `${debts.length} active debt${debts.length!==1?'s':''} · Total ${fmt(totalDebt)}`;
-
-  // CC Utilization
-  const totalCCOutstanding = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0),0)
-    + D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate,0);
-  const totalCCLimit = D.accounts.indCards.reduce((s,c)=>s+(c.limit||0),0)
-    + D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.limitAED||0)*D.aedRate,0);
-  const ccUtil = totalCCLimit>0 ? totalCCOutstanding/totalCCLimit : 0;
-  const ccUtilColor = ccUtil<0.3?'var(--green)':ccUtil<0.6?'var(--orange)':'var(--red)';
-
-  const ccUtilEl = document.getElementById('debt-cc-util');
-  const ccBarEl  = document.getElementById('debt-cc-util-bar');
-  if(ccUtilEl) { ccUtilEl.textContent=(ccUtil*100).toFixed(1)+'%'; ccUtilEl.style.color=ccUtilColor; }
-  if(ccBarEl)  { ccBarEl.style.width=Math.min(ccUtil*100,100)+'%'; ccBarEl.style.background=ccUtilColor; }
-
-  // EMI % of income
-  const emiPctEl  = document.getElementById('debt-emi-pct');
-  const emiBarEl  = document.getElementById('debt-emi-pct-bar');
-  const emiColor  = debtRatioNum<0.3?'var(--green)':debtRatioNum<0.5?'var(--orange)':'var(--red)';
-  if(emiPctEl) { emiPctEl.textContent=debtRatio; emiPctEl.style.color=emiColor; }
-  if(emiBarEl) { emiBarEl.style.width=Math.min(debtRatioNum*100,100)+'%'; emiBarEl.style.background=emiColor; }
-
-  // ── Sort by strategy ──────────────────────────────────────────────────────
-  const sorted = [...debts].sort((a,b) =>
-    debtStrategy==='avalanche' ? b.rate-a.rate : a.outstanding-b.outstanding
-  );
-
-  // ── Render debt cards ─────────────────────────────────────────────────────
-  const el = document.getElementById('debt-list');
-  el.innerHTML = sorted.map((d,i) => {
-    const interestPerMonth = d.outstanding * (d.rate/100/12);
-    const monthsToPayoff = d.monthlyPayment > interestPerMonth
-      ? Math.ceil(d.outstanding / (d.monthlyPayment - interestPerMonth))
-      : null;
-    const totalInterest = monthsToPayoff
-      ? Math.max(0, (d.monthlyPayment * monthsToPayoff) - d.outstanding)
-      : null;
-    const pctOfTotal = totalDebt>0 ? d.outstanding/totalDebt : 0;
-    const priority = i===0 ? '🎯 Pay First' : i===1 ? '2nd' : `${i+1}th`;
-
-    return `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:12px 14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:20px">${d.icon}</span>
-            <div>
-              <div style="font-size:14px;font-weight:600">${d.name}</div>
-              <div style="font-size:10px;color:var(--text3)">${d.type==='credit_card'?'Credit Card':d.type==='informal'?'Informal Loan':'EMI Loan'}${d.lender?' · '+d.lender:''}</div>
-            </div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:${d.color}">${fmt(d.outstanding)}</div>
-            <div style="font-size:10px;color:${i===0?'var(--gold)':'var(--text3)'};font-weight:${i===0?'700':'400'}">${priority}</div>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
-          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
-            <div style="font-size:9px;color:var(--text3)">INTEREST</div>
-            <div style="font-size:13px;font-weight:700;color:var(--red)">${d.rate}% p.a.</div>
-          </div>
-          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
-            <div style="font-size:9px;color:var(--text3)">MONTHLY</div>
-            <div style="font-size:13px;font-weight:700">${d.monthlyPayment>0?fmt(d.monthlyPayment):'—'}</div>
-          </div>
-          <div style="background:var(--surface2);border-radius:7px;padding:7px 8px;">
-            <div style="font-size:9px;color:var(--text3)">PAYOFF</div>
-            <div style="font-size:13px;font-weight:700;color:${monthsToPayoff&&monthsToPayoff<12?'var(--green)':'var(--text)'}">${monthsToPayoff?monthsToPayoff+' mo':'—'}</div>
-          </div>
-        </div>
-
-        ${totalInterest !== null ? `<div style="font-size:11px;color:var(--text3);">Total interest to pay: <span style="color:var(--red);font-weight:600">${fmt(totalInterest)}</span></div>` : ''}
-
-        <div class="prog-bar" style="margin-top:8px;">
-          <div class="prog-fill" style="width:${pctOfTotal*100}%;background:${d.color}"></div>
-        </div>
-        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${(pctOfTotal*100).toFixed(0)}% of total debt</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-
-// ══════════════════════════════════════════════════════════
-// LOAN PAYOFF + NET WORTH PREDICTOR
+// SMS AUTO SCANNER
 // ══════════════════════════════════════════════════════════
 
-function getAvgMonthlySurplus(months) {
-  // Average over last N months of actual data
-  const now = new Date();
-  let totalInc = 0, totalExp = 0, count = 0;
-  for(let i = 0; i < months; i++) {
-    let m = now.getMonth() - i;
-    let y = now.getFullYear();
-    while(m < 0) { m += 12; y--; }
-    const inc = monthIncome(m, y).reduce((s,x)=>s+(x.amountAED?x.amountAED*D.aedRate:x.amount), 0);
-    const exp = monthExpenses(m, y).reduce((s,x)=>s+(x.amountAED?x.amountAED*D.aedRate:x.amount), 0);
-    if(inc > 0 || exp > 0) { totalInc+=inc; totalExp+=exp; count++; }
-  }
-  if(count === 0) return { avgInc:0, avgExp:0, surplus:0 };
-  const avgInc = totalInc/count;
-  const avgExp = totalExp/count;
-  return { avgInc, avgExp, surplus: avgInc - avgExp };
+function toggleAutoSMSScan(enabled) {
+  localStorage.setItem('ft_auto_sms', enabled ? '1' : '0');
+  const knob = document.getElementById('auto-sms-knob');
+  const toggle = document.getElementById('auto-sms-toggle');
+  if(knob) knob.style.transform = enabled ? 'translateX(20px)' : '';
+  if(knob) knob.style.background = enabled ? 'var(--teal)' : 'var(--text3)';
+  showToast(enabled ? '✅ Auto SMS scan enabled' : 'Auto SMS scan disabled');
 }
 
-function calcLoanPayoff(outstanding, rate, emi) {
-  // Returns months to payoff and total interest
-  if(emi <= 0 || outstanding <= 0) return null;
-  const monthlyRate = rate / 100 / 12;
-  let bal = outstanding, months = 0, totalPaid = 0;
-  if(monthlyRate === 0) {
-    months = Math.ceil(bal / emi);
-    return { months, totalInterest: 0, payoffDate: addMonths(new Date(), months) };
-  }
-  while(bal > 0 && months < 600) {
-    const interest = bal * monthlyRate;
-    const principal = Math.min(emi - interest, bal);
-    if(principal <= 0) return null; // EMI too low to cover interest
-    bal -= principal;
-    totalPaid += emi;
-    months++;
-  }
-  return {
-    months,
-    totalInterest: Math.max(0, totalPaid - outstanding),
-    payoffDate: addMonths(new Date(), months)
-  };
+function initAutoSMSToggle() {
+  const enabled = localStorage.getItem('ft_auto_sms') === '1';
+  const toggle = document.getElementById('auto-sms-toggle');
+  const knob   = document.getElementById('auto-sms-knob');
+  if(toggle) toggle.checked = enabled;
+  if(knob) { knob.style.transform = enabled ? 'translateX(20px)' : ''; knob.style.background = enabled ? 'var(--teal)' : 'var(--text3)'; }
 }
 
-function addMonths(date, months) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
-  return d;
-}
+function parseSMSText(s) {
+  // Returns parsed transaction or null
+  const isFinancial = /debited|credited|Rs\.?\s*[\d,]+|INR|AED|UPI|NEFT|IMPS|transfer|withdrawn|deposited|transaction|balance|payment|bill|due/i.test(s);
+  if(!isFinancial) return null;
 
-function fmtMonthYear(date) {
-  return date.toLocaleDateString('en-IN', { month:'short', year:'numeric' });
-}
+  let amount = 0, txType = 'debit', acctHint = '', merchant = '', date = today();
 
-function switchDebtTab(tab) {
-  const listEl   = document.getElementById('debt-list');
-  const payoffEl = document.getElementById('debt-payoff');
-  const listBtn  = document.getElementById('dtab-list');
-  const payoffBtn= document.getElementById('dtab-payoff');
-  if(tab === 'list') {
-    if(listEl) listEl.style.display='block';
-    if(payoffEl) payoffEl.style.display='none';
-    if(listBtn) { listBtn.style.background='rgba(212,168,67,0.1)'; listBtn.style.borderColor='var(--gold)'; listBtn.style.color='var(--gold)'; listBtn.style.fontWeight='700'; }
-    if(payoffBtn) { payoffBtn.style.background='var(--surface2)'; payoffBtn.style.borderColor='var(--border)'; payoffBtn.style.color='var(--text3)'; payoffBtn.style.fontWeight='400'; }
-  } else {
-    if(listEl) listEl.style.display='none';
-    if(payoffEl) payoffEl.style.display='block';
-    if(listBtn) { listBtn.style.background='var(--surface2)'; listBtn.style.borderColor='var(--border)'; listBtn.style.color='var(--text3)'; listBtn.style.fontWeight='400'; }
-    if(payoffBtn) { payoffBtn.style.background='rgba(52,211,153,0.1)'; payoffBtn.style.borderColor='var(--green)'; payoffBtn.style.color='var(--green)'; payoffBtn.style.fontWeight='700'; }
-    renderPayoffPredictor();
-  }
-}
-
-function renderPayoffPredictor() {
-  const el = document.getElementById('debt-payoff');
-  if(!el) return;
-
-  const { avgInc, avgExp, surplus } = getAvgMonthlySurplus(3);
-  const totalEMI = D.accounts.loans.filter(l=>(l.outstanding||0)>0)
-    .reduce((s,l)=>s+(l.emi||0), 0);
-  const freeCash = Math.max(0, surplus); // after expenses (EMIs already in expenses usually)
-
-  // Gather EMI loans only (have rate + emi)
-  const loans = D.accounts.loans.filter(l =>
-    (l.outstanding||0) > 0 && (l.emi||0) > 0 && (l.loanType==='emi'||!l.loanType)
-  );
-
-  let html = '';
-
-  // ── Cash flow summary ──────────────────────────────────────────────────────
-  html += `<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Avg Monthly Cash Flow (Last 3 months)</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-      <div><div style="font-size:10px;color:var(--text3)">Income</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--green)">${fmt(avgInc)}</div></div>
-      <div><div style="font-size:10px;color:var(--text3)">Expenses</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--red)">${fmt(avgExp)}</div></div>
-      <div><div style="font-size:10px;color:var(--text3)">Surplus</div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:${surplus>=0?'var(--gold)':'var(--red)'}">${surplus>=0?'+':''}${fmt(surplus)}</div></div>
-    </div>
-  </div>`;
-
-  if(loans.length === 0) {
-    html += '<div class="empty-state"><div class="icon">🎉</div>No active EMI loans to predict!</div>';
-    el.innerHTML = html;
-    return;
-  }
-
-  // ── Per-loan payoff cards ──────────────────────────────────────────────────
-  html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Loan Payoff Predictions</div>`;
-
-  loans.forEach(loan => {
-    const base = calcLoanPayoff(loan.outstanding, loan.rate||0, loan.emi||0);
-    if(!base) {
-      html += `<div style="background:var(--surface);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;border:1px solid var(--border);">
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">${loan.name}</div>
-        <div style="font-size:12px;color:var(--orange)">⚠️ EMI too low to cover interest — loan will never pay off at current rate</div>
-      </div>`;
-      return;
-    }
-
-    // Extra payment scenario — use 30% of surplus
-    const extraPayment = Math.max(0, Math.round(freeCash * 0.3 / 1000) * 1000);
-    const accel = extraPayment > 0
-      ? calcLoanPayoff(loan.outstanding, loan.rate||0, (loan.emi||0) + extraPayment)
-      : null;
-
-    const monthsSaved = accel ? base.months - accel.months : 0;
-    const interestSaved = accel ? Math.max(0, base.totalInterest - accel.totalInterest) : 0;
-
-    html += `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:12px;border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:12px 14px 10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-          <div>
-            <div style="font-size:14px;font-weight:600">${loan.name}</div>
-            <div style="font-size:11px;color:var(--text3)">${loan.lender||''} · ${loan.rate||0}% p.a. · EMI ${fmt(loan.emi||0)}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--red)">${fmt(loan.outstanding)}</div>
-            <div style="font-size:10px;color:var(--text3)">outstanding</div>
-          </div>
-        </div>
-
-        <!-- Base scenario -->
-        <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">📅 At Current EMI</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div>
-              <div style="font-size:10px;color:var(--text3)">Payoff Date</div>
-              <div style="font-size:14px;font-weight:700;color:var(--text)">${fmtMonthYear(base.payoffDate)}</div>
-              <div style="font-size:10px;color:var(--text3)">${base.months} months</div>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--text3)">Total Interest</div>
-              <div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(base.totalInterest)}</div>
-            </div>
-          </div>
-        </div>
-
-        ${accel && monthsSaved > 0 ? `
-        <!-- Accelerated scenario -->
-        <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:10px 12px;">
-          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">🚀 With Extra ${fmt(extraPayment)}/month</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div>
-              <div style="font-size:10px;color:var(--text3)">New Payoff Date</div>
-              <div style="font-size:14px;font-weight:700;color:var(--green)">${fmtMonthYear(accel.payoffDate)}</div>
-              <div style="font-size:10px;color:var(--green)">${monthsSaved} months earlier! 🎉</div>
-            </div>
-            <div>
-              <div style="font-size:10px;color:var(--text3)">Interest Saved</div>
-              <div style="font-size:14px;font-weight:700;color:var(--green)">${fmt(interestSaved)}</div>
-            </div>
-          </div>
-        </div>` : surplus <= 0 ? `<div style="font-size:11px;color:var(--orange);padding:4px 0;">⚠️ No surplus to accelerate — reduce expenses to pay off sooner</div>` : ''}
-      </div>
-    </div>`;
-  });
-
-  // ── CC payoff info ─────────────────────────────────────────────────────────
-  const ccDebts = D.accounts.indCards.filter(c=>(c.outstanding||0)>0 && (c.minDue||0)>0);
-  if(ccDebts.length > 0) {
-    html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 10px;">Credit Card Payoff</div>`;
-    ccDebts.forEach(c => {
-      // CC typically 36% p.a. if not set
-      const rate = c.rate || 36;
-      const base = calcLoanPayoff(c.outstanding, rate, c.minDue);
-      if(!base) return;
-      html += `<div style="background:var(--surface);border-radius:var(--radius);margin-bottom:10px;border:1px solid var(--border);padding:12px 14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <div><div style="font-size:14px;font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--orange)">⚠️ ${rate}% interest — pay off ASAP</div></div>
-          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--red)">${fmt(c.outstanding)}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><div style="font-size:10px;color:var(--text3)">Paying Min Due</div><div style="font-size:13px;font-weight:700">${fmtMonthYear(base.payoffDate)} (${base.months}mo)</div></div>
-          <div><div style="font-size:10px;color:var(--text3)">Interest Cost</div><div style="font-size:13px;font-weight:700;color:var(--red)">${fmt(base.totalInterest)}</div></div>
-        </div>
-      </div>`;
-    });
-  }
-
-  el.innerHTML = html;
-}
-
-// ── Net Worth Predictor ────────────────────────────────────────────────────
-function renderNWPredictor() {
-  const el = document.getElementById('dash-nw-predictor');
-  if(!el) return;
-
-  const history = D.netWorthHistory || [];
-  const { avgInc, avgExp, surplus } = getAvgMonthlySurplus(3);
-
-  // Current net worth
-  const bankTotal  = D.accounts.indBanks.reduce((s,b)=>s+(b.balance||0), 0);
-  const uaeSavings = D.accounts.uaeAccounts.filter(u=>u.type!=='Credit Card').reduce((s,u)=>s+(u.balanceAED||0)*D.aedRate, 0);
-  const ccDebt     = D.accounts.indCards.reduce((s,c)=>s+(c.outstanding||0), 0);
-  const loanDebt   = D.accounts.loans.reduce((s,l)=>s+(l.outstanding||0), 0);
-  const uaeCCDebt  = D.accounts.uaeAccounts.filter(u=>u.type==='Credit Card').reduce((s,u)=>s+(u.outstandingAED||0)*D.aedRate, 0);
-  const borrowDebt = (D.borrowings||[]).filter(b=>b.status!=='settled').reduce((s,b)=>s+(b.amount-b.repaid), 0);
-  const lentOut    = (D.lent||[]).filter(l=>l.status!=='settled').reduce((s,l)=>s+(l.amount-l.recovered), 0);
-  const currentNW  = bankTotal + uaeSavings - ccDebt - loanDebt - uaeCCDebt - borrowDebt + lentOut;
-
-  if(avgInc === 0 && surplus === 0) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">Add income and expense data to see predictions</div>';
-    return;
-  }
-
-  // Project 12, 24, 60 months
-  const scenarios = [
-    { label:'Conservative', savingsPct:0.10, color:'#94A3B8' },
-    { label:'Moderate',     savingsPct:0.20, color:'#34D399' },
-    { label:'Aggressive',   savingsPct:0.35, color:'#D4A843' },
+  const amtPats = [
+    /(?:of|for|rs\.?)\s*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /(?:Rs\.?|INR|₹)[:\s]*\.?\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /([\d,]+(?:\.\d{1,2})?)\s*(?:Rs\.?|INR|₹)/i,
   ];
+  for(const p of amtPats) {
+    const m = s.match(p); if(m) { amount = parseFloat(m[1].replace(/,/g,'')); break; }
+  }
+  if(!amount || amount <= 0) return null;
 
-  // CAGR from history if available
-  let cagr = null;
-  if(history.length >= 2) {
-    const first = history[0];
-    const last  = history[history.length-1];
-    const months = history.length;
-    if(first.netWorth > 0 && last.netWorth > first.netWorth) {
-      cagr = (Math.pow(last.netWorth/first.netWorth, 12/months) - 1) * 100;
-    }
+  if(/total\s*(?:amt\s*)?due|min\s*(?:amt\s*)?due|bill\s+generated/i.test(s)) txType = 'bill';
+  else if(/credit|credited|received|refund|cashback|deposited/i.test(s)) txType = 'credit';
+  else txType = 'debit';
+
+  const acctPats = [/[Aa]\/[Cc]\s*X{0,2}(\d{4})/, /ending\s+(?:in\s+)?X{0,2}(\d{4})/i, /\bX{1,2}(\d{4})\b/];
+  for(const p of acctPats) { const m = s.match(p); if(m) { acctHint = m[1]; break; } }
+
+  const dm = s.match(/(\d{2})[\-\/](\d{2})[\-\/](\d{2,4})/) ||
+             s.match(/(\d{2})[\-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[\-](\d{2,4})/i);
+  if(dm) {
+    try {
+      const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+      let [,d,mo,y] = dm;
+      if(isNaN(Number(mo))) mo = months[mo.toLowerCase()];
+      if(y.length===2) y = '20'+y;
+      date = y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    } catch(e) {}
   }
 
-  const milestones = [1000000, 2500000, 5000000, 10000000];
-  const monthlySurplusActual = surplus;
+  const mPats = [/(?:at|to)\s+([A-Za-z][A-Za-z0-9 &\-.]{2,25})(?:\s+on|\s+via|\.)/i];
+  for(const p of mPats) { const m = s.match(p); if(m && m[1].trim().length > 2) { merchant = m[1].trim(); break; } }
 
-  let html = '';
-
-  // Current NW
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div>
-      <div style="font-size:11px;color:var(--text3)">Current Net Worth</div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:${currentNW>=0?'var(--green)':'var(--red)'}">${fmt(currentNW)}</div>
-    </div>
-    ${cagr ? `<div style="text-align:right;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:8px;padding:8px 12px;">
-      <div style="font-size:10px;color:var(--text3)">Monthly Growth</div>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--green)">+${cagr.toFixed(1)}%</div>
-    </div>` : ''}
-  </div>`;
-
-  // Projections
-  html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Projection (based on avg monthly surplus ${fmt(monthlySurplusActual)})</div>`;
-
-  const periods = [{months:12,label:'1 Year'},{months:24,label:'2 Years'},{months:60,label:'5 Years'}];
-  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
-    <thead><tr>
-      <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);">Scenario</th>
-      ${periods.map(p=>`<th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border);">${p.label}</th>`).join('')}
-    </tr></thead>
-    <tbody>
-      ${scenarios.map(s => {
-        const mSavings = avgInc * s.savingsPct;
-        return `<tr>
-          <td style="padding:8px;border-bottom:1px solid var(--border);">
-            <div style="font-weight:600;color:${s.color}">${s.label}</div>
-            <div style="font-size:10px;color:var(--text3)">Save ${(s.savingsPct*100).toFixed(0)}% of income (${fmt(mSavings)}/mo)</div>
-          </td>
-          ${periods.map(p => {
-            const proj = currentNW + (mSavings * p.months);
-            return `<td style="text-align:right;padding:8px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-weight:700;color:${proj>=0?s.color:'var(--red)'};">${fmt(proj)}</td>`;
-          }).join('')}
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
-
-  // Milestones
-  const reachableMilestones = milestones.filter(m => m > currentNW);
-  if(reachableMilestones.length > 0 && monthlySurplusActual > 0) {
-    html += `<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:14px 0 8px;">Milestones (at current surplus ${fmt(monthlySurplusActual)}/mo)</div>`;
-    html += reachableMilestones.slice(0,3).map(m => {
-      const monthsNeeded = Math.ceil((m - currentNW) / monthlySurplusActual);
-      const date = addMonths(new Date(), monthsNeeded);
-      const label = m >= 10000000 ? '₹1 Cr' : m >= 5000000 ? '₹50L' : m >= 2500000 ? '₹25L' : '₹10L';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px;">
-        <div style="font-size:13px;font-weight:600">${label} 🎯</div>
-        <div style="text-align:right">
-          <div style="font-size:13px;font-weight:700;color:var(--gold)">${fmtMonthYear(date)}</div>
-          <div style="font-size:10px;color:var(--text3)">${monthsNeeded} months away</div>
-        </div>
-      </div>`;
-    }).join('');
+  let matchedAccount = null;
+  if(acctHint) {
+    matchedAccount = D.accounts.indBanks.find(b => b.accountNo && b.accountNo.endsWith(acctHint))
+      || D.accounts.indCards.find(c => c.last4 && c.last4 === acctHint);
   }
 
-  el.innerHTML = html;
+  return { amount, txType, acctHint, merchant, date,
+    accountId: matchedAccount?.id || null,
+    accountName: matchedAccount?.name || (acctHint ? 'A/c ...'+acctHint : 'Unknown'),
+    valid: txType !== 'bill' };
 }
+
+// Called by Android native (SmsReceiver.kt) via evaluateJavascript
+function receiveSMSFromAndroid(body, sender) {
+  if(!body) return;
+  const parsed = parseSMSText(body);
+  if(!parsed || !parsed.valid) return;
+
+  // Show review popup
+  showSMSReviewPopup(parsed, body, sender);
+}
+
+function showSMSReviewPopup(parsed, rawSMS, sender) {
+  const existing = document.getElementById('sms-review-popup');
+  if(existing) existing.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'sms-review-popup';
+  popup.style.cssText = 'position:fixed;bottom:80px;left:12px;right:12px;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+
+  const acctOpts = allAccountOptions().map(o =>
+    `<option value="${o.value}" ${parsed.accountId===o.value?'selected':''}>${o.label}</option>`
+  ).join('');
+
+  const catOpts = parsed.txType === 'credit'
+    ? ['Salary','Business','Freelance','Investment','Rental','Other'].map(c=>`<option value="${c}">${c}</option>`).join('')
+    : CATEGORIES.map(c=>`<option value="${c.name}">${c.emoji} ${c.name}</option>`).join('');
+
+  popup.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;">${parsed.txType==='credit'?'💰 Credit':'💸 Debit'} — ${fmt(parsed.amount)}</div>
+      <button onclick="document.getElementById('sms-review-popup').remove()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text3);cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">${sender||''} · ${parsed.date}${parsed.merchant?' · '+parsed.merchant:''}</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <select id="sms-rev-account" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;">
+        <option value="">Select account</option>${acctOpts}
+      </select>
+      <select id="sms-rev-cat" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;">
+        ${catOpts}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveSMSFromPopup(${JSON.stringify(parsed).replace(/"/g,"'")})" style="flex:2;background:var(--teal);border:none;border-radius:10px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;">✅ Save</button>
+      <button onclick="document.getElementById('sms-review-popup').remove()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--text2);font-size:13px;cursor:pointer;">Skip</button>
+    </div>`;
+  document.body.appendChild(popup);
+}
+
+function saveSMSFromPopup(parsed) {
+  const accountId = document.getElementById('sms-rev-account')?.value;
+  const category  = document.getElementById('sms-rev-cat')?.value;
+  if(!accountId) { showToast('⚠️ Select an account'); return; }
+
+  if(parsed.txType === 'credit') {
+    if(!D.income) D.income = [];
+    D.income.push({ id:Date.now().toString(), desc:parsed.merchant||'SMS Credit', amount:parsed.amount, date:parsed.date, category:category||'Other', accountId, note:'Auto SMS' });
+    creditToAccount(accountId, parsed.amount);
+    showToast('💰 Income saved — '+fmt(parsed.amount));
+  } else {
+    if(!D.expenses) D.expenses = [];
+    D.expenses.push({ id:Date.now().toString(), desc:parsed.merchant||'SMS Debit', amount:parsed.amount, date:parsed.date, category:category||'Others', accountId, mode:'UPI', note:'Auto SMS' });
+    deductFromAccount(accountId, parsed.amount);
+    showToast('💸 Expense saved — '+fmt(parsed.amount));
+  }
+
+  save(); renderDashboard();
+  document.getElementById('sms-review-popup')?.remove();
+}
+
+// Manual scan trigger from settings
+function manualSMSScan() {
+  const statusEl = document.getElementById('sms-scan-status');
+  if(statusEl) statusEl.textContent = 'Requesting SMS access...';
+  // Signal Android to trigger SMS scan
+  if(window.Android && window.Android.scanSMS) {
+    window.Android.scanSMS();
+  } else {
+    showToast('📱 SMS scan works in the Android app');
+    if(statusEl) statusEl.textContent = 'Available in Android app only';
+  }
+}
+
 
 // ══════════════════════════════════════════════════════════
 // INIT
